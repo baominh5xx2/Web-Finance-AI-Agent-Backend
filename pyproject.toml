@@ -1,0 +1,4 @@
+[tool.black]
+line-length = 80
+#python -m venv venv
+#venv\Scripts\activate

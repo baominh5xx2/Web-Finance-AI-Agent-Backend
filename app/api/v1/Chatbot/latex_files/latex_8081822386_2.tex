@@ -1,0 +1,79 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{csvsimple}
+\usepackage{longtable}
+\usepackage{booktabs}
+
+\begin{document}
+
+\title{Phân Tích CSV}
+\author{Một Mô Hình Ngôn Ngữ Lớn}
+\date{\today}
+
+\maketitle
+
+\section{Giới thiệu}
+
+Tài liệu này trình bày cách phân tích dữ liệu từ tệp CSV bằng \LaTeX. Chúng ta sẽ sử dụng gói \texttt{csvsimple} để đọc và hiển thị dữ liệu.
+
+\section{Ví dụ về Tệp CSV}
+
+Giả sử chúng ta có một tệp CSV có tên là \texttt{data.csv} với nội dung sau:
+
+\begin{verbatim}
+Name,Age,City
+Alice,30,New York
+Bob,25,London
+Charlie,35,Paris
+\end{verbatim}
+
+\section{Sử dụng gói \texttt{csvsimple}}
+
+Chúng ta có thể sử dụng gói \texttt{csvsimple} để đọc và hiển thị dữ liệu này trong một bảng.
+
+\subsection{Bảng cơ bản}
+
+\begin{center}
+\csvreader[head to column names]{data.csv}{}{%
+  \Name & \Age & \City \\\hline
+}
+\end{center}
+
+\subsection{Bảng với \texttt{longtable} và \texttt{booktabs}}
+
+Để tạo ra một bảng dài hơn và đẹp mắt hơn, chúng ta có thể sử dụng gói \texttt{longtable} và \texttt{booktabs}.
+
+\begin{longtable}{lll}
+\caption{Dữ liệu từ \texttt{data.csv}} \\
+\toprule
+Name & Age & City \\
+\midrule
+\endfirsthead
+
+\multicolumn{3}{c}%
+{{\bfseries Tiếp tục từ trang trước}} \\
+\toprule
+Name & Age & City \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{3}{r}{{Tiếp tục ở trang sau}} \\
+\endfoot
+
+\bottomrule
+\endlastfoot
+
+\csvreader[head to column names]{data.csv}{}{%
+  \Name & \Age & \City \\
+}
+\end{longtable}
+
+\section{Kết luận}
+
+\LaTeX, cùng với các gói như \texttt{csvsimple}, có thể được sử dụng để phân tích và trình bày dữ liệu từ tệp CSV một cách hiệu quả.
+
+\end{document}
