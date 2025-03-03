@@ -13,7 +13,7 @@ import os
 from generate_plot import GeneratePlot
 from gemini_api import Gemini_api
 from latex_generator import LatexGenerator
-from vnstockk import VNStockService
+from vnstock_service.service import VNStockService
 
 # Load environment variables
 load_dotenv()
