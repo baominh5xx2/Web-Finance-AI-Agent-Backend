@@ -182,7 +182,7 @@ class Gemini_api:
             if self.latex_generator:
                 # Clean the prompt by removing trigger keywords
                 prompt = message.lower()
-                for keyword in ["latex", "tạo latex", "tạo pdf", "pdf"]:
+                for keyword in ["tạo pdf"]:
                     prompt = prompt.replace(keyword, "", 1)
                 prompt = prompt.strip()
                 
