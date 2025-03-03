@@ -12,7 +12,8 @@ from dotenv import load_dotenv
 import os
 from generate_plot import GeneratePlot
 from gemini_api import Gemini_api
-from latex_generator import LatexGenerator
+from latex_pdf.latex_generator import LatexGenerator
+import datetime
 from vnstock_service.service import VNStockService
 
 # Load environment variables

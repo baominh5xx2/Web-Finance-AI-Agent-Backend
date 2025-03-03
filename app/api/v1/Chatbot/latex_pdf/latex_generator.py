@@ -3,7 +3,7 @@ import google.generativeai as genai
 from telegram import Update
 from telegram.ext import CallbackContext
 import re
-from compile_latex import compile_latex_to_pdf, clean_latex_auxiliary_files
+from .compile_latex import compile_latex_to_pdf, clean_latex_auxiliary_files
 
 class LatexGenerator:
     def __init__(self, gemini_api):
