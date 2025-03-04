@@ -12,8 +12,8 @@ import threading
 import uvicorn
 from dotenv import load_dotenv
 
-# Import MongoDB class for database connection
-from app.database.mongodb import MongoDB
+# Import router for Market Indices
+from app.api.v1.MarketIndices.router import router as market_indices_router
 
 # Load environment variables
 load_dotenv()
@@ -21,19 +21,11 @@ load_dotenv()
 # Create FastAPI app
 app = FastAPI(title="ChatBot Finance Backend")
 
+# Register the router
+app.include_router(market_indices_router, prefix="/api/v1")
+
 # Initialize telegram bot and get app instances
 telegram_app, flask_app = initialize_bot()
-
-# Database startup and shutdown events
-@app.on_event("startup")
-async def startup_db_client():
-    await MongoDB.connect()
-    print("✅ Connected to MongoDB database")
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    await MongoDB.close()
-    print("✅ Closed MongoDB database connection")
 
 @app.get("/")
 def read_root():

@@ -15,6 +15,9 @@ from dotenv import load_dotenv
 # Import MongoDB class for database connection
 from app.database.mongodb import MongoDB
 
+# Import market indices router
+from app.api.v1.MarketIndices.router import router as market_router
+
 # Load environment variables
 load_dotenv()
 
@@ -23,6 +26,9 @@ app = FastAPI(title="ChatBot Finance Backend")
 
 # Initialize telegram bot and get app instances
 telegram_app, flask_app = initialize_bot()
+
+# Include market indices router
+app.include_router(market_router, prefix="/api/v1/market", tags=["Market Indices"])
 
 # Database startup and shutdown events
 @app.on_event("startup")
