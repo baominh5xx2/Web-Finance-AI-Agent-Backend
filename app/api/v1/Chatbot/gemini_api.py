@@ -3,7 +3,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 from telegram import Update
 from datetime import datetime
 import time
-from generate_plot import GeneratePlot
+from .generate_plot import GeneratePlot
 import re
 import io
 import json

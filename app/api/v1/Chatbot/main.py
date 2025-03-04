@@ -6,34 +6,49 @@ import matplotlib.pyplot as plt
 import numpy as np
 import io
 import threading
-
 import re
 from dotenv import load_dotenv
 import os
-from generate_plot import GeneratePlot
-from gemini_api import Gemini_api
-from latex_pdf.latex_generator import LatexGenerator
+from .gemini_api import Gemini_api
+from .latex_pdf.latex_generator import LatexGenerator
 import datetime
-from vnstock_service.service import VNStockService
+from .vnstock_service.service import VNStockService
 
-# Load environment variables
-load_dotenv()
-
-# Set up API keys and tokens
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")  # Default if not set
-genai.configure(api_key=GEMINI_API_KEY)
-
-# Initialize Telegram app
-app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+# Create Flask app
 flask_app = Flask(__name__)
 
-# Initialize VNStock service
-vnstock_service = VNStockService()
+# Initialize global variables
+app = None
+gemini_bot = None
+vnstock_service = None
+latex_generator = None
 
-# Initialize Gemini bot
-gemini_bot = Gemini_api()
+def initialize_bot():
+    """Initialize the Telegram bot and all services"""
+    global app, gemini_bot, vnstock_service, latex_generator
+    
+    # Load environment variables
+    load_dotenv()
+    
+    # Set up API keys and tokens
+    TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")  # Default if not set
+    genai.configure(api_key=GEMINI_API_KEY)
+    
+    # Initialize Telegram app
+    app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+    
+    # Initialize services
+    vnstock_service = VNStockService()
+    gemini_bot = Gemini_api()
+    latex_generator = LatexGenerator(gemini_bot)
+    gemini_bot.latex_generator = latex_generator
+    
+    # Register all command handlers
+    register_commands()
+    
+    return app, flask_app
 
 async def start_command(update: Update, context: CallbackContext):
     """Lệnh /start"""
@@ -51,7 +66,9 @@ async def start_command(update: Update, context: CallbackContext):
     
     await update.message.reply_text(welcome_message)
     await gemini_bot.start_command(update, context)
-    
+
+# [KEEP ALL OTHER ASYNC FUNCTIONS THE SAME]
+# Help command, latex commands, search commands, etc.
 async def help_command(update: Update, context: CallbackContext):
     """Hiển thị trợ giúp"""
     help_text = (
@@ -196,7 +213,6 @@ def register_commands():
 def home():
     return "Bot is running!"
 
-
 @flask_app.route("/webhook", methods=["POST"])
 def webhook():
     """Xử lý Webhook từ Telegram"""
@@ -210,16 +226,12 @@ def run_flask():
     """Chạy Flask để xử lý Webhook"""
     flask_app.run(host="0.0.0.0", port=8080)
 
-if __name__ == "__main__":
+def run_bot():
+    """Run the bot directly"""
     print("🚀 Khởi động bot...")
     
-    # Initialize Gemini bot and LaTeX generator
-    gemini_bot = Gemini_api()
-    latex_generator = LatexGenerator(gemini_bot)
-    gemini_bot.latex_generator = latex_generator
-    
-    # Register all command handlers
-    register_commands()
+    # Initialize bot and services
+    initialize_bot()
     
     # Start the Flask server in a separate thread if webhook mode is used
     if os.getenv("USE_WEBHOOK", "False").lower() == "true":
@@ -229,3 +241,6 @@ if __name__ == "__main__":
     # Start the bot
     print("✅ Bot started successfully! Press Ctrl+C to stop.")
     app.run_polling()
+
+if __name__ == "__main__":
+    run_bot()
