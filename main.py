@@ -7,6 +7,7 @@ root_dir = str(Path(__file__).parent)
 sys.path.insert(0, root_dir)
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.Chatbot.main import initialize_bot, flask_app, run_flask
 import threading
 import uvicorn
@@ -21,8 +22,17 @@ load_dotenv()
 # Create FastAPI app
 app = FastAPI(title="ChatBot Finance Backend")
 
+# Add CORS middleware - ensure this is before any router registration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Be specific for production
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+)
+
 # Register the router
-app.include_router(market_indices_router, prefix="/api/v1")
+app.include_router(market_indices_router, prefix="/api/v1/market")
 
 # Initialize telegram bot and get app instances
 telegram_app, flask_app = initialize_bot()
@@ -37,7 +47,7 @@ def chatbot_status():
 
 def start_telegram_bot():
     """Start the Telegram bot in a separate thread"""
-    print("🚀 Khởi động Telegram Bot...")
+    print(" Khởi động Telegram Bot...")
     telegram_app.run_polling()
 
 if __name__ == "__main__":
@@ -55,5 +65,5 @@ if __name__ == "__main__":
     
     # Start the FastAPI application
     port = int(os.getenv("PORT", 8000))
-    print(f"✅ Starting FastAPI server on port {port}...")
+    print(f" Starting FastAPI server on port {port}...")
     uvicorn.run(app, host="0.0.0.0", port=port)
