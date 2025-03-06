@@ -15,7 +15,7 @@ router = APIRouter(tags=["Market Indices"])
 market_indices_instance = Market_indices()
 
 @router.get("/indices/{index_code}", response_model=MarketIndexResponse)
-async def get_market_indices(index_code: str = "VNINDEX", top: int = 30):
+async def get_market_indices(index_code: str = "VNINDEX", top: int = 90):
     """
     Get market index data
     """
@@ -54,11 +54,11 @@ async def get_market_indices(index_code: str = "VNINDEX", top: int = 30):
         )
 
 # Hàm async để tải một chỉ số
-async def fetch_index_data(index_code: str, top: int = 30):
+async def fetch_index_data(index_code: str, top: int = 90):
     return index_code, market_indices_instance.get_market_indices(index_code, top)
 
 @router.get("/indices", response_model=MarketIndexResponse)
-async def get_default_indices(top: int = 30):
+async def get_default_indices(top: int = 90):
     """
     Get default market indices (VNINDEX, HNXINDEX, UPCOMINDEX, VN30, HNX30)
     """

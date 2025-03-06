@@ -17,6 +17,8 @@ from app.database.mongodb import MongoDB
 
 # Import market indices router
 from app.api.v1.MarketIndices.router import router as market_router
+# Import treemap router
+from app.api.v1.treemap.router import router as treemap_router
 
 # Load environment variables
 load_dotenv()
@@ -29,6 +31,8 @@ telegram_app, flask_app = initialize_bot()
 
 # Include market indices router
 app.include_router(market_router, prefix="/api/v1/market", tags=["Market Indices"])
+# Include treemap router
+app.include_router(treemap_router, prefix="/api/v1/treemap", tags=["Treemap"])
 
 # Database startup and shutdown events
 @app.on_event("startup")

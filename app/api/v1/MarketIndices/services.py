@@ -29,7 +29,7 @@ class Market_indices:
         self.cache_time = _global_cache_time
         self.cache_expiry = _global_cache_expiry
     
-    def get_market_indices(self, index_code: str = "VNINDEX", top: int = 30) -> List[Dict[str, Any]]:
+    def get_market_indices(self, index_code: str = "VNINDEX", top: int = 90) -> List[Dict[str, Any]]:
         try:
             current_time = time.time()  # Use time.time() instead of datetime.now().timestamp()
             cache_key = f"{index_code}_{top}"
@@ -41,7 +41,7 @@ class Market_indices:
             try:
                 # Lấy dữ liệu thời gian
                 end_date = datetime.now().strftime('%Y-%m-%d')
-                start_date = (datetime.now() - timedelta(days=2)).strftime('%Y-%m-%d')
+                start_date = (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d')
 
                 # Sử dụng instance đã tạo sẵn
                 stock = get_vnstock_instance()
