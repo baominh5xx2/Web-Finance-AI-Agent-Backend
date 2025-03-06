@@ -6,11 +6,12 @@ from pathlib import Path
 root_dir = str(Path(__file__).parent)
 sys.path.insert(0, root_dir)
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.Chatbot.main import initialize_bot, flask_app, run_flask
 import threading
 import uvicorn
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 
 # Import router for Market Indices
@@ -22,13 +23,15 @@ load_dotenv()
 # Create FastAPI app
 app = FastAPI(title="ChatBot Finance Backend")
 
-# Add CORS middleware - ensure this is before any router registration
+# Configure CORS properly - allow all origins for development
+origins = ["*"]  # Allow all origins in development mode
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Be specific for production
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Register the router
