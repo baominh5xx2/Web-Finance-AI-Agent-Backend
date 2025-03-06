@@ -17,7 +17,7 @@ def compile_latex_to_pdf(latex_file, output_dir=None):
     working_dir = os.path.dirname(latex_file)
     
     command = [
-        "xelatex",
+        "xelatex", #pylatex
         "-interaction=nonstopmode",
         "-halt-on-error",
         f"-output-directory={output_dir}",
