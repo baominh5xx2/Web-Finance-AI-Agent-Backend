@@ -11,7 +11,10 @@ class MarketIndicesAdjustDayService:
         # Fix method name to match what router is calling
         try:
             end_date = datetime.now().strftime('%Y-%m-%d')
-            if time == "3M":
+            if time == "1D":
+                start_date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+                interval = '1m'
+            elif time == "3M":
                 start_date = (datetime.now() - timedelta(days=90)).strftime('%Y-%m-%d')
                 interval = '1D'
             elif time == "6M":
