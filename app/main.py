@@ -21,7 +21,8 @@ from app.api.v1.MarketIndices.router import router as market_router
 from app.api.v1.treemap.router import router as treemap_router
 # Import treemap_color router
 from app.api.v1.treemap_color.router import router as treemap_color_router
-
+# import market indices adjust day
+from app.api.v1.marketindices_adjustday.router import router as marketindices_adjustday_router
 # Load environment variables
 load_dotenv()
 
@@ -37,7 +38,8 @@ app.include_router(market_router, prefix="/api/v1/market", tags=["Market Indices
 app.include_router(treemap_router, prefix="/api/v1/treemap", tags=["Treemap"])
 # Include treemap_color router
 app.include_router(treemap_color_router, prefix="/api/v1")
-
+# Include market indices adjust day router
+app.include_router(marketindices_adjustday_router, prefix="/api/v1/market-adjust-indices")
 # Database startup and shutdown events
 @app.on_event("startup")
 async def startup_db_client():
