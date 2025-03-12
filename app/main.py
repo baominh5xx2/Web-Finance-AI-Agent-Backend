@@ -16,14 +16,14 @@ from dotenv import load_dotenv
 # Import MongoDB class for database connection
 from app.database.mongodb import MongoDB
 
-# Import market indices router
+# Import routers
 from app.api.v1.MarketIndices.router import router as market_router
-# Import treemap router
 from app.api.v1.treemap.router import router as treemap_router
-# Import treemap_color router
 from app.api.v1.treemap_color.router import router as treemap_color_router
-# import market indices adjust day
 from app.api.v1.marketindices_adjustday.router import router as marketindices_adjustday_router
+# Import news router
+from app.api.v1.news.router import router as news_router
+
 # Load environment variables
 load_dotenv()
 
@@ -48,14 +48,14 @@ app.add_middleware(
 # Initialize telegram bot and get app instances
 telegram_app, flask_app = initialize_bot()
 
-# Include market indices router
+# Include routers
 app.include_router(market_router, prefix="/api/v1/market", tags=["Market Indices"])
-# Include treemap router
 app.include_router(treemap_router, prefix="/api/v1/treemap", tags=["Treemap"])
-# Include treemap_color router
 app.include_router(treemap_color_router, prefix="/api/v1")
-# Include market indices adjust day router
 app.include_router(marketindices_adjustday_router, prefix="/api/v1/market-adjust-indices")
+# Make sure the news router is included with the correct prefix
+app.include_router(news_router, prefix="/api/v1/news", tags=["Stock News"])
+
 # Database startup and shutdown events
 @app.on_event("startup")
 async def startup_db_client():
