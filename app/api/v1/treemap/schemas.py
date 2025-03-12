@@ -4,7 +4,6 @@ from pydantic import BaseModel, Field
 class StockData(BaseModel):
     """Schema cho dữ liệu của một cổ phiếu"""
     symbol: str = Field(..., description="Mã cổ phiếu")
-    total_value: float = Field(..., description="Giá trị giao dịch")
     market_cap: float = Field(..., description="Vốn hóa thị trường (tỷ đồng)")
 
 class TreemapResponse(BaseModel):

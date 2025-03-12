@@ -27,24 +27,31 @@ async def get_stocks_by_index(index_name: str):
         start_time = time.time()
         
         # Lấy dữ liệu cổ phiếu với vốn hóa và GTGD
-        stocks_data = treemap_instance.get_combined_data(index_name)
+        result = treemap_instance.sort_cp(index_name)
         
-        # Chuyển đổi dữ liệu sang định dạng phù hợp với schema
-        formatted_data = [
-            StockData(
-                symbol=stock["symbol"],
-                total_value=stock["total_value"],
-                market_cap=stock["market_cap"]
-            ) for stock in stocks_data
-        ]
+        # Extract the DataFrame and convert to records
+        if isinstance(result, dict) and 'market_cap_data' in result:
+            # Convert DataFrame to list of dictionaries
+            market_cap_df = result['market_cap_data']
+            stocks_data = market_cap_df.to_dict('records')
+            
+            # Chuyển đổi dữ liệu sang định dạng phù hợp với schema
+            formatted_data = [
+                StockData(
+                    symbol=stock["symbol"],
+                    market_cap=float(stock["von_hoa"])  # Use 'von_hoa' instead of 'market_cap'
+                ) for stock in stocks_data
+            ]
+        else:
+            formatted_data = []
         
         elapsed = time.time() - start_time
-        print(f"Fetched {len(stocks_data)} stocks from {index_name} in {elapsed:.2f} seconds")
+        print(f"Fetched {len(formatted_data)} stocks from {index_name} in {elapsed:.2f} seconds")
         
         return JSONResponse(
             content={
                 "success": True,
-                "message": f"Successfully fetched {len(stocks_data)} stocks from {index_name}",
+                "message": f"Successfully fetched {len(formatted_data)} stocks from {index_name}",
                 "data": [stock.dict() for stock in formatted_data]
             },
             headers={

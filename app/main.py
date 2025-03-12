@@ -7,6 +7,7 @@ root_dir = str(Path(__file__).parent)
 sys.path.insert(0, root_dir)
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware  # Import CORS middleware
 from app.api.v1.Chatbot.main import initialize_bot, flask_app, run_flask
 import threading
 import uvicorn
@@ -28,6 +29,21 @@ load_dotenv()
 
 # Create FastAPI app
 app = FastAPI(title="ChatBot Finance Backend")
+
+# Configure CORS middleware
+origins = [
+    "http://localhost:3000",          # Next.js development server
+    "http://localhost",
+    "https://your-production-domain.com",  # Add your production domain when deployed
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Initialize telegram bot and get app instances
 telegram_app, flask_app = initialize_bot()

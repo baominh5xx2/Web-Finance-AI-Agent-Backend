@@ -1,155 +1,155 @@
 {
-  "cache_date": "2025-03-06T18:12:50.652346",
+  "cache_date": "2025-03-11T13:28:46.488411",
   "data": [
     {
       "symbol": "IDC",
-      "market_cap": 18380996045300.0,
-      "total_value": 70574745.76996619
+      "market_cap": 18677995981400.0,
+      "total_value": 0.0
     },
     {
       "symbol": "MBS",
-      "market_cap": 17068931612000.0,
-      "total_value": 97563066.0439504
+      "market_cap": 17756271140000.0,
+      "total_value": 0.0
     },
     {
       "symbol": "PVS",
-      "market_cap": 16489837005000.0,
-      "total_value": 32831821.000530284
+      "market_cap": 16203057231000.0,
+      "total_value": 0.0
     },
     {
       "symbol": "HUT",
-      "market_cap": 14547945029500.0,
-      "total_value": 85478601.91356725
+      "market_cap": 14637196226000.0,
+      "total_value": 0.0
     },
     {
       "symbol": "NVB",
-      "market_cap": 13038423536100.0,
-      "total_value": 35284342.400675446
+      "market_cap": 13625739911600.0,
+      "total_value": 0.0
     },
     {
       "symbol": "SHS",
-      "market_cap": 11140247447600.0,
-      "total_value": 11462613.315374987
+      "market_cap": 11790772846000.0,
+      "total_value": 0.0
     },
     {
       "symbol": "NTP",
-      "market_cap": 9449890429200.0,
-      "total_value": 86819179.07597448
+      "market_cap": 9578169484800.0,
+      "total_value": 0.0
     },
     {
       "symbol": "VCS",
-      "market_cap": 9360000000000.0,
-      "total_value": 79252079.56377558
+      "market_cap": 9376000000000.0,
+      "total_value": 0.0
     },
     {
       "symbol": "CEO",
-      "market_cap": 7727811977600.0,
-      "total_value": 24077739.482145
+      "market_cap": 8052055836800.0,
+      "total_value": 0.0
     },
     {
       "symbol": "DHT",
-      "market_cap": 7320049114000.0,
-      "total_value": 93535424.71352918
+      "market_cap": 7138900542000.0,
+      "total_value": 0.0
     },
     {
       "symbol": "VC3",
       "market_cap": 3466681010300.0,
-      "total_value": 7068012.864862213
+      "total_value": 0.0
     },
     {
       "symbol": "TNG",
-      "market_cap": 2807567617400.0,
-      "total_value": 11977755.172637008
+      "market_cap": 2783047376200.0,
+      "total_value": 0.0
     },
     {
       "symbol": "TIG",
-      "market_cap": 2207110737000.0,
-      "total_value": 59255021.79684866
+      "market_cap": 2226471357500.0,
+      "total_value": 0.0
     },
     {
       "symbol": "LAS",
-      "market_cap": 2200699800000.0,
-      "total_value": 8074102.992406883
+      "market_cap": 2211985440000.0,
+      "total_value": 0.0
     },
     {
       "symbol": "PLC",
-      "market_cap": 2044178419800.0,
-      "total_value": 67617595.57142544
+      "market_cap": 2076497446200.0,
+      "total_value": 0.0
     },
     {
       "symbol": "SLS",
-      "market_cap": 2034766171000.0,
-      "total_value": 74074949.65921466
+      "market_cap": 2047495699500.0,
+      "total_value": 0.0
     },
     {
       "symbol": "L18",
-      "market_cap": 1719055412800.0,
-      "total_value": 26648468.277409904
-    },
-    {
-      "symbol": "IDV",
-      "market_cap": 1341103599000.0,
-      "total_value": 2714619.7556790356
+      "market_cap": 1734302024000.0,
+      "total_value": 0.0
     },
     {
       "symbol": "DTD",
-      "market_cap": 1333739812000.0,
-      "total_value": 19043680.879737448
+      "market_cap": 1356735326000.0,
+      "total_value": 0.0
     },
     {
-      "symbol": "TMB",
-      "market_cap": 1087500000000.0,
-      "total_value": 25497986.565766048
+      "symbol": "IDV",
+      "market_cap": 1336083400800.0,
+      "total_value": 0.0
     },
     {
       "symbol": "LHC",
-      "market_cap": 1072800000000.0,
-      "total_value": 78730876.19232216
+      "market_cap": 1075680000000.0,
+      "total_value": 0.0
+    },
+    {
+      "symbol": "TMB",
+      "market_cap": 1065000000000.0,
+      "total_value": 0.0
     },
     {
       "symbol": "L14",
-      "market_cap": 925779450000.0,
-      "total_value": 80684679.78323391
+      "market_cap": 950466902000.0,
+      "total_value": 0.0
     },
     {
       "symbol": "PVC",
-      "market_cap": 901258539300.0,
-      "total_value": 56455700.09185607
-    },
-    {
-      "symbol": "PVB",
-      "market_cap": 738719931600.0,
-      "total_value": 18347570.542742286
-    },
-    {
-      "symbol": "CAP",
-      "market_cap": 702418390000.0,
-      "total_value": 65361596.7803318
+      "market_cap": 909377985600.0,
+      "total_value": 0.0
     },
     {
       "symbol": "PSD",
-      "market_cap": 694493779600.0,
-      "total_value": 45592968.873609014
+      "market_cap": 751504463000.0,
+      "total_value": 0.0
+    },
+    {
+      "symbol": "PVB",
+      "market_cap": 747359930800.0,
+      "total_value": 0.0
+    },
+    {
+      "symbol": "CAP",
+      "market_cap": 708526376000.0,
+      "total_value": 0.0
     },
     {
       "symbol": "DXP",
       "market_cap": 676984502900.0,
-      "total_value": 52794685.30405512
+      "total_value": 0.0
     },
     {
       "symbol": "TVD",
-      "market_cap": 562035800000.0,
-      "total_value": 60312348.793000944
+      "market_cap": 566532086400.0,
+      "total_value": 0.0
     },
     {
       "symbol": "HLD",
-      "market_cap": 521399356500.0,
-      "total_value": 39095602.384712316
+      "market_cap": 518239360400.0,
+      "total_value": 0.0
     },
     {
       "symbol": "DVM",
       "market_cap": 355073302800.0,
-      "total_value": 7178803.543752043
+      "total_value": 0.0
     }
   ]
 }
