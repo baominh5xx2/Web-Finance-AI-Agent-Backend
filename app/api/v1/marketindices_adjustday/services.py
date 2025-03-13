@@ -21,16 +21,16 @@ class MarketIndicesAdjustDayService:
                 interval = '1m'
             elif time == "3M":
                 start_date = (datetime.now() - timedelta(days=90)).strftime('%Y-%m-%d')
-                interval = '1D'
+                interval = '1H'
             elif time == "6M":
                 start_date = (datetime.now() - timedelta(days=180)).strftime('%Y-%m-%d')
-                interval = '1D'
+                interval = '1H'
             elif time == "1Y":
                 start_date = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
-                interval = '1M'
+                interval = '1D'
             elif time == "2Y":
                 start_date = (datetime.now() - timedelta(days=730)).strftime('%Y-%m-%d')
-                interval = '1M'
+                interval = '1D'
                 
             logger.info(f"Date range: {start_date} to {end_date}, interval: {interval}")
             
