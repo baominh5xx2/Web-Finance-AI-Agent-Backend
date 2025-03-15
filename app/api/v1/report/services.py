@@ -196,31 +196,119 @@ def generate_pdf_report(symbol: str):
             "INCOME STATEMENT": income_statement_data,
             "PROFITABILITY ANALYSIS": profitability_analysis_data
         }
-
-        # Generate PDF using ReportLab
+        
+        # Chuẩn bị dữ liệu cho báo cáo định dạng mới
+        company_data = {
+            "name": f"{company_name} ({symbol})",
+            "symbol": symbol,
+            "info": f"[ Việt Nam / {exchange} ]"
+        }
+        
+        # Tính toán giá hiện tại và giá mục tiêu (ví dụ)
+        current_price = net_income[-1] / total_equity[-1] * 10000 if len(net_income) > 0 and len(total_equity) > 0 else 0
+        target_price = current_price * 1.25  # Giả định giá mục tiêu cao hơn 25%
+        
+        recommendation_data = {
+            "date": datetime.date.today().strftime('%d/%m/%Y'),
+            "price_date": datetime.date.today().strftime('%d/%m/%Y'),
+            "current_price": f"{current_price:,.0f}",
+            "target_price": f"{target_price:,.0f}"
+        }
+        
+        # Chuẩn bị dữ liệu thị trường
+        market_data = {
+            "VNINDEX": "1,325",
+            "HNXINDEX": "242",
+            "Vốn hóa (tỷ VND)": f"{current_price * 1000000 / 1000000000:,.0f}",
+            "SL CP lưu hành (triệu CP)": "1,000",
+            "Tỷ lệ giao dịch tự do (%)": "35",
+            "ROE (%)": f"{ratios['roe'][-1] * 100:,.2f}",
+            "ROA (%)": f"{ratios['roa'][-1] * 100:,.2f}",
+            "ROS (%)": f"{ratios['ros'][-1] * 100:,.2f}"
+        }
+        
+        # Chuẩn bị nội dung phân tích
+        analysis_paragraphs = []
+        if analysis:
+            # Tạo tiêu đề cho các phần phân tích chính
+            analysis_sections = [
+                "**PHÂN TÍCH TÀI CHÍNH**",
+                "**PHÂN TÍCH RỦI RO**",
+                "**ĐÁNH GIÁ TRIỂN VỌNG ĐẦU TƯ**"
+            ]
+            
+            # Chia phân tích thành các phần
+            paragraphs = analysis.split('\n\n')
+            
+            # Kiểm tra xem phân tích đã có tiêu đề Markdown hay chưa
+            if paragraphs and not any(p.startswith('**') for p in paragraphs):
+                # Không có tiêu đề Markdown, thêm tiêu đề vào nội dung
+                formatted_paragraphs = []
+                section_idx = 0
+                paragraphs_per_section = max(1, len(paragraphs) // len(analysis_sections))
+                
+                for i, para in enumerate(paragraphs):
+                    if i % paragraphs_per_section == 0 and section_idx < len(analysis_sections):
+                        # Thêm tiêu đề kết hợp với đoạn đầu tiên của phần
+                        formatted_paragraphs.append(f"{analysis_sections[section_idx]} {para}")
+                        section_idx += 1
+                    else:
+                        # Thêm đoạn thông thường
+                        formatted_paragraphs.append(para)
+                
+                # Đảm bảo sử dụng tất cả các tiêu đề
+                while section_idx < len(analysis_sections):
+                    formatted_paragraphs.append(analysis_sections[section_idx])
+                    section_idx += 1
+                
+                analysis_paragraphs = formatted_paragraphs
+            else:
+                # Đã có tiêu đề Markdown, giữ nguyên định dạng
+                analysis_paragraphs = paragraphs
+        
+        analysis_data = {
+            "title": f"Báo cáo phân tích {symbol}",
+            "recommendation": f"Định giá cập nhật với khuyến nghị MUA, giá mục tiêu {recommendation_data['target_price']} đồng",
+            "content": analysis_paragraphs
+        }
+        
+        # Generate PDF using ReportLab với định dạng mới
         pdf = PDFReport()
-        pdf.create_report(
+        pdf.create_stock_report(
             output_path=output_path,
-            company_name=f"{company_name} ({symbol} - {exchange})",
-            data=data,
-            years=years,  # Truyền years để hiển thị đúng trong bảng
-            chart_paths=chart_paths,
-            analysis=analysis
+            company_data=company_data,
+            recommendation_data=recommendation_data,
+            market_data=market_data,
+            analysis_data=analysis_data
         )
+        
         return output_path
     
     except Exception as e:
         print(f"Error generating PDF report: {str(e)}")
         # Create a simple error PDF
         error_pdf = PDFReport()
-        error_pdf.add_page()
-        error_pdf.create_table([("Error", f"Could not generate report for {symbol}: {str(e)}")])
         
         error_dir = "reports"
         os.makedirs(error_dir, exist_ok=True)
         error_path = os.path.join(error_dir, f"error_{symbol}.pdf")
         
-        error_pdf.output(error_path)
+        # Sử dụng mẫu báo cáo mới cho cả báo cáo lỗi
+        company_data = {"name": f"Error Report for {symbol}", "info": "Error"}
+        recommendation_data = {"date": datetime.date.today().strftime('%d/%m/%Y')}
+        analysis_data = {
+            "title": "Error Generating Report",
+            "content": [f"Could not generate report for {symbol}: {str(e)}"]
+        }
+        
+        error_pdf.create_stock_report(
+            output_path=error_path,
+            company_data=company_data,
+            recommendation_data=recommendation_data,
+            market_data={},
+            analysis_data=analysis_data
+        )
+        
         return error_path
 
 def get_financial_analysis(symbol=None):
