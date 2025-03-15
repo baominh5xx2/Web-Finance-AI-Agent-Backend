@@ -183,76 +183,30 @@ def generate_pdf_report(symbol: str):
         # Tạo biểu đồ tài chính
         chart_paths = generate_financial_charts(os.path.dirname(os.path.abspath(__file__)), symbol, years, financial_data)
 
-        # Generate PDF
+        # Tạo các dictionary dữ liệu cho báo cáo
+        data = {
+            "info": [
+                ("Company Name", company_name),
+                ("Stock Symbol", symbol),
+                ("Exchange", exchange),
+                ("Report Date", datetime.date.today().strftime('%d-%b-%Y')),
+            ],
+            "BALANCE SHEET": balance_sheet_data,
+            "FUNDAMENTAL": fundamental_data,
+            "INCOME STATEMENT": income_statement_data,
+            "PROFITABILITY ANALYSIS": profitability_analysis_data
+        }
+
+        # Generate PDF using ReportLab
         pdf = PDFReport()
-        today = datetime.date.today()
-        
-        # Add first page with company information
-        pdf.add_page()
-        pdf.header(company_name, today)
-        pdf.create_table([
-            ("Company Name", company_name),
-            ("Stock Symbol", symbol),
-            ("Exchange", exchange),
-            ("Report Date", today.strftime('%d-%b-%Y')),
-        ])
-        
-        # Add financial tables
-        pdf.create_financial_table("BALANCE SHEET", balance_sheet_data, years)
-        pdf.create_financial_table("FUNDAMENTAL", fundamental_data, years)
-        pdf.create_financial_table("INCOME STATEMENT", income_statement_data, years)
-        pdf.create_financial_table("PROFITABILITY ANALYSIS", profitability_analysis_data, years)
-        
-        # Add chart pages if charts were generated
-        if chart_paths:
-            # Add chart page
-            pdf.add_page()
-            pdf.set_font('DejaVu', 'B', 14)
-            pdf.set_text_color(10, 100, 240)
-            pdf.cell(0, 10, "FINANCIAL CHARTS", 0, 1, 'L')
-            pdf.ln(5)
-            
-            # Xác định size của ảnh
-            img_width = 160
-            img_height = 100
-            x_center = (210 - img_width) / 2
-            
-            # Thêm biểu đồ 1 và 2
-            if len(chart_paths) >= 2:
-                pdf.add_images(chart_paths[:2], x_center=x_center, img_width=img_width, img_height=img_height)
-                
-                # Thêm biểu đồ 3 và 4 vào trang mới nếu có
-                if len(chart_paths) >= 4:
-                    pdf.add_page()
-                    pdf.set_font('DejaVu', 'B', 14)
-                    pdf.set_text_color(10, 100, 240)
-                    pdf.cell(0, 10, "FINANCIAL CHARTS (CONTINUED)", 0, 1, 'L')
-                    pdf.ln(5)
-                    pdf.add_images(chart_paths[2:4], x_center=x_center, img_width=img_width, img_height=img_height)
-        else:
-            # Add chart page with message if no charts
-            pdf.add_page()
-            pdf.set_font('DejaVu', 'B', 14)
-            pdf.set_text_color(10, 100, 240)
-            pdf.cell(0, 10, "FINANCIAL CHARTS", 0, 1, 'L')
-            pdf.ln(5)
-            pdf.set_font('DejaVu', '', 10)
-            pdf.set_text_color(0, 0, 0)
-            pdf.multi_cell(0, 5, "Error generating charts for this report.")
-        
-        # Add analysis page
-        if analysis:
-            pdf.add_page()
-            pdf.set_font('DejaVu', 'B', 14)
-            pdf.set_text_color(10, 100, 240)
-            pdf.cell(0, 10, "FINANCIAL ANALYSIS", 0, 1, 'L')
-            pdf.ln(5)
-            pdf.set_font('DejaVu', '', 10)
-            pdf.set_text_color(0, 0, 0)
-            pdf.multi_cell(0, 5, analysis)
-        
-        # Output final PDF
-        pdf.output(output_path)
+        pdf.create_report(
+            output_path=output_path,
+            company_name=f"{company_name} ({symbol} - {exchange})",
+            data=data,
+            years=years,  # Truyền years để hiển thị đúng trong bảng
+            chart_paths=chart_paths,
+            analysis=analysis
+        )
         return output_path
     
     except Exception as e:
