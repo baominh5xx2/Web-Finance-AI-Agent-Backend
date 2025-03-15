@@ -11,6 +11,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
 from reportlab.pdfgen.canvas import Canvas
 from .finance_calc import get_market_data
+from vnstock import Vnstock
 
 class PDFReport:
     def __init__(self):
@@ -326,7 +327,7 @@ class PDFReport:
         # Sắp xếp các chỉ số theo thứ tự trong ảnh
         ordered_keys = [
             "VNINDEX", "HNXINDEX", 
-            "Vốn hóa (tỷ VND)", "SLCP lưu hành (triệu CP)", "Tự do giao dịch (triệu CP)",
+            "Vốn hóa (tỷ VND)", "SLCP lưu hành (triệu CP)",
             "52-tuần cao/thấp (VND)", "KLGD bình quân 90 ngày (triệu CP)", "GTGD bình quân 90 ngày (tỷ VND)"
         ]
         
@@ -337,7 +338,6 @@ class PDFReport:
             "HNXINDEX": "HNXINDEX",
             "Vốn hóa (tỷ VND)": "Vốn hóa (tỷ VND)",
             "SL CP lưu hành (triệu CP)": "SLCP lưu hành (triệu CP)",
-            "Tỷ lệ giao dịch tự do (%)": "Tự do giao dịch (triệu CP)",
             "52-tuần cao/thấp": "52-tuần cao/thấp (VND)",
             "KLGD bình quân 90 ngày": "KLGD bình quân 90 ngày (triệu CP)",
             "GTGD bình quân 90 ngày": "GTGD bình quân 90 ngày (tỷ VND)"
@@ -349,7 +349,6 @@ class PDFReport:
             ["HNXINDEX", "N/A"],
             ["Vốn hóa (tỷ VND)", "N/A"],
             ["SLCP lưu hành (triệu CP)", "N/A"],
-            ["Tự do giao dịch (triệu CP)", "N/A"],
             ["52-tuần cao/thấp (VND)", "N/A"],
             ["KLGD bình quân 90 ngày (triệu CP)", "N/A"],
             ["GTGD bình quân 90 ngày (tỷ VND)", "N/A"]
@@ -365,7 +364,7 @@ class PDFReport:
                 fixed_data[i][1] = market_data[key_in_data]
         
         # Điều chỉnh kích thước cột để rộng hơn
-        table = Table(fixed_data, colWidths=[3.8*cm, 2.2*cm], spaceBefore=3, spaceAfter=3)  # Tăng đáng kể chiều rộng của cả hai cột
+        table = Table(fixed_data, colWidths=[3.6*cm, 2.2*cm], spaceBefore=3, spaceAfter=3)  # Tăng đáng kể chiều rộng của cả hai cột
         
         # Style mới cho bảng - đơn giản hơn, không có lưới
         table_style = TableStyle([
@@ -401,45 +400,119 @@ class PDFReport:
         # Tăng khoảng cách giữa các bảng
         middle_spacer = Spacer(1, 0.5*cm)  # Tăng từ 0.3cm lên 0.5cm
         
-        # Tạo dữ liệu cho cổ đông lớn - vẫn hiển thị cố định theo ảnh mẫu vì là dữ liệu riêng biệt
-        major_shareholders = [
-            ["Cổ đông lớn (%)", "Hồ Minh Quang", "14.20%"],
-            ["", "Unicoh Specialty Chemicals", "5.85%"]
-        ]
+        # Tạo dữ liệu cho cổ đông lớn từ market_data thay vì dữ liệu cố định
+        major_shareholders = []
         
-        # Tăng chiều rộng của bảng cổ đông
-        shareholder_table = Table(major_shareholders, colWidths=[2.2*cm, 3.5*cm, 1*cm], spaceBefore=3, spaceAfter=3)
+        # Kiểm tra xem có dữ liệu cổ đông lớn không
+        if "co_dong_lon" in market_data and market_data["co_dong_lon"] is not None:
+            shareholders_df = market_data["co_dong_lon"]
+            try:
+                # In ra tên các cột trong DataFrame để debug
+                print(f"Columns in shareholders_df: {list(shareholders_df.columns)}")
+                
+                # Đảm bảo DataFrame có cột cần thiết - kiểm tra bất kể tên cột
+                if not shareholders_df.empty:
+                    # Kiểm tra nếu tồn tại các cột cần thiết
+                    share_holder_col = None
+                    share_percent_col = None
+                    
+                    # Tìm cột chứa tên cổ đông
+                    for col in shareholders_df.columns:
+                        if 'hold' in str(col).lower() or 'name' in str(col).lower():
+                            share_holder_col = col
+                            break
+                    
+                    # Tìm cột chứa phần trăm sở hữu
+                    for col in shareholders_df.columns:
+                        if 'percent' in str(col).lower() or 'own' in str(col).lower() or 'ratio' in str(col).lower():
+                            share_percent_col = col
+                            break
+                    
+                    print(f"Found columns - holder: {share_holder_col}, percent: {share_percent_col}")
+                    
+                    if share_holder_col and share_percent_col:
+                        # Tạo dòng tiêu đề
+                        try:
+                            ownership_ratio = float(shareholders_df.iloc[0][share_percent_col]) * 100
+                            major_shareholders.append(["Cổ đông lớn (%)", str(shareholders_df.iloc[0][share_holder_col]), f"{ownership_ratio:.2f}%"])
+                            
+                            # Thêm các cổ đông còn lại
+                            for i in range(1, min(3, len(shareholders_df))):
+                                ownership_ratio = float(shareholders_df.iloc[i][share_percent_col]) * 100
+                                major_shareholders.append(["", str(shareholders_df.iloc[i][share_holder_col]), f"{ownership_ratio:.2f}%"])
+                            
+                            print(f"Đã tạo bảng cổ đông lớn với {len(major_shareholders)} dòng")
+                        except (ValueError, TypeError) as e:
+                            print(f"Lỗi khi xử lý giá trị: {str(e)}")
+                            # Vẫn tiếp tục thực hiện nếu có lỗi
+                    else:
+                        print(f"Không tìm thấy cột phù hợp cho tên cổ đông và tỷ lệ sở hữu")
+                else:
+                    print("DataFrame cổ đông rỗng")
+            except Exception as e:
+                print(f"Lỗi khi xử lý dữ liệu cổ đông lớn: {str(e)}")
+                # Sử dụng dữ liệu mẫu khi có lỗi
+                major_shareholders = [
+                    ["Cổ đông lớn (%)", "Hồ Minh Quang", "14.20%"],
+                    ["", "Unicoh Specialty Chemicals", "5.85%"]
+                ]
         
+        # Chuẩn bị dữ liệu cổ đông lớn dưới dạng có thể đọc được
+        formatted_shareholders = []
+        if len(major_shareholders) > 0:
+            # Bỏ tiêu đề "Cổ đông lớn (%)" và chỉ giữ lại tên và phần trăm
+            for i, shareholder in enumerate(major_shareholders):
+                if i == 0 and len(shareholder) >= 3:
+                    formatted_shareholders.append([shareholder[1], shareholder[2]])
+                elif len(shareholder) >= 3:
+                    formatted_shareholders.append([shareholder[1], shareholder[2]])
+        
+        # Tạo tiêu đề riêng cho bảng cổ đông lớn với style tương tự như tiêu đề "Thị trường"
+        shareholder_title = Paragraph("Cổ đông lớn (%)", self.styles['MarketDataTitle'])
+        
+        # Thêm spacer nhỏ trước và sau tiêu đề
+        pre_shareholder_title_spacer = Spacer(1, 0.4*cm)
+        post_shareholder_title_spacer = Spacer(1, 0.1*cm)
+        
+        # Tạo bảng cổ đông lớn với căn lề cố định
+        shareholder_table = Table(
+            formatted_shareholders, 
+            colWidths=[4.2*cm, 1.6*cm],  # Điều chỉnh độ rộng cột
+            spaceBefore=3,
+            spaceAfter=3
+        )
+        
+        # Style mới cho bảng cổ đông
         shareholder_style = TableStyle([
             # Căn lề
-            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
-            ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),     # Tên cổ đông căn trái
+            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),    # Phần trăm căn phải
             
             # Font
-            ('FONTNAME', (0, 0), (0, 0), 'DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold'),
-            ('FONTNAME', (1, 0), (2, -1), 'DejaVuSans' if self.font_added else 'Helvetica'),
-            ('FONTNAME', (2, 0), (2, -1), 'DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),  # Kích thước font không đổi
+            ('FONTNAME', (0, 0), (0, -1), 'DejaVuSans' if self.font_added else 'Helvetica'),       # Font thường cho tên
+            ('FONTNAME', (1, 0), (1, -1), 'DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold'), # Font đậm cho phần trăm
+            ('FONTSIZE', (0, 0), (-1, -1), 9),      # Kích thước font đồng nhất
             
             # Padding
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),  # Tăng padding dưới từ 8 lên 12
-            ('TOPPADDING', (0, 0), (-1, -1), 12),     # Tăng padding trên từ 8 lên 12
-            ('LEFTPADDING', (0, 0), (0, -1), 0),      # Giữ nguyên
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6), # Giảm padding dưới
+            ('TOPPADDING', (0, 0), (-1, -1), 6),    # Giảm padding trên
+            ('LEFTPADDING', (0, 0), (0, -1), 0),    # Không padding bên trái cột đầu
+            ('RIGHTPADDING', (1, 0), (1, -1), 0),   # Không padding bên phải cột cuối
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'), # Căn giữa theo chiều dọc
             
-            # Đường viền trên và dưới
+            # Đường viền trên và dưới cả bảng
             ('LINEABOVE', (0, 0), (-1, 0), 0.5, colors.HexColor('#0066CC')),
             ('LINEBELOW', (0, -1), (-1, -1), 0.5, colors.HexColor('#0066CC')),
+            
+            # Nền cho toàn bộ bảng
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#E6F0FA')),
         ])
         
-        # Thêm màu nền cho cổ đông lớn
-        shareholder_style.add('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#E6F0FA'))
-        
+        # Thêm style cho bảng
         shareholder_table.setStyle(shareholder_style)
         
         # Trả về một list các elements
-        return [title, spacer, table, middle_spacer, shareholder_table]
+        return [title, spacer, table, middle_spacer, pre_shareholder_title_spacer, shareholder_title, post_shareholder_title_spacer, shareholder_table]
         
     def draw_header_background(self, canvas, doc):
         """Vẽ background cho header"""
@@ -454,10 +527,12 @@ class PDFReport:
         # Vẽ đường phân cách giữa sidebar và phần nội dung
         canvas.setStrokeColor(colors.lightgrey)
         canvas.line(6.5*cm, 0, 6.5*cm, height - 2.5*cm)
-    
     def create_stock_report(self, output_path, company_data, recommendation_data, market_data=None, analysis_data=None):
         """Tạo báo cáo chứng khoán theo mẫu mới"""
         width, height = A4
+        
+        # Lấy symbol từ company_data nếu có
+        symbol = company_data.get('symbol')
         
         # Nếu không có dữ liệu thị trường được cung cấp, tự động lấy từ API
         if market_data is None or len(market_data) == 0:
@@ -470,8 +545,9 @@ class PDFReport:
                     'ratios': company_data.get('ratios', {})
                 }
                 
-                market_data = get_market_data(stock_info)
-                print(f"Đã tự động lấy dữ liệu thị trường: {market_data}")
+                # Truyền thêm symbol vào get_market_data
+                market_data = get_market_data(stock_info, symbol)
+                print(f"Đã tự động lấy dữ liệu thị trường cho {symbol}: {market_data}")
             except Exception as e:
                 print(f"Lỗi khi lấy dữ liệu thị trường: {str(e)}")
                 market_data = {"VNINDEX": "N/A", "HNXINDEX": "N/A"}
@@ -642,26 +718,33 @@ class PDFReport:
     
     def _draw_page_template(self, canvas, doc, company_data):
         """Vẽ template cho trang báo cáo"""
-        width, height = A4
-        
-        # Vẽ header màu xanh
-        canvas.setFillColor(self.blue_color)
-        canvas.rect(0, height - 3*cm, width, 3*cm, fill=1, stroke=0)
-        
-        # Vẽ tên công ty
-        canvas.setFont('DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold', 24)
-        canvas.setFillColor(colors.white)
-        company_name = company_data.get('name', 'CTCP Thép Nam Kim')
-        canvas.drawString(0.5*cm, height - 1.8*cm, company_name)  # Điều chỉnh vị trí x từ 1cm xuống 0.5cm
-        
-        # Vẽ thông tin phụ
-        canvas.setFont('DejaVuSans' if self.font_added else 'Helvetica', 12)
-        canvas.drawString(0.5*cm, height - 2.5*cm, company_data.get('info', '[ Việt Nam / Thép ]'))  # Điều chỉnh vị trí x từ 1cm xuống 0.5cm
-        
-        # Vẽ đường kẻ phân cách giữa sidebar và phần nội dung
-        canvas.setStrokeColor(colors.lightgrey)
-        canvas.line(6.5*cm, 0, 6.5*cm, height - 3*cm)
-    
+        try:
+            print(f"Đang vẽ template với dữ liệu: {company_data}")
+            width, height = A4
+            
+            # Vẽ header màu xanh
+            canvas.setFillColor(self.blue_color)
+            canvas.rect(0, height - 3*cm, width, 3*cm, fill=1, stroke=0)
+            
+            # Vẽ tên công ty
+            canvas.setFont('DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold', 24)
+            canvas.setFillColor(colors.white)
+            company_name = company_data.get('name', 'CTCP Thép Nam Kim')
+            print(f"Tên công ty: {company_name}")
+            canvas.drawString(0.5*cm, height - 1.8*cm, company_name)  # Điều chỉnh vị trí x từ 1cm xuống 0.5cm
+            
+            # Vẽ thông tin phụ
+            canvas.setFont('DejaVuSans' if self.font_added else 'Helvetica', 12)
+            info_text = company_data.get('info', '[ Việt Nam / Thép ]')
+            print(f"Thông tin phụ: {info_text}")
+            canvas.drawString(0.5*cm, height - 2.5*cm, info_text)  # Điều chỉnh vị trí x từ 1cm xuống 0.5cm
+            
+            # Vẽ đường kẻ phân cách giữa sidebar và phần nội dung
+            canvas.setStrokeColor(colors.lightgrey)
+            canvas.line(6.5*cm, 0, 6.5*cm, height - 3*cm)
+        except Exception as e:
+            print(f"Lỗi trong _draw_page_template: {str(e)}")
+   
     def create_report(self, output_path, company_name, data, years, chart_paths=None, analysis=None):
         """Tạo báo cáo PDF hoàn chỉnh - Phương thức cũ được giữ lại để tương thích"""
         doc = SimpleDocTemplate(

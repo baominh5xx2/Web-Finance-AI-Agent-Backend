@@ -10,7 +10,23 @@ from .module_report.finance_calc import (calculate_total_current_assets, calcula
 from .module_report.generate_pdf import PDFReport
 from .module_report.api_gemini import generate_financial_analysis, create_analysis_prompt
 from .module_report.chart_generator import generate_financial_charts
+from vnstock import Vnstock
 
+def get_company_industry(symbol):
+    try:
+        stock = Vnstock().stock(symbol=symbol, source='VCI')
+        symbols_by_industry = stock.listing.symbols_by_industries()
+        company_info = symbols_by_industry[symbols_by_industry['symbol'].str.upper() == symbol.upper()]
+        if not company_info.empty and 'icb_name4' in company_info.columns:
+            icb_name4_value = company_info['icb_name4'].values[0]
+            return icb_name4_value
+        return "Không xác định"
+    except Exception as e:
+        print(f"Lỗi khi lấy thông tin ngành nghề: {str(e)}")
+        return "Không xác định"
+def get_company_name(symbol):
+    company = Vnstock().stock(symbol=symbol, source='TCBS').company
+    return company.profile()['company_name'].values[0]
 def generate_pdf_report(symbol: str):
     try:
         # Fix the file paths for financial data - ensure proper formatting with os.path.join
@@ -198,11 +214,15 @@ def generate_pdf_report(symbol: str):
             "PROFITABILITY ANALYSIS": profitability_analysis_data
         }
         
+        # Lấy thông tin ngành nghề của công ty
+        industry = get_company_industry(symbol)
+        print(f"Đã lấy thông tin ngành nghề của {symbol}: {industry}")
+        name = get_company_name(symbol)
         # Chuẩn bị dữ liệu cho báo cáo định dạng mới
         company_data = {
-            "name": f"{company_name} ({symbol})",
+            "name": f"{name}",  # Chỉ hiển thị tên công ty, không kèm mã
             "symbol": symbol,
-            "info": f"[ Việt Nam / {exchange} ]"
+            "info": f"[ {symbol} | {exchange} | Ngành: {industry} ]"  # Thêm thông tin ngành
         }
         
         # Tính toán giá hiện tại và giá mục tiêu (ví dụ)
@@ -270,9 +290,9 @@ def generate_pdf_report(symbol: str):
             'ratios': ratios
         }
         
-        # Lấy dữ liệu thị trường từ API
-        market_data = get_market_data(stock_info)
-        print(f"Đã lấy dữ liệu thị trường từ module finance_calc: {market_data}")
+        # Lấy dữ liệu thị trường từ API - truyền thêm symbol
+        market_data = get_market_data(stock_info, symbol)
+        print(f"Đã lấy dữ liệu thị trường từ module finance_calc cho {symbol}: {market_data}")
         
         # Generate PDF using ReportLab với định dạng mới
         pdf = PDFReport()
