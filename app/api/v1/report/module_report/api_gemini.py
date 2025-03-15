@@ -13,9 +13,9 @@ def configure_api():
 def create_analysis_prompt(balance_sheet, income_statement, profitability_analysis):
     """Create the prompt for financial analysis"""
     return f""" 
-Bạn là một chuyên gia phân tích tài chính chuyên về phân tích cơ bản cổ phiếu. Hãy đánh giá rủi ro và triển vọng đầu tư của mã cổ phiếu dựa trên các chỉ số tài chính và thông tin sausau.
+Bạn là một chuyên gia phân tích tài chính chuyên về phân tích cơ bản cổ phiếu về công ty Thép Nam Kim với mã chứng khoán là NKG. Hãy đánh giá rủi ro và triển vọng đầu tư của mã cổ phiếu dựa trên các chỉ số tài chính và thông tin sau.
 Giữ văn phong chuyên nghiệp và báo cáo dưới 300 từ.
-
+- Tìm số liệu trên mạng để nói
 Cho các dữ liệu báo cáo tài chính sau:  
 Bảng cân đối kế toán (Balance Sheet):
 {balance_sheet}  
@@ -23,32 +23,28 @@ Báo cáo thu nhập (Income Statement):
 {income_statement}  
 Phân tích khả năng sinh lời (Profitability Analysis):
 {profitability_analysis} 
-Hãy lấy các chỉ số tài chính từ các dữ liệu trên và đánh giá rủi ro và triển vọng đầu tư của mã cổ phiếu. kkhi đưa ra so sánh hoặc đánh giá nên trích dẫn số liệu cụ thể.
-Nhận xét với văn phong và từ ngữ nên được tham khảo sau đây, khi đưa ra so sánh hoặc đánh giá nên trích dẫn số liệu cụ thể lấy từ dữ liệu đã chocho:
+- viết sao cho chuyên nghiệp như là một nhà phân tích tài chính chuyên nghiệp.
+
 Yêu cầu phân tích:
 
-- PHÂN TÍCH TÀI CHÍNH:
-Một đoạn văn dưới 200 từ, phân tích các chỉ số tài chính quan trọng sau:
-Doanh thu và Lợi nhuận ròng: Xu hướng tăng trưởng qua các năm.
-Biên lợi nhuận gộp (Gross Margin), biên lợi nhuận ròng (Net Profit Margin): So sánh với trung bình ngành.
-Tỷ lệ giá trên thu nhập (P/E): Tỷ lệ này đo lường mối quan hệ giữa giá cổ phiếu và thu nhập của công ty. P/E càng cao thì cổ phiếu càng được định giá cao.
-Tỷ lệ giá trên giá trị sổ sách (P/B): Tỷ lệ này đo lường mối quan hệ giữa giá cổ phiếu và giá trị sổ sách của công ty. P/B càng thấp thì cổ phiếu càng được định giá thấp.
-Tỷ lệ lợi nhuận trên vốn chủ sở hữu (ROE): Tỷ lệ này đo lường khả năng sinh lời của công ty trên vốn chủ sở hữu. ROE càng cao thì công ty càng có khả năng tạo ra lợi nhuận.
-Tỷ lệ lợi nhuận trên tài sản (ROA): Tỷ lệ này đo lường khả năng sinh lời của công ty trên tổng tài sản. ROA càng cao thì công ty càng có khả năng tạo ra lợi nhuận từ tài sản của mình.
-Tỷ lệ nợ trên vốn chủ sở hữu (D/E): Tỷ lệ này đo lường mức độ đòn bẩy tài chính của công ty. D/E càng cao thì công ty càng phụ thuộc vào nợ vay.
-EBITDA: EBITDA là chỉ số đo lường lợi nhuận trước thuế, lãi vay, khấu hao và chi phí khấu hao.
-Hãy đưa ra nhận xét ngắn gọn về tình hình tài chính.
+- GIỚI THIỆU VỀ CÔNG TY:
+Một đoạn văn dưới 200 từ, giới thiệu tổng quan về công ty, ngành nghề kinh doanh, vị thế trong ngành, và những điểm nổi bật về mô hình kinh doanh của công ty Thép Nam Kim. Hãy viết đoạn văn này thật chuyên nghiệp.
 
-- PHÂN TÍCH RỦI RO:
-Đoạn văn dưới 200 từ đánh giá được rủi ro tài chính (nợ vay, thanh khoản, dòng tiền).
+- TÌNH HÌNH TÀI CHÍNH HIỆN NAY:
++ Không quá 200 từ
++ Đưa ra được ([+/-]% YoY, [+/-]% QoQ) cho người dùng
++ Đoạn văn dưới 200 từ, phân tích tình hình tài chính hiện tại của công ty, tập trung vào các số liệu cụ thể theo định dạng sau:
++ Trong quý gần nhất, [tên công ty] ghi nhận doanh thu thuần đạt [X] tỷ đồng ([+/-]% YoY, [+/-]% QoQ) do [lý do]. Sản lượng [sản phẩm chính] đạt [X] tấn/đơn vị ([+/-]% QoQ). LNST đạt [X] tỷ đồng ([+/-]% YoY, [+/-]% QoQ) do [lý do, đặc biệt là ảnh hưởng của chi phí tài chính, chi phí lãi vay, biến động tỷ giá...].
++ Tính cả năm [năm gần nhất], [tên công ty] đạt doanh thu thuần [X] tỷ đồng ([+/-]% YoY), sản lượng [sản phẩm chính] đạt [X] đơn vị ([+/-]% YoY). Biên lợi nhuận gộp tăng/giảm từ [X]% lên/xuống [Y]% YoY, LNST đạt [X] tỷ đồng ([+/-]% YoY), [so sánh với kế hoạch năm]. Tập trung vào các chỉ số này, bắt buộc phải đưa chỉ số này ra cho người dùng.
 
-- ĐÁNH GIÁ TRIỂN VỌNG ĐẦU TƯ:
-Đoạn văn ngắn đánh giá ttiềm năng tăng trưởng lợi nhuận và biên lợi nhuận.
+Đánh giá tình hình nợ vay và khả năng thanh toán của công ty, cũng như triển vọng tăng trưởng trong thời gian tới.
 
-Định dạng đầu ra mong muốn: Đoạn văn nhận xét súc tích, logic (khoảng bé hơn 300 từ)
-Có kết luận rõ ràng về tiềm năng đầu tư của mã cổ phiếu.
+Định dạng đầu ra mong muốn: 
+- Đoạn văn nhận xét súc tích, logic (khoảng bé hơn 300 từ)
+- Có kết luận rõ ràng về tiềm năng đầu tư của mã cổ phiếu.
 - TUYỆT ĐỐI PHẢI TIẾT KIỆM SỐ TRANG SỬ DỤNG. HÃY GHI CÁC NỘI DUNG GẦN VỚI NHAU NHẤT CÓ THỂ, TRÁNH TÌNH TRẠNG VIẾT NỘI DUNG VÀO FILE MÀ MỖI CÁC NỘI DUNG DÙNG 1 TRẠNG. TIẾT KIỆM NHẤT CÓ THỂ NHÉ.
 - KHÔNG ĐƯỢC XUỐNG DÒNG 2 LẦN TRONG MỌI TÌNH HUỐNG.
+- PHẢI SỬ DỤNG 2 TIÊU ĐỀ MARKDOWN: **GIỚI THIỆU VỀ CÔNG TY** và **TÌNH HÌNH TÀI CHÍNH HIỆN NAY** trong nội dung phân tích, không được thay đổi.
 """
 
 def generate_financial_analysis(balance_sheet=None, income_statement=None, profitability_analysis=None, custom_prompt=None):
@@ -80,7 +76,7 @@ def generate_financial_analysis(balance_sheet=None, income_statement=None, profi
         model_name="gemini-2.0-flash-exp",
         safety_settings=safety_settings,
         generation_config=generation_config,
-        system_instruction="Chatbot này sẽ hoạt động như một broker chứng khoán chuyên nghiệp..."
+        system_instruction="Bạn là một chuyên gia phân tích chứng khoán viết báo cáo phân tích cổ phiếu. KHÔNG BAO GIỜ bắt đầu với lời chào như 'Chào bạn' hoặc 'Tôi là chuyên gia phân tích'. KHÔNG BAO GIỜ giới thiệu bản thân hoặc nói về việc bạn đang phân tích. Phản hồi của bạn phải bắt đầu trực tiếp bằng tiêu đề '**GIỚI THIỆU VỀ CÔNG TY**' và sau đó là nội dung phân tích. TUYỆT ĐỐI KHÔNG có bất kỳ đoạn văn nào trước tiêu đề đầu tiên."
     )
 
     try:

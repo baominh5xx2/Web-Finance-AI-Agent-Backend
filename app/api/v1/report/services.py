@@ -6,7 +6,7 @@ from .module_report.data_processing import read_data, clean_column_names, standa
 from .module_report.finance_calc import (calculate_total_current_assets, calculate_ppe, calculate_total_assets, 
                                         calculate_ebitda, calculate_financial_ratios, calculate_total_operating_expense,
                                         calculate_net_income_before_taxes, calculate_net_income_before_extraordinary_items,
-                                        get_market_data)
+                                        get_market_data, current_price)
 from .module_report.generate_pdf import PDFReport
 from .module_report.api_gemini import generate_financial_analysis, create_analysis_prompt
 from .module_report.chart_generator import generate_financial_charts
@@ -225,25 +225,50 @@ def generate_pdf_report(symbol: str):
             "info": f"[ {symbol} | {exchange} | Ngành: {industry} ]"  # Thêm thông tin ngành
         }
         
-        # Tính toán giá hiện tại và giá mục tiêu (ví dụ)
-        current_price = net_income[-1] / total_equity[-1] * 10000 if len(net_income) > 0 and len(total_equity) > 0 else 0
-        target_price = current_price * 1.25  # Giả định giá mục tiêu cao hơn 25%
+        # Lấy giá hiện tại từ API thay vì tính toán
+        try:
+            price_value = current_price(symbol)
+            formatted_current_price = f"{price_value:,.0f}"
+            print(f"Đã lấy giá hiện tại của {symbol} từ API: {formatted_current_price}")
+        except Exception as e:
+            print(f"Lỗi khi lấy giá hiện tại từ API: {str(e)}")
+            # Fallback: Tính toán giá hiện tại từ net_income và total_equity nếu API lỗi
+            price_value = net_income[-1] / total_equity[-1] * 10000 if len(net_income) > 0 and len(total_equity) > 0 else 0
+            formatted_current_price = f"{price_value:,.0f}"
+            print(f"Sử dụng giá hiện tại tính toán: {formatted_current_price}")
+        
+        # Tính giá mục tiêu dựa trên giá hiện tại
+        target_price = price_value * 1.25  # Giả định giá mục tiêu cao hơn 25%
         
         recommendation_data = {
             "date": datetime.date.today().strftime('%d/%m/%Y'),
             "price_date": datetime.date.today().strftime('%d/%m/%Y'),
-            "current_price": f"{current_price:,.0f}",
+            "current_price": formatted_current_price,
             "target_price": f"{target_price:,.0f}"
         }
         
         # Chuẩn bị nội dung phân tích
         analysis_paragraphs = []
         if analysis:
+            # Loại bỏ các dòng lời chào nếu có
+            if isinstance(analysis, str):
+                # Loại bỏ các dòng lời chào đầu tiên
+                lines = analysis.split('\n')
+                clean_lines = []
+                skip_intro = True
+                for line in lines:
+                    # Bỏ qua các dòng cho đến khi gặp tiêu đề đầu tiên
+                    if skip_intro and not line.startswith('**GIỚI THIỆU VỀ CÔNG TY**'):
+                        continue
+                    skip_intro = False
+                    clean_lines.append(line)
+                
+                analysis = '\n'.join(clean_lines)
+            
             # Tạo tiêu đề cho các phần phân tích chính
             analysis_sections = [
-                "**PHÂN TÍCH TÀI CHÍNH**",
-                "**PHÂN TÍCH RỦI RO**",
-                "**ĐÁNH GIÁ TRIỂN VỌNG ĐẦU TƯ**"
+                "**GIỚI THIỆU VỀ CÔNG TY**",
+                "**TÌNH HÌNH TÀI CHÍNH HIỆN NAY**"
             ]
             
             # Chia phân tích thành các phần
@@ -275,9 +300,10 @@ def generate_pdf_report(symbol: str):
                 # Đã có tiêu đề Markdown, giữ nguyên định dạng
                 analysis_paragraphs = paragraphs
         
+        # Loại bỏ các lời chào khỏi tiêu đề và khuyến nghị 
+        # Lưu ý: Các giá trị này không được sử dụng nữa vì đã xóa bỏ hiển thị trong generate_pdf.py
+        
         analysis_data = {
-            "title": f"Báo cáo phân tích {symbol}",
-            "recommendation": f"Định giá cập nhật với khuyến nghị MUA, giá mục tiêu {recommendation_data['target_price']} đồng",
             "content": analysis_paragraphs
         }
         

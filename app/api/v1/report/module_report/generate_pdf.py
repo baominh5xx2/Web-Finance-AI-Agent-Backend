@@ -10,7 +10,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
 from reportlab.pdfgen.canvas import Canvas
-from .finance_calc import get_market_data
+from .finance_calc import get_market_data, current_price
 from vnstock import Vnstock
 
 class PDFReport:
@@ -213,7 +213,7 @@ class PDFReport:
         elements.append(Spacer(1, 10*mm))
         
         return elements
-        
+
     def create_table(self, data):
         """Tạo bảng thông tin từ dữ liệu"""
         table_data = []
@@ -534,12 +534,27 @@ class PDFReport:
         # Lấy symbol từ company_data nếu có
         symbol = company_data.get('symbol')
         
+        # Lấy giá hiện tại từ hàm current_price
+        if symbol:
+            try:
+                current_price_value = current_price(symbol)
+                # Format giá hiện tại với dấu phân cách hàng nghìn
+                formatted_price = f"{current_price_value:,.0f}"
+                # Cập nhật recommendation_data với giá hiện tại mới
+                recommendation_data['current_price'] = formatted_price
+                print(f"Đã lấy giá hiện tại của {symbol}: {formatted_price} VND")
+            except Exception as e:
+                print(f"Lỗi khi lấy giá hiện tại: {str(e)}")
+                # Nếu có lỗi, giữ nguyên giá trị hiện tại trong recommendation_data nếu có
+                if not recommendation_data.get('current_price'):
+                    recommendation_data['current_price'] = "N/A"
+        
         # Nếu không có dữ liệu thị trường được cung cấp, tự động lấy từ API
         if market_data is None or len(market_data) == 0:
             try:
                 # Chuẩn bị thông tin cổ phiếu để truyền vào get_market_data
                 stock_info = {
-                    'current_price': float(recommendation_data.get('current_price', '0').replace(',', '')) if recommendation_data.get('current_price') else 0,
+                    'current_price': float(recommendation_data.get('current_price', '0').replace(',', '')) if recommendation_data.get('current_price') and recommendation_data.get('current_price') != 'N/A' else 0,
                     'shares_outstanding': company_data.get('shares_outstanding', 1000),
                     'free_float': company_data.get('free_float', 35),
                     'ratios': company_data.get('ratios', {})
@@ -586,7 +601,7 @@ class PDFReport:
             7*cm,                # x position
             1*cm,                # y position
             width - 8*cm,        # width (page width minus left col width and margins)
-            height - 4*cm,       # height (subtract header and margins)
+            height - 3.2*cm,       # height (subtract header and margins)
             id='right_column',
             leftPadding=0.05*cm,
             rightPadding=0.05*cm,
@@ -672,16 +687,9 @@ class PDFReport:
         # Chuyển sang cột bên phải bằng cách thêm FrameBreak
         story.append(FrameBreak())
         
-        # Tiêu đề phân tích
-        story.append(Paragraph(analysis_data.get('title', 'Đón sóng tăng trưởng'), 
-                              self.styles['AnalysisTitle']))
+        # Không hiển thị tiêu đề "Báo cáo phân tích" và dòng khuyến nghị nữa
+        # Thay vào đó chỉ thêm một khoảng trống nhỏ trước khi hiển thị nội dung phân tích
         story.append(Spacer(1, 0.3*cm))
-        
-        # Khuyến nghị chi tiết
-        story.append(Paragraph(analysis_data.get('recommendation', 
-                              'Định giá cập nhật với khuyến nghị MUA, giá mục tiêu 19,900 đồng'), 
-                              self.styles['NormalVN']))
-        story.append(Spacer(1, 0.5*cm))
         
         # Nhận nội dung phân tích
         content_list = self._set_style_from_analysis_data_sample(analysis_data)
@@ -808,11 +816,9 @@ class PDFReport:
         
         # Nếu không có dữ liệu phân tích, tạo mẫu
         if not analysis_data or not analysis_data.get('content'):
-            sample_text = """**PHÂN TÍCH TÀI CHÍNH** Doanh thu có xu hướng tăng trưởng mạnh mẽ từ 11,559,674,520,160.00 lên 28,173,402,236,226.00, sau đó giảm xuống 23,071,247,285,247.00. Tuy nhiên, lợi nhuận ròng lại biến động mạnh, từ 295,269,532,668.00 tăng vọt lên 2,225,261,058,221.00 rồi giảm sâu xuống -124,684,837,727.00. Biên lợi nhuận ròng cũng biến động tương tự 2.55% lên 7.90% rồi giảm xuống -0.54%. ROE và ROA cũng có xu hướng tương tự. Tỷ lệ D/E biến động từ 144.04% xuống 169.04% rồi giảm còn 153.04%, cho thấy mức độ sử dụng đòn bẩy tài chính cao. Nhìn chung, tình hình tài chính có sự biến động lớn, đặc biệt là về lợi nhuận.
+            sample_text = """**Giới thiệu về công ty** Công ty Cổ phần Thép Nam Kim (NKG) là một trong những công ty hàng đầu tại Việt Nam trong lĩnh vực thép mạ và ống thép. Thành lập vào năm 2002, Nam Kim đã nhanh chóng khẳng định vị thế của mình trong ngành công nghiệp thép Việt Nam. Công ty chuyên sản xuất và kinh doanh các sản phẩm thép mạ (tôn mạ kẽm, tôn mạ lạnh, tôn mạ màu), ống thép, xà gồ, và các sản phẩm thép công nghiệp khác. Nam Kim hiện sở hữu 5 nhà máy sản xuất với công suất lên tới hơn 1.2 triệu tấn sản phẩm mỗi năm, đáp ứng nhu cầu thị trường trong nước và xuất khẩu.
             
-**PHÂN TÍCH RỦI RO** Rủi ro tài chính của mã cổ phiếu này đến từ việc lợi nhuận biến động mạnh và tỷ lệ nợ trên vốn chủ sở hữu cao. Sự biến động lợi nhuận có thể ảnh hưởng đến việc trả nợ và thanh toán cổ tức của công ty. Tỷ lệ nợ cao cũng làm tăng rủi ro khi lãi suất tăng hoặc khi công ty gặp khó khăn trong hoạt động kinh doanh. Cần xem xét kỹ động tiền của công ty để đánh giá khả năng trả nợ trong tương lai.
-            
-**ĐÁNH GIÁ TRIỂN VỌNG ĐẦU TƯ** Tiềm năng tăng trưởng lợi nhuận và biến động chỉ tiêu qua các năm thể hiện công ty có thể đang trong giai đoạn cải thiện hiệu quả hoạt động. Doanh thu tăng trưởng nhưng lợi nhuận không tăng tương ứng đã tăng, cho thấy hiệu quả hoạt động cổ đang cải thiện. Cần theo dõi lợi nhuận trong những năm tới để đánh giá xu hướng vận hành mà cổ phiếu này có rủi ro tài chính và biến động lợi nhuận lớn."""
+**Tình hình tài chính hiện nay** Nam Kim đã trải qua những biến động mạnh về tài chính trong những năm gần đây. Doanh thu của công ty có xu hướng tăng trưởng từ 11,559 tỷ đồng lên 28,173 tỷ đồng, sau đó điều chỉnh xuống 23,071 tỷ đồng. Tuy nhiên, lợi nhuận biến động đáng kể với biên lợi nhuận ròng dao động từ 2.55% lên 7.90% rồi giảm xuống -0.54% trong giai đoạn khó khăn. Tỷ lệ nợ trên vốn chủ sở hữu duy trì ở mức cao, khoảng 150-170%, phản ánh chiến lược sử dụng đòn bẩy tài chính của công ty. Hiện tại, Nam Kim đang trong quá trình cải thiện hiệu quả hoạt động, tối ưu hóa chi phí và tăng cường xuất khẩu để cải thiện biên lợi nhuận. Thị trường thép toàn cầu đang dần phục hồi sau giai đoạn khó khăn, tạo điều kiện thuận lợi cho Nam Kim cải thiện kết quả kinh doanh trong thời gian tới."""
             
             # Chia thành từng đoạn
             paragraphs = [p.strip() for p in sample_text.split('\n') if p.strip()]

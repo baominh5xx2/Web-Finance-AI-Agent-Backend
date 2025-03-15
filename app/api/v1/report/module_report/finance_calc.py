@@ -73,7 +73,10 @@ def get_52_week_high_low(symbol):
     min_price = historic_data['low'].min()
     result = f"{max_price} / {min_price}"
     return result
-
+def current_price(symbol):
+    stock = Vnstock().stock(symbol=symbol, source='VCI')
+    k = stock.quote.intraday(symbol=symbol)
+    return k['price'].values[-1]
 def get_index_data(symbol='VNINDEX'):
     """Lấy dữ liệu chỉ số thị trường từ API VNStock
     
