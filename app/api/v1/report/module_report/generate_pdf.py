@@ -61,11 +61,12 @@ class PDFReport:
         self.styles.add(ParagraphStyle(
             name='Recommendation',
             fontName=title_font,
-            fontSize=18,
+            fontSize=16,
             textColor=colors.HexColor('#003366'),
             alignment=TA_LEFT,
-            spaceBefore=10,
-            spaceAfter=10,
+            spaceBefore=6,
+            spaceAfter=6,
+            leading=20,
         ))
         self.styles.add(ParagraphStyle(
             name='SectionTitle',
@@ -105,6 +106,34 @@ class PDFReport:
             leading=14,
             borderWidth=0,
             backColor=None,
+        ))
+        
+        # Thêm style cho giá hiện tại
+        self.styles.add(ParagraphStyle(
+            name='PriceRow',
+            fontName=normal_font,
+            fontSize=10,
+            leading=14,
+            alignment=TA_LEFT,
+        ))
+        
+        # Style cho giá trị
+        self.styles.add(ParagraphStyle(
+            name='PriceValue',
+            fontName=title_font,
+            fontSize=14,
+            textColor=colors.HexColor('#003366'),
+            alignment=TA_LEFT,
+            leading=16,
+        ))
+
+        # Style cho toàn bộ cột bên trái
+        self.styles.add(ParagraphStyle(
+            name='LeftColumn',
+            fontName=normal_font,
+            fontSize=10,
+            leading=14,
+            alignment=TA_LEFT,
         ))
     
     def _process_markdown_content(self, text):
@@ -319,8 +348,8 @@ class PDFReport:
         doc = SimpleDocTemplate(
             output_path,
             pagesize=A4,
-            rightMargin=1*cm,
-            leftMargin=1*cm,
+            rightMargin=0.5*cm,
+            leftMargin=0.5*cm,
             topMargin=3*cm,  # Để chỗ cho header
             bottomMargin=1*cm
         )
@@ -332,8 +361,8 @@ class PDFReport:
             5*cm,                # width
             height - 4*cm,       # height (subtract header and margins)
             id='left_column',
-            leftPadding=0.2*cm,
-            rightPadding=0.2*cm,
+            leftPadding=0.05*cm,
+            rightPadding=0.05*cm,
             bottomPadding=0.5*cm,
             topPadding=0.5*cm,
         )
@@ -344,8 +373,8 @@ class PDFReport:
             width - 8*cm,        # width (page width minus left col width and margins)
             height - 4*cm,       # height (subtract header and margins)
             id='right_column',
-            leftPadding=0.2*cm,
-            rightPadding=0.2*cm,
+            leftPadding=0.05*cm,
+            rightPadding=0.05*cm,
             bottomPadding=0.5*cm,
             topPadding=0.5*cm,
         )
@@ -365,21 +394,19 @@ class PDFReport:
         # 1. Phần bên trái (Sidebar)
         left_content = []
         
-        # Thêm khuyến nghị
-        left_content.append(Paragraph("MUA", self.styles['Recommendation']))
-        left_content.append(Spacer(1, 0.3*cm))
-        
-        # Thêm báo cáo ngày
-        left_content.append(Paragraph(f"Báo cáo cập nhật", self.styles['SectionTitle']))
-        left_content.append(Paragraph(f"{recommendation_data.get('date', datetime.date.today().strftime('%d/%m/%Y'))}", 
-                           self.styles['NormalVN']))
+        # Thêm khuyến nghị - giảm kích thước chữ cho phần này
+        date_str = recommendation_data.get('date', datetime.date.today().strftime('%d/%m/%Y'))
+        left_content.append(Paragraph(f"<font size='14'>Báo cáo cập nhật {date_str}</font>", 
+                                     self.styles['Recommendation']))
         left_content.append(Spacer(1, 0.5*cm))
         
-        # Thêm giá hiện tại
-        left_content.append(Paragraph(f"Giá hiện tại ({recommendation_data.get('price_date', '')})", 
-                           self.styles['NormalVN']))
-        left_content.append(Paragraph(f"{recommendation_data.get('current_price', '')} VND", 
-                           self.styles['PriceData']))
+        # Thêm giá hiện tại - đảm bảo tất cả nội dung căn trái
+        price_label = Paragraph("Giá hiện tại", self.styles['LeftColumn'])
+        price_value = Paragraph(f"<b>{recommendation_data.get('current_price', '')} VND</b>", 
+                               self.styles['PriceValue'])
+        
+        left_content.append(price_label)
+        left_content.append(price_value)
         left_content.append(Spacer(1, 0.5*cm))
         
         # Thêm dữ liệu thị trường
