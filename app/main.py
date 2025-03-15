@@ -23,6 +23,8 @@ from app.api.v1.treemap_color.router import router as treemap_color_router
 from app.api.v1.marketindices_adjustday.router import router as marketindices_adjustday_router
 # Import news router
 from app.api.v1.news.router import router as news_router
+# Import report router
+from app.api.v1.report.router import router as report_router
 
 # Load environment variables
 load_dotenv()
@@ -55,6 +57,8 @@ app.include_router(treemap_color_router, prefix="/api/v1")
 app.include_router(marketindices_adjustday_router, prefix="/api/v1/market-adjust-indices")
 # Make sure the news router is included with the correct prefix
 app.include_router(news_router, prefix="/api/v1/news", tags=["Stock News"])
+# Change prefix to match the requested URL pattern "/api/v1/pdf/{symbol}"
+app.include_router(report_router, prefix="/api/v1", tags=["Financial Reports"])
 
 # Database startup and shutdown events
 @app.on_event("startup")
