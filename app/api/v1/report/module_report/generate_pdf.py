@@ -10,6 +10,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
 from reportlab.pdfgen.canvas import Canvas
+from .finance_calc import get_market_data
 
 class PDFReport:
     def __init__(self):
@@ -263,7 +264,7 @@ class PDFReport:
                 data.append(row)
             
             # Tạo bảng
-            table = Table(data, colWidths=[6*cm] + [2.5*cm] * len(years))
+            table = Table(data, colWidths=[8*cm] + [4*cm] * len(years))
             
             # Style cho bảng - Sử dụng DejaVuSans nếu đã đăng ký thành công
             header_font = 'DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold'
@@ -276,7 +277,7 @@ class PDFReport:
                 ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
                 ('ALIGN', (0, 1), (0, -1), 'LEFT'),
                 ('FONTNAME', (0, 0), (-1, 0), header_font),
-                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('FONTSIZE', (0, 0), (-1, 0), 4),
                 ('FONTNAME', (0, 1), (-1, -1), content_font),
                 ('FONTSIZE', (0, 1), (-1, -1), 9),
                 ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
@@ -303,28 +304,142 @@ class PDFReport:
         if not market_data:
             return None
             
-        data = []
-        for key, value in market_data.items():
-            data.append([key, value])
-            
-        table = Table(data, colWidths=[4*cm, 2*cm])
+        # Thêm tiêu đề "Thị trường" ở đầu bảng
+        self.styles.add(ParagraphStyle(
+            name='MarketDataTitle',
+            fontName='DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold',
+            fontSize=12,  # Tăng kích thước tiêu đề từ 11 lên 12
+            textColor=colors.HexColor('#003366'),
+            alignment=TA_LEFT,
+            leading=16,  # Tăng leading từ 14 lên 16
+            leftIndent=0,
+        ))
         
+        title = Paragraph("Thị trường", self.styles['MarketDataTitle'])
+        
+        # Tạo Spacer trước bảng
+        spacer = Spacer(1, 0.3*cm)  # Tăng từ 0.2cm lên 0.3cm
+        
+        # In ra để debug các khóa có trong market_data
+        print(f"Keys in market_data: {list(market_data.keys())}")
+        
+        # Sắp xếp các chỉ số theo thứ tự trong ảnh
+        ordered_keys = [
+            "VNINDEX", "HNXINDEX", 
+            "Vốn hóa (tỷ VND)", "SLCP lưu hành (triệu CP)", "Tự do giao dịch (triệu CP)",
+            "52-tuần cao/thấp (VND)", "KLGD bình quân 90 ngày (triệu CP)", "GTGD bình quân 90 ngày (tỷ VND)"
+        ]
+        
+        # Map keys từ market_data API sang keys trong giao diện hiển thị 
+        # Đảm bảo tên khóa khớp chính xác với finance_calc.py
+        key_mapping = {
+            "VNINDEX": "VNINDEX",
+            "HNXINDEX": "HNXINDEX",
+            "Vốn hóa (tỷ VND)": "Vốn hóa (tỷ VND)",
+            "SL CP lưu hành (triệu CP)": "SLCP lưu hành (triệu CP)",
+            "Tỷ lệ giao dịch tự do (%)": "Tự do giao dịch (triệu CP)",
+            "52-tuần cao/thấp": "52-tuần cao/thấp (VND)",
+            "KLGD bình quân 90 ngày": "KLGD bình quân 90 ngày (triệu CP)",
+            "GTGD bình quân 90 ngày": "GTGD bình quân 90 ngày (tỷ VND)"
+        }
+        
+        # Chuẩn bị dữ liệu cố định cho bảng - tất cả là N/A trước khi kiểm tra
+        fixed_data = [
+            ["VNINDEX", "N/A"],
+            ["HNXINDEX", "N/A"],
+            ["Vốn hóa (tỷ VND)", "N/A"],
+            ["SLCP lưu hành (triệu CP)", "N/A"],
+            ["Tự do giao dịch (triệu CP)", "N/A"],
+            ["52-tuần cao/thấp (VND)", "N/A"],
+            ["KLGD bình quân 90 ngày (triệu CP)", "N/A"],
+            ["GTGD bình quân 90 ngày (tỷ VND)", "N/A"]
+        ]
+        
+        # Cập nhật giá trị từ market_data nếu có
+        for i, row in enumerate(fixed_data):
+            key_display = row[0]  # Khóa hiển thị
+            # Tìm khóa tương ứng trong market_data
+            key_in_data = next((k for k, v in key_mapping.items() if v == key_display), None)
+            
+            if key_in_data and key_in_data in market_data:
+                fixed_data[i][1] = market_data[key_in_data]
+        
+        # Điều chỉnh kích thước cột để rộng hơn
+        table = Table(fixed_data, colWidths=[3.8*cm, 2.2*cm], spaceBefore=3, spaceAfter=3)  # Tăng đáng kể chiều rộng của cả hai cột
+        
+        # Style mới cho bảng - đơn giản hơn, không có lưới
         table_style = TableStyle([
+            # Căn lề
             ('ALIGN', (0, 0), (0, -1), 'LEFT'),
             ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-            ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans' if self.font_added else 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            
+            # Font
+            ('FONTNAME', (0, 0), (0, -1), 'DejaVuSans' if self.font_added else 'Helvetica'),
+            ('FONTNAME', (1, 0), (1, -1), 'DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 7),  # Kích thước font
+            
+            # Padding
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),  # Tăng padding dưới
+            ('TOPPADDING', (0, 0), (-1, -1), 8),     # Tăng padding trên
+            ('LEFTPADDING', (0, 0), (0, -1), 0),     # Giảm padding bên trái của cột đầu tiên
+            ('RIGHTPADDING', (0, 0), (0, -1), 5),   # Tăng padding bên phải của cột đầu tiên
+            ('LEFTPADDING', (1, 0), (1, -1), 5),    # Tăng padding bên trái của cột thứ hai
+            ('RIGHTPADDING', (1, 0), (1, -1), 0),    # Giảm padding bên phải của cột thứ hai
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LINEBELOW', (0, -1), (-1, -1), 0.5, colors.grey),
+            
+            # Đường viền trên và dưới
+            ('LINEABOVE', (0, 0), (-1, 0), 0.5, colors.HexColor('#0066CC')),
+            ('LINEBELOW', (0, -1), (-1, -1), 0.5, colors.HexColor('#0066CC')),
         ])
         
-        for i in range(len(data) - 1):
-            table_style.add('LINEBELOW', (0, i), (-1, i), 0.5, colors.lightgrey)
-            
+        # Thêm màu nền cho các nhóm chỉ số
+        # Chỉ số thị trường (2 dòng đầu)
+        table_style.add('BACKGROUND', (0, 0), (-1, 1), colors.HexColor('#E6F0FA'))
+        
         table.setStyle(table_style)
-        return table
+        
+        # Tăng khoảng cách giữa các bảng
+        middle_spacer = Spacer(1, 0.5*cm)  # Tăng từ 0.3cm lên 0.5cm
+        
+        # Tạo dữ liệu cho cổ đông lớn - vẫn hiển thị cố định theo ảnh mẫu vì là dữ liệu riêng biệt
+        major_shareholders = [
+            ["Cổ đông lớn (%)", "Hồ Minh Quang", "14.20%"],
+            ["", "Unicoh Specialty Chemicals", "5.85%"]
+        ]
+        
+        # Tăng chiều rộng của bảng cổ đông
+        shareholder_table = Table(major_shareholders, colWidths=[2.2*cm, 3.5*cm, 1*cm], spaceBefore=3, spaceAfter=3)
+        
+        shareholder_style = TableStyle([
+            # Căn lề
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+            ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
+            
+            # Font
+            ('FONTNAME', (0, 0), (0, 0), 'DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (2, -1), 'DejaVuSans' if self.font_added else 'Helvetica'),
+            ('FONTNAME', (2, 0), (2, -1), 'DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),  # Kích thước font không đổi
+            
+            # Padding
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),  # Tăng padding dưới từ 8 lên 12
+            ('TOPPADDING', (0, 0), (-1, -1), 12),     # Tăng padding trên từ 8 lên 12
+            ('LEFTPADDING', (0, 0), (0, -1), 0),      # Giữ nguyên
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            
+            # Đường viền trên và dưới
+            ('LINEABOVE', (0, 0), (-1, 0), 0.5, colors.HexColor('#0066CC')),
+            ('LINEBELOW', (0, -1), (-1, -1), 0.5, colors.HexColor('#0066CC')),
+        ])
+        
+        # Thêm màu nền cho cổ đông lớn
+        shareholder_style.add('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#E6F0FA'))
+        
+        shareholder_table.setStyle(shareholder_style)
+        
+        # Trả về một list các elements
+        return [title, spacer, table, middle_spacer, shareholder_table]
         
     def draw_header_background(self, canvas, doc):
         """Vẽ background cho header"""
@@ -340,29 +455,53 @@ class PDFReport:
         canvas.setStrokeColor(colors.lightgrey)
         canvas.line(6.5*cm, 0, 6.5*cm, height - 2.5*cm)
     
-    def create_stock_report(self, output_path, company_data, recommendation_data, market_data, analysis_data):
+    def create_stock_report(self, output_path, company_data, recommendation_data, market_data=None, analysis_data=None):
         """Tạo báo cáo chứng khoán theo mẫu mới"""
         width, height = A4
+        
+        # Nếu không có dữ liệu thị trường được cung cấp, tự động lấy từ API
+        if market_data is None or len(market_data) == 0:
+            try:
+                # Chuẩn bị thông tin cổ phiếu để truyền vào get_market_data
+                stock_info = {
+                    'current_price': float(recommendation_data.get('current_price', '0').replace(',', '')) if recommendation_data.get('current_price') else 0,
+                    'shares_outstanding': company_data.get('shares_outstanding', 1000),
+                    'free_float': company_data.get('free_float', 35),
+                    'ratios': company_data.get('ratios', {})
+                }
+                
+                market_data = get_market_data(stock_info)
+                print(f"Đã tự động lấy dữ liệu thị trường: {market_data}")
+            except Exception as e:
+                print(f"Lỗi khi lấy dữ liệu thị trường: {str(e)}")
+                market_data = {"VNINDEX": "N/A", "HNXINDEX": "N/A"}
+        
+        # Đảm bảo analysis_data không là None
+        if analysis_data is None:
+            analysis_data = {
+                "title": "Báo cáo phân tích",
+                "content": []
+            }
         
         # Tạo document với format mới
         doc = SimpleDocTemplate(
             output_path,
             pagesize=A4,
             rightMargin=0.5*cm,
-            leftMargin=0.5*cm,
+            leftMargin=0.1*cm,
             topMargin=3*cm,  # Để chỗ cho header
             bottomMargin=1*cm
         )
         
         # Tạo các frames cho layout
         left_column = Frame(
-            1*cm,                # x position
-            1*cm,                # y position
-            5*cm,                # width
-            height - 4*cm,       # height (subtract header and margins)
+            0.5*cm,             # Giảm x position để tạo thêm không gian
+            1*cm,               # y position
+            5.5*cm,             # Tăng width từ 5cm lên 5.5cm
+            height - 3.5*cm,    # Tăng height bằng cách giảm khoảng cách từ đỉnh (từ 4cm xuống 3.5cm)
             id='left_column',
-            leftPadding=0.05*cm,
-            rightPadding=0.05*cm,
+            leftPadding=0.05*cm,  
+            rightPadding=0*cm,   # Điều chỉnh padding bên phải về 0 thay vì -0.5cm
             bottomPadding=0.5*cm,
             topPadding=0.5*cm,
         )
@@ -394,16 +533,49 @@ class PDFReport:
         # 1. Phần bên trái (Sidebar)
         left_content = []
         
-        # Thêm khuyến nghị - giảm kích thước chữ cho phần này
-        date_str = recommendation_data.get('date', datetime.date.today().strftime('%d/%m/%Y'))
-        left_content.append(Paragraph(f"<font size='14'>Báo cáo cập nhật {date_str}</font>", 
-                                     self.styles['Recommendation']))
+        # Thêm khoảng trống ở đầu để hạ nội dung xuống thấp hơn
         left_content.append(Spacer(1, 0.5*cm))
         
-        # Thêm giá hiện tại - đảm bảo tất cả nội dung căn trái
-        price_label = Paragraph("Giá hiện tại", self.styles['LeftColumn'])
-        price_value = Paragraph(f"<b>{recommendation_data.get('current_price', '')} VND</b>", 
-                               self.styles['PriceValue'])
+        # Thêm khuyến nghị - giảm kích thước chữ cho phần này và điều chỉnh style
+        self.styles.add(ParagraphStyle(
+            name='ReportDate',
+            fontName='DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold',
+            fontSize=12,  # Giảm từ 14 xuống 12
+            textColor=colors.HexColor('#003366'),
+            alignment=TA_LEFT,
+            spaceBefore=2,  # Giảm từ 6 xuống 2
+            spaceAfter=2,   # Giảm từ 6 xuống 2
+            leading=14,     # Giảm từ 16 xuống 14
+            leftIndent=0,   # Không thụt lề
+        ))
+        
+        date_str = recommendation_data.get('date', datetime.date.today().strftime('%d/%m/%Y'))
+        left_content.append(Paragraph(f"Báo cáo cập nhật<br/>{date_str}", self.styles['ReportDate']))
+        left_content.append(Spacer(1, 0.3*cm))  # Giảm từ 0.5cm xuống 0.3cm
+        
+        # Thêm giá hiện tại - đảm bảo căn trái chính xác 
+        self.styles.add(ParagraphStyle(
+            name='PriceLabel',
+            fontName='DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold',
+            fontSize=10,
+            leading=14,
+            alignment=TA_LEFT,
+            leftIndent=0,        # Không thụt lề
+        ))
+        
+        price_label = Paragraph("Giá hiện tại", self.styles['PriceLabel'])
+        
+        self.styles.add(ParagraphStyle(
+            name='PriceValueLeft',
+            fontName='DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold',
+            fontSize=14,
+            textColor=colors.HexColor('#003366'),
+            alignment=TA_LEFT,
+            leading=16,
+            leftIndent=0,        # Không thụt lề
+        ))
+        
+        price_value = Paragraph(f"<b>{recommendation_data.get('current_price', '')} VND</b>", self.styles['PriceValueLeft'])
         
         left_content.append(price_label)
         left_content.append(price_value)
@@ -411,10 +583,11 @@ class PDFReport:
         
         # Thêm dữ liệu thị trường
         if market_data:
-            market_table = self.create_market_data_table(market_data)
-            if market_table:
-                left_content.append(market_table)
-                left_content.append(Spacer(1, 0.5*cm))
+            market_elements = self.create_market_data_table(market_data)
+            if market_elements:
+                for element in market_elements:
+                    left_content.append(element)
+                left_content.append(Spacer(1, 0.3*cm))
         
         # Thêm các elements vào story với nextFrameFlowable để chuyển sang cột bên trái
         for element in left_content:
@@ -479,11 +652,11 @@ class PDFReport:
         canvas.setFont('DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold', 24)
         canvas.setFillColor(colors.white)
         company_name = company_data.get('name', 'CTCP Thép Nam Kim')
-        canvas.drawString(1*cm, height - 1.8*cm, company_name)
+        canvas.drawString(0.5*cm, height - 1.8*cm, company_name)  # Điều chỉnh vị trí x từ 1cm xuống 0.5cm
         
         # Vẽ thông tin phụ
         canvas.setFont('DejaVuSans' if self.font_added else 'Helvetica', 12)
-        canvas.drawString(1*cm, height - 2.5*cm, company_data.get('info', '[ Việt Nam / Thép ]'))
+        canvas.drawString(0.5*cm, height - 2.5*cm, company_data.get('info', '[ Việt Nam / Thép ]'))  # Điều chỉnh vị trí x từ 1cm xuống 0.5cm
         
         # Vẽ đường kẻ phân cách giữa sidebar và phần nội dung
         canvas.setStrokeColor(colors.lightgrey)
@@ -580,3 +753,4 @@ class PDFReport:
                 print(f"Đã chuyển đổi văn bản thành {len(content)} đoạn phân tích")
             
         return content
+

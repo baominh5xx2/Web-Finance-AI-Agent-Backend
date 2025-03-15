@@ -5,7 +5,8 @@ import numpy as np
 from .module_report.data_processing import read_data, clean_column_names, standardize_columns, merge_balance_sheets, get_values
 from .module_report.finance_calc import (calculate_total_current_assets, calculate_ppe, calculate_total_assets, 
                                         calculate_ebitda, calculate_financial_ratios, calculate_total_operating_expense,
-                                        calculate_net_income_before_taxes, calculate_net_income_before_extraordinary_items)
+                                        calculate_net_income_before_taxes, calculate_net_income_before_extraordinary_items,
+                                        get_market_data)
 from .module_report.generate_pdf import PDFReport
 from .module_report.api_gemini import generate_financial_analysis, create_analysis_prompt
 from .module_report.chart_generator import generate_financial_charts
@@ -215,18 +216,6 @@ def generate_pdf_report(symbol: str):
             "target_price": f"{target_price:,.0f}"
         }
         
-        # Chuẩn bị dữ liệu thị trường
-        market_data = {
-            "VNINDEX": "1,325",
-            "HNXINDEX": "242",
-            "Vốn hóa (tỷ VND)": f"{current_price * 1000000 / 1000000000:,.0f}",
-            "SL CP lưu hành (triệu CP)": "1,000",
-            "Tỷ lệ giao dịch tự do (%)": "35",
-            "ROE (%)": f"{ratios['roe'][-1] * 100:,.2f}",
-            "ROA (%)": f"{ratios['roa'][-1] * 100:,.2f}",
-            "ROS (%)": f"{ratios['ros'][-1] * 100:,.2f}"
-        }
-        
         # Chuẩn bị nội dung phân tích
         analysis_paragraphs = []
         if analysis:
@@ -271,6 +260,19 @@ def generate_pdf_report(symbol: str):
             "recommendation": f"Định giá cập nhật với khuyến nghị MUA, giá mục tiêu {recommendation_data['target_price']} đồng",
             "content": analysis_paragraphs
         }
+        
+        # Lấy dữ liệu thị trường từ module finance_calc thay vì tạo trực tiếp trong services
+        # Chuẩn bị thông tin cổ phiếu để truyền vào get_market_data
+        stock_info = {
+            'current_price': float(recommendation_data['current_price'].replace(',', '')) if recommendation_data.get('current_price') else 0,
+            'shares_outstanding': financial_data.get('shares_outstanding', 1000) if isinstance(financial_data, dict) else 1000,
+            'free_float': 35,  # Giá trị mặc định nếu không có dữ liệu
+            'ratios': ratios
+        }
+        
+        # Lấy dữ liệu thị trường từ API
+        market_data = get_market_data(stock_info)
+        print(f"Đã lấy dữ liệu thị trường từ module finance_calc: {market_data}")
         
         # Generate PDF using ReportLab với định dạng mới
         pdf = PDFReport()
