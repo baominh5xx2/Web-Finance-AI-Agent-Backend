@@ -246,6 +246,17 @@ def GTGD_90_ngay(symbol):
     avg_volume_x_close = avg_volume_x_close / 1_000_000
     return f"{avg_volume_x_close:,.2f}"
 # Thêm hàm lấy dữ liệu thị trường dựa trên dữ liệu từ VNINDEX và các nguồn khác
+def predict_price(symbol):
+    stock = Vnstock().stock(symbol=symbol, source='VCI')
+    pe = stock.finance.ratio(period='quater',lang='en', dropna=True)
+    pe_pre = pe[('Chỉ tiêu định giá', 'P/E')][:4]
+    pe_value = np.mean(pe_pre)
+    eps = stock.finance.ratio(period='year',lang='en', dropna=True)
+    eps_pre = eps[('Chỉ tiêu định giá', 'EPS (VND)')][0]
+    price_target = pe_value * eps_pre
+    rounded_price_target = round(price_target / 100) * 100
+    return rounded_price_target
+    
 def get_market_data(stock_info=None, symbol=None):
     """Lấy các dữ liệu thị trường bao gồm VNINDEX và thông tin cổ phiếu"""
     # Trả về tất cả giá trị là N/A

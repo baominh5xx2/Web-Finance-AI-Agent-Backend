@@ -258,7 +258,7 @@ def generate_pdf_report(symbol: str):
                 skip_intro = True
                 for line in lines:
                     # Bỏ qua các dòng cho đến khi gặp tiêu đề đầu tiên
-                    if skip_intro and not line.startswith('**GIỚI THIỆU VỀ CÔNG TY**'):
+                    if skip_intro and not line.startswith('**Định giá cập nhật với khuyến nghị MUA**'):
                         continue
                     skip_intro = False
                     clean_lines.append(line)
@@ -267,7 +267,7 @@ def generate_pdf_report(symbol: str):
             
             # Tạo tiêu đề cho các phần phân tích chính
             analysis_sections = [
-                "**GIỚI THIỆU VỀ CÔNG TY**",
+                "**Định giá cập nhật với khuyến nghị MUA**",
                 "**TÌNH HÌNH TÀI CHÍNH HIỆN NAY**"
             ]
             
