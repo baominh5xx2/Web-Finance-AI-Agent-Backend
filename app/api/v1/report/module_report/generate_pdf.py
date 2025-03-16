@@ -139,10 +139,10 @@ class PDFReport:
         ))
         
         # Style mới cho phần giá mục tiêu và suất sinh lời
-        self.styles.add(ParagraphStyle(name='TargetPriceLabel', fontSize=8, alignment=TA_RIGHT, fontName='DejaVuSans', textColor=colors.gray))
-        self.styles.add(ParagraphStyle(name='TargetPriceValue', fontSize=16, alignment=TA_RIGHT, fontName='DejaVuSans-Bold', leading=18))
-        self.styles.add(ParagraphStyle(name='ProfitLabel', fontSize=8, alignment=TA_RIGHT, fontName='DejaVuSans', textColor=colors.gray))
-        self.styles.add(ParagraphStyle(name='ProfitValue', fontSize=14, alignment=TA_RIGHT, fontName='DejaVuSans-Bold', leading=16))
+        self.styles.add(ParagraphStyle(name='TargetPriceLabel', fontSize=8, alignment=TA_LEFT, fontName='DejaVuSans', textColor=colors.gray))
+        self.styles.add(ParagraphStyle(name='TargetPriceValue', fontSize=16, alignment=TA_LEFT, fontName='DejaVuSans-Bold', leading=18))
+        self.styles.add(ParagraphStyle(name='ProfitLabel', fontSize=8, alignment=TA_LEFT, fontName='DejaVuSans', textColor=colors.gray))
+        self.styles.add(ParagraphStyle(name='ProfitValue', fontSize=14, alignment=TA_LEFT, fontName='DejaVuSans-Bold', leading=16))
         
         # Thêm các style còn thiếu
         self.styles.add(ParagraphStyle(
@@ -161,14 +161,14 @@ class PDFReport:
             fontName=normal_font,
             fontSize=8,
             textColor=colors.gray,
-            alignment=TA_RIGHT,
+            alignment=TA_LEFT,
         ))
         
         self.styles.add(ParagraphStyle(
             name='DateValue',
             fontName=normal_font,
             fontSize=10,
-            alignment=TA_RIGHT,
+            alignment=TA_LEFT,
             leading=12,
         ))
         
@@ -178,7 +178,7 @@ class PDFReport:
             fontName=normal_font,
             fontSize=8,
             textColor=colors.gray,
-            alignment=TA_RIGHT,
+            alignment=TA_LEFT,
         ))
     
     def _process_markdown_content(self, text):
@@ -348,9 +348,6 @@ class PDFReport:
         if not market_data:
             # Trả về danh sách rỗng thay vì None để tránh lỗi khi extend
             return []
-            
-        # Thêm tiêu đề "Thị trường" ở đầu bảng
-        title = Paragraph("Thị trường", self.styles['MarketDataTitle'])
         
         # Tạo Spacer trước bảng
         spacer = Spacer(1, 0.2*cm)  # Tăng từ 0.2cm lên 0.3cm
@@ -518,7 +515,7 @@ class PDFReport:
                 shareholders.append(empty_df)
         
         # Kết hợp tất cả elements
-        elements = [title, spacer, table]
+        elements = [spacer, table]
         
         # Chỉ thêm phần cổ đông nếu có
         if shareholders:
@@ -619,7 +616,7 @@ class PDFReport:
         story = []
         
         # Thêm spacing để tránh chồng lấp với khung màu xanh
-        story.append(Spacer(1, 0.5*cm))
+        story.append(Spacer(1,2.5*cm))
         
         # Date hiện tại
         date_today = datetime.date.today().strftime('%d/%m/%Y')
@@ -648,11 +645,13 @@ class PDFReport:
             try:
                 # Chuyển đổi profit_percent thành số để xác định màu sắc
                 profit_num = float(profit_percent)
+                # Nhân với 100 để hiển thị đúng tỷ lệ phần trăm
+                profit_display = profit_num * 100
                 profit_color = "green" if profit_num > 0 else "red"
                 # Thêm dấu + cho giá trị dương
                 sign = "+" if profit_num > 0 else ""
-                profit_value = Paragraph("<b><font color='{0}'>{1}{2}%</font></b>".format(
-                    profit_color, sign, profit_percent
+                profit_value = Paragraph("<b><font color='{0}'>{1}{2:.2f}%</font></b>".format(
+                    profit_color, sign, profit_display
                 ), self.styles['ProfitValue'])
             except (ValueError, TypeError):
                 # Nếu không thể chuyển đổi thành số, hiển thị giá trị mặc định
@@ -716,7 +715,7 @@ class PDFReport:
         doc.build(story)
         return output_path
     
-    def _draw_page_template(self, canvas, doc, company_data):
+    def _draw_page_template(self, canvas, doc, company_data): # vẽ cái giao diện nền công ty
         """Vẽ template cho trang báo cáo"""
         try:
             print(f"Đang vẽ template với dữ liệu: {company_data}")
@@ -727,15 +726,15 @@ class PDFReport:
             canvas.rect(0, height - 3*cm, width, 3*cm, fill=1, stroke=0)
             
             # Vẽ tên công ty
-            canvas.setFont('DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold', 24)
+            canvas.setFont('DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold', 18)
             canvas.setFillColor(colors.white)
-            company_name = company_data.get('name', 'CTCP Thép Nam Kim')
+            company_name = company_data.get('name')
             print(f"Tên công ty: {company_name}")
             canvas.drawString(0.5*cm, height - 1.8*cm, company_name)  # Điều chỉnh vị trí x từ 1cm xuống 0.5cm
             
             # Vẽ thông tin phụ
-            canvas.setFont('DejaVuSans' if self.font_added else 'Helvetica', 12)
-            info_text = company_data.get('info', '[ Việt Nam / Thép ]')
+            canvas.setFont('DejaVuSans' if self.font_added else 'Helvetica', 10)
+            info_text = company_data.get('info')
             print(f"Thông tin phụ: {info_text}")
             canvas.drawString(0.5*cm, height - 2.5*cm, info_text)  # Điều chỉnh vị trí x từ 1cm xuống 0.5cm
             

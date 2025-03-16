@@ -232,16 +232,17 @@ def generate_pdf_report(symbol: str):
             # Tính giá mục tiêu và suất sinh lời sử dụng hàm predict_price
             try:
                 price_target, profit_percent = predict_price(symbol)
+                print(f"Đã tính giá mục tiêu cho {symbol}: {price_target} VND, Suất sinh lời: {profit_percent}%")
                 formatted_price_target = f"{price_target:,.0f}"
-                print(f"Đã tính giá mục tiêu cho {symbol}: {formatted_price_target} VND, Suất sinh lời: {profit_percent}%")
+                print(f"Đã tính giá mục tiêu cho {symbol}: {formatted_price_target} VND, Suất sinh lời: {profit_percent * 100}%")
             except Exception as e:
                 print(f"Lỗi khi tính giá mục tiêu: {str(e)}")
                 # Kiểm tra nếu price_value là số thì mới tính toán giá mục tiêu dự phòng
                 if isinstance(price_value, (int, float)) and price_value > 0:
                     # Fallback: Tính toán giá mục tiêu đơn giản (25% cao hơn giá hiện tại)
-                    price_target = price_value * 1.25
+                    price_target = price_value * 1.5
                     formatted_price_target = f"{price_target:,.0f}"
-                    profit_percent = 25
+                    profit_percent = 100
                     print(f"Sử dụng giá mục tiêu đơn giản: {formatted_price_target} VND, Suất sinh lời: {profit_percent}%")
                 else:
                     # Nếu không thể tính toán được giá mục tiêu, sử dụng "N/A"
