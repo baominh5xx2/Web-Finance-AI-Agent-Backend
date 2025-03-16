@@ -255,7 +255,11 @@ def predict_price(symbol):
     eps_pre = eps[('Chỉ tiêu định giá', 'EPS (VND)')][0]
     price_target = pe_value * eps_pre
     rounded_price_target = round(price_target / 100) * 100
-    return rounded_price_target
+    stockk = Vnstock().stock(symbol=symbol, source='VCI')
+    kk = stock.quote.intraday(symbol=symbol)
+    current_price = kk['price'].values[-1]
+    profit = (price_target - current_price) / current_price
+    return rounded_price_target, profit
     
 def get_market_data(stock_info=None, symbol=None):
     """Lấy các dữ liệu thị trường bao gồm VNINDEX và thông tin cổ phiếu"""
