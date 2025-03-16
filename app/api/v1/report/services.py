@@ -6,7 +6,7 @@ from .module_report.data_processing import read_data, clean_column_names, standa
 from .module_report.finance_calc import (calculate_total_current_assets, calculate_ppe, calculate_total_assets, 
                                         calculate_ebitda, calculate_financial_ratios, calculate_total_operating_expense,
                                         calculate_net_income_before_taxes, calculate_net_income_before_extraordinary_items,
-                                        get_market_data, current_price)
+                                        get_market_data, current_price, predict_price)
 from .module_report.generate_pdf import PDFReport
 from .module_report.api_gemini import generate_financial_analysis, create_analysis_prompt
 from .module_report.chart_generator import generate_financial_charts
@@ -187,9 +187,7 @@ def generate_pdf_report(symbol: str):
         
         # Request AI analysis
         analysis = generate_financial_analysis(
-            balance_sheet=balance_sheet_data,
-            income_statement=income_statement_data,
-            profitability_analysis=profitability_analysis_data
+            custom_prompt=f"Analyze financial performance of {symbol} based on: Balance Sheet: {balance_sheet_data}, Income Statement: {income_statement_data}, Profitability Analysis: {profitability_analysis_data}"
         )
         
         # Create output directory
@@ -230,21 +228,54 @@ def generate_pdf_report(symbol: str):
             price_value = current_price(symbol)
             formatted_current_price = f"{price_value:,.0f}"
             print(f"Đã lấy giá hiện tại của {symbol} từ API: {formatted_current_price}")
+            
+            # Tính giá mục tiêu và suất sinh lời sử dụng hàm predict_price
+            try:
+                price_target, profit_percent = predict_price(symbol)
+                formatted_price_target = f"{price_target:,.0f}"
+                print(f"Đã tính giá mục tiêu cho {symbol}: {formatted_price_target} VND, Suất sinh lời: {profit_percent}%")
+            except Exception as e:
+                print(f"Lỗi khi tính giá mục tiêu: {str(e)}")
+                # Kiểm tra nếu price_value là số thì mới tính toán giá mục tiêu dự phòng
+                if isinstance(price_value, (int, float)) and price_value > 0:
+                    # Fallback: Tính toán giá mục tiêu đơn giản (25% cao hơn giá hiện tại)
+                    price_target = price_value * 1.25
+                    formatted_price_target = f"{price_target:,.0f}"
+                    profit_percent = 25
+                    print(f"Sử dụng giá mục tiêu đơn giản: {formatted_price_target} VND, Suất sinh lời: {profit_percent}%")
+                else:
+                    # Nếu không thể tính toán được giá mục tiêu, sử dụng "N/A"
+                    formatted_price_target = "N/A"
+                    profit_percent = "N/A"
+                    print("Không thể tính toán giá mục tiêu, sử dụng N/A")
         except Exception as e:
             print(f"Lỗi khi lấy giá hiện tại từ API: {str(e)}")
             # Fallback: Tính toán giá hiện tại từ net_income và total_equity nếu API lỗi
-            price_value = net_income[-1] / total_equity[-1] * 10000 if len(net_income) > 0 and len(total_equity) > 0 else 0
-            formatted_current_price = f"{price_value:,.0f}"
-            print(f"Sử dụng giá hiện tại tính toán: {formatted_current_price}")
-        
-        # Tính giá mục tiêu dựa trên giá hiện tại
-        target_price = price_value * 1.25  # Giả định giá mục tiêu cao hơn 25%
+            try:
+                if len(net_income) > 0 and len(total_equity) > 0 and total_equity[-1] != 0:
+                    price_value = net_income[-1] / total_equity[-1] * 10000
+                    formatted_current_price = f"{price_value:,.0f}"
+                    print(f"Sử dụng giá hiện tại tính toán: {formatted_current_price}")
+                    
+                    # Tính giá mục tiêu đơn giản và suất sinh lời
+                    price_target = price_value * 1.25
+                    formatted_price_target = f"{price_target:,.0f}"
+                    profit_percent = 25
+                else:
+                    formatted_current_price = "N/A"
+                    formatted_price_target = "N/A"
+                    profit_percent = "N/A"
+            except:
+                formatted_current_price = "N/A"
+                formatted_price_target = "N/A"
+                profit_percent = "N/A"
         
         recommendation_data = {
             "date": datetime.date.today().strftime('%d/%m/%Y'),
             "price_date": datetime.date.today().strftime('%d/%m/%Y'),
             "current_price": formatted_current_price,
-            "target_price": f"{target_price:,.0f}"
+            "target_price": formatted_price_target,
+            "profit_percent": f"{profit_percent}"
         }
         
         # Chuẩn bị nội dung phân tích

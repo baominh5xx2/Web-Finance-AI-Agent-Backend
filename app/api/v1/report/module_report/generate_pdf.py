@@ -5,7 +5,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm, cm, inch
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, PageBreak, Frame, NextPageTemplate, PageTemplate, FrameBreak
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, PageBreak, Frame, NextPageTemplate, PageTemplate, FrameBreak, BaseDocTemplate
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
@@ -136,6 +136,49 @@ class PDFReport:
             fontSize=10,
             leading=14,
             alignment=TA_LEFT,
+        ))
+        
+        # Style mới cho phần giá mục tiêu và suất sinh lời
+        self.styles.add(ParagraphStyle(name='TargetPriceLabel', fontSize=8, alignment=TA_RIGHT, fontName='DejaVuSans', textColor=colors.gray))
+        self.styles.add(ParagraphStyle(name='TargetPriceValue', fontSize=16, alignment=TA_RIGHT, fontName='DejaVuSans-Bold', leading=18))
+        self.styles.add(ParagraphStyle(name='ProfitLabel', fontSize=8, alignment=TA_RIGHT, fontName='DejaVuSans', textColor=colors.gray))
+        self.styles.add(ParagraphStyle(name='ProfitValue', fontSize=14, alignment=TA_RIGHT, fontName='DejaVuSans-Bold', leading=16))
+        
+        # Thêm các style còn thiếu
+        self.styles.add(ParagraphStyle(
+            name='MarketDataTitle',
+            fontName=title_font,
+            fontSize=12,
+            textColor=colors.HexColor('#003366'),
+            alignment=TA_LEFT,
+            leading=16,
+            leftIndent=0,
+        ))
+        
+        # Style cho ngày báo cáo
+        self.styles.add(ParagraphStyle(
+            name='DateLabel',
+            fontName=normal_font,
+            fontSize=8,
+            textColor=colors.gray,
+            alignment=TA_RIGHT,
+        ))
+        
+        self.styles.add(ParagraphStyle(
+            name='DateValue',
+            fontName=normal_font,
+            fontSize=10,
+            alignment=TA_RIGHT,
+            leading=12,
+        ))
+        
+        # Style cho label giá hiện tại
+        self.styles.add(ParagraphStyle(
+            name='PriceLabel',
+            fontName=normal_font,
+            fontSize=8,
+            textColor=colors.gray,
+            alignment=TA_RIGHT,
         ))
     
     def _process_markdown_content(self, text):
@@ -303,56 +346,39 @@ class PDFReport:
     def create_market_data_table(self, market_data):
         """Tạo bảng dữ liệu thị trường cho phần sidebar"""
         if not market_data:
-            return None
+            # Trả về danh sách rỗng thay vì None để tránh lỗi khi extend
+            return []
             
         # Thêm tiêu đề "Thị trường" ở đầu bảng
-        self.styles.add(ParagraphStyle(
-            name='MarketDataTitle',
-            fontName='DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold',
-            fontSize=12,  # Tăng kích thước tiêu đề từ 11 lên 12
-            textColor=colors.HexColor('#003366'),
-            alignment=TA_LEFT,
-            leading=16,  # Tăng leading từ 14 lên 16
-            leftIndent=0,
-        ))
-        
         title = Paragraph("Thị trường", self.styles['MarketDataTitle'])
         
         # Tạo Spacer trước bảng
-        spacer = Spacer(1, 0.3*cm)  # Tăng từ 0.2cm lên 0.3cm
+        spacer = Spacer(1, 0.2*cm)  # Tăng từ 0.2cm lên 0.3cm
         
         # In ra để debug các khóa có trong market_data
         print(f"Keys in market_data: {list(market_data.keys())}")
-        
-        # Sắp xếp các chỉ số theo thứ tự trong ảnh
-        ordered_keys = [
-            "VNINDEX", "HNXINDEX", 
-            "Vốn hóa (tỷ VND)", "SLCP lưu hành (triệu CP)",
-            "52-tuần cao/thấp (VND)", "KLGD bình quân 90 ngày (triệu CP)", "GTGD bình quân 90 ngày (tỷ VND)"
-        ]
-        
-        # Map keys từ market_data API sang keys trong giao diện hiển thị 
-        # Đảm bảo tên khóa khớp chính xác với finance_calc.py
-        key_mapping = {
-            "VNINDEX": "VNINDEX",
-            "HNXINDEX": "HNXINDEX",
-            "Vốn hóa (tỷ VND)": "Vốn hóa (tỷ VND)",
-            "SL CP lưu hành (triệu CP)": "SLCP lưu hành (triệu CP)",
-            "52-tuần cao/thấp": "52-tuần cao/thấp (VND)",
-            "KLGD bình quân 90 ngày": "KLGD bình quân 90 ngày (triệu CP)",
-            "GTGD bình quân 90 ngày": "GTGD bình quân 90 ngày (tỷ VND)"
-        }
         
         # Chuẩn bị dữ liệu cố định cho bảng - tất cả là N/A trước khi kiểm tra
         fixed_data = [
             ["VNINDEX", "N/A"],
             ["HNXINDEX", "N/A"],
             ["Vốn hóa (tỷ VND)", "N/A"],
-            ["SLCP lưu hành (triệu CP)", "N/A"],
-            ["52-tuần cao/thấp (VND)", "N/A"],
-            ["KLGD bình quân 90 ngày (triệu CP)", "N/A"],
-            ["GTGD bình quân 90 ngày (tỷ VND)", "N/A"]
+            ["SLCP lưu hành (tr CP)", "N/A"],
+            ["52-tuần cao/thấp", "N/A"],
+            ["KLGD 90 ngày (tr CP)", "N/A"],
+            ["GTGD 90 ngày (tỷ)", "N/A"]
         ]
+        
+        # Map keys từ market_data API sang keys trong giao diện hiển thị 
+        key_mapping = {
+            "VNINDEX": "VNINDEX",
+            "HNXINDEX": "HNXINDEX",
+            "Vốn hóa (tỷ VND)": "Vốn hóa (tỷ VND)",
+            "SL CP lưu hành (triệu CP)": "SLCP lưu hành (tr CP)",
+            "52-tuần cao/thấp": "52-tuần cao/thấp",
+            "KLGD bình quân 90 ngày": "KLGD 90 ngày (tr CP)",
+            "GTGD bình quân 90 ngày": "GTGD 90 ngày (tỷ)"
+        }
         
         # Cập nhật giá trị từ market_data nếu có
         for i, row in enumerate(fixed_data):
@@ -363,8 +389,8 @@ class PDFReport:
             if key_in_data and key_in_data in market_data:
                 fixed_data[i][1] = market_data[key_in_data]
         
-        # Điều chỉnh kích thước cột để rộng hơn
-        table = Table(fixed_data, colWidths=[3.6*cm, 2.2*cm], spaceBefore=3, spaceAfter=3)  # Tăng đáng kể chiều rộng của cả hai cột
+        # Điều chỉnh kích thước cột để vừa với không gian - giảm chiều rộng cột 1
+        table = Table(fixed_data, colWidths=[3.2*cm, 2.6*cm], spaceBefore=3, spaceAfter=3)
         
         # Style mới cho bảng - đơn giản hơn, không có lưới
         table_style = TableStyle([
@@ -375,15 +401,15 @@ class PDFReport:
             # Font
             ('FONTNAME', (0, 0), (0, -1), 'DejaVuSans' if self.font_added else 'Helvetica'),
             ('FONTNAME', (1, 0), (1, -1), 'DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 7),  # Kích thước font
+            ('FONTSIZE', (0, 0), (-1, -1), 7),  # Kích thước font nhỏ
             
             # Padding
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),  # Tăng padding dưới
-            ('TOPPADDING', (0, 0), (-1, -1), 8),     # Tăng padding trên
-            ('LEFTPADDING', (0, 0), (0, -1), 0),     # Giảm padding bên trái của cột đầu tiên
-            ('RIGHTPADDING', (0, 0), (0, -1), 5),   # Tăng padding bên phải của cột đầu tiên
-            ('LEFTPADDING', (1, 0), (1, -1), 5),    # Tăng padding bên trái của cột thứ hai
-            ('RIGHTPADDING', (1, 0), (1, -1), 0),    # Giảm padding bên phải của cột thứ hai
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),  # Giảm padding
+            ('TOPPADDING', (0, 0), (-1, -1), 6),     # Giảm padding
+            ('LEFTPADDING', (0, 0), (0, -1), 0),     # Giảm padding bên trái
+            ('RIGHTPADDING', (0, 0), (0, -1), 2),    # Giảm padding bên phải
+            ('LEFTPADDING', (1, 0), (1, -1), 2),     # Giảm padding bên trái
+            ('RIGHTPADDING', (1, 0), (1, -1), 0),    # Giảm padding bên phải
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             
             # Đường viền trên và dưới
@@ -391,128 +417,115 @@ class PDFReport:
             ('LINEBELOW', (0, -1), (-1, -1), 0.5, colors.HexColor('#0066CC')),
         ])
         
-        # Thêm màu nền cho các nhóm chỉ số
-        # Chỉ số thị trường (2 dòng đầu)
+        # Thêm màu nền cho chỉ số thị trường
         table_style.add('BACKGROUND', (0, 0), (-1, 1), colors.HexColor('#E6F0FA'))
         
         table.setStyle(table_style)
         
         # Tăng khoảng cách giữa các bảng
-        middle_spacer = Spacer(1, 0.5*cm)  # Tăng từ 0.3cm lên 0.5cm
+        middle_spacer = Spacer(1, 0.3*cm)  # Giảm từ 0.5cm xuống 0.3cm
         
-        # Tạo dữ liệu cho cổ đông lớn từ market_data thay vì dữ liệu cố định
-        major_shareholders = []
-        
-        # Kiểm tra xem có dữ liệu cổ đông lớn không
+        # Xử lý phần cổ đông lớn
+        shareholders = []
+        # Chỉ hiển thị tiêu đề cổ đông lớn nếu có dữ liệu
         if "co_dong_lon" in market_data and market_data["co_dong_lon"] is not None:
             shareholders_df = market_data["co_dong_lon"]
-            try:
-                # In ra tên các cột trong DataFrame để debug
-                print(f"Columns in shareholders_df: {list(shareholders_df.columns)}")
-                
-                # Đảm bảo DataFrame có cột cần thiết - kiểm tra bất kể tên cột
-                if not shareholders_df.empty:
-                    # Kiểm tra nếu tồn tại các cột cần thiết
+            
+            # Tiêu đề cho phần cổ đông lớn
+            shareholder_title = Paragraph("Cổ đông lớn (%)", self.styles['MarketDataTitle'])
+            shareholders.append(shareholder_title)
+            shareholders.append(Spacer(1, 0.1*cm))
+            
+            # Nếu có dữ liệu cổ đông, xử lý và hiển thị
+            if not shareholders_df.empty:
+                try:
+                    # Tìm các cột liên quan
                     share_holder_col = None
                     share_percent_col = None
                     
-                    # Tìm cột chứa tên cổ đông
+                    # Tìm cột tên cổ đông
                     for col in shareholders_df.columns:
                         if 'hold' in str(col).lower() or 'name' in str(col).lower():
                             share_holder_col = col
                             break
                     
-                    # Tìm cột chứa phần trăm sở hữu
+                    # Tìm cột tỷ lệ sở hữu
                     for col in shareholders_df.columns:
                         if 'percent' in str(col).lower() or 'own' in str(col).lower() or 'ratio' in str(col).lower():
                             share_percent_col = col
                             break
                     
-                    print(f"Found columns - holder: {share_holder_col}, percent: {share_percent_col}")
-                    
+                    # Nếu có đủ thông tin cột
                     if share_holder_col and share_percent_col:
-                        # Tạo dòng tiêu đề
-                        try:
-                            ownership_ratio = float(shareholders_df.iloc[0][share_percent_col]) * 100
-                            major_shareholders.append(["Cổ đông lớn (%)", str(shareholders_df.iloc[0][share_holder_col]), f"{ownership_ratio:.2f}%"])
-                            
-                            # Thêm các cổ đông còn lại
-                            for i in range(1, min(3, len(shareholders_df))):
+                        # Chuẩn bị dữ liệu cổ đông
+                        formatted_shareholders = []
+                        for i in range(min(3, len(shareholders_df))):
+                            try:
+                                # Rút ngắn tên cổ đông nếu quá dài
+                                holder_name = str(shareholders_df.iloc[i][share_holder_col])
+                                if len(holder_name) > 20:
+                                    holder_name = holder_name[:18] + "..."
+                                
+                                # Định dạng tỷ lệ sở hữu
                                 ownership_ratio = float(shareholders_df.iloc[i][share_percent_col]) * 100
-                                major_shareholders.append(["", str(shareholders_df.iloc[i][share_holder_col]), f"{ownership_ratio:.2f}%"])
+                                formatted_shareholders.append([holder_name, f"{ownership_ratio:.2f}%"])
+                            except (ValueError, TypeError) as e:
+                                print(f"Lỗi khi xử lý cổ đông {i}: {str(e)}")
+                                continue
+                        
+                        # Tạo bảng cổ đông nếu có dữ liệu
+                        if formatted_shareholders:
+                            # Điều chỉnh kích thước cột cho phù hợp
+                            shareholder_table = Table(
+                                formatted_shareholders, 
+                                colWidths=[4.0*cm, 1.8*cm],
+                                spaceBefore=3,
+                                spaceAfter=3
+                            )
                             
-                            print(f"Đã tạo bảng cổ đông lớn với {len(major_shareholders)} dòng")
-                        except (ValueError, TypeError) as e:
-                            print(f"Lỗi khi xử lý giá trị: {str(e)}")
-                            # Vẫn tiếp tục thực hiện nếu có lỗi
+                            # Style cho bảng cổ đông
+                            shareholder_style = TableStyle([
+                                ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+                                ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+                                ('FONTNAME', (0, 0), (0, -1), 'DejaVuSans' if self.font_added else 'Helvetica'),
+                                ('FONTNAME', (1, 0), (1, -1), 'DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold'),
+                                ('FONTSIZE', (0, 0), (-1, -1), 8),
+                                ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+                                ('TOPPADDING', (0, 0), (-1, -1), 5),
+                                ('LEFTPADDING', (0, 0), (0, -1), 0),
+                                ('RIGHTPADDING', (1, 0), (1, -1), 0),
+                                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                                ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#F5F5F5')),
+                            ])
+                            
+                            shareholder_table.setStyle(shareholder_style)
+                            shareholders.append(shareholder_table)
+                        else:
+                            # Thông báo không có dữ liệu
+                            no_data = Paragraph("Không có dữ liệu", self.styles['NormalVN'])
+                            shareholders.append(no_data)
                     else:
-                        print(f"Không tìm thấy cột phù hợp cho tên cổ đông và tỷ lệ sở hữu")
-                else:
-                    print("DataFrame cổ đông rỗng")
-            except Exception as e:
-                print(f"Lỗi khi xử lý dữ liệu cổ đông lớn: {str(e)}")
-                # Sử dụng dữ liệu mẫu khi có lỗi
-                major_shareholders = [
-                    ["Cổ đông lớn (%)", "Hồ Minh Quang", "14.20%"],
-                    ["", "Unicoh Specialty Chemicals", "5.85%"]
-                ]
+                        # Thông báo không tìm thấy cột
+                        no_column = Paragraph("Không tìm thấy cột dữ liệu", self.styles['NormalVN'])
+                        shareholders.append(no_column)
+                except Exception as e:
+                    # Xử lý lỗi
+                    error_msg = Paragraph(f"Lỗi: {str(e)[:30]}...", self.styles['NormalVN'])
+                    shareholders.append(error_msg)
+            else:
+                # DataFrame rỗng
+                empty_df = Paragraph("Không có dữ liệu cổ đông", self.styles['NormalVN'])
+                shareholders.append(empty_df)
         
-        # Chuẩn bị dữ liệu cổ đông lớn dưới dạng có thể đọc được
-        formatted_shareholders = []
-        if len(major_shareholders) > 0:
-            # Bỏ tiêu đề "Cổ đông lớn (%)" và chỉ giữ lại tên và phần trăm
-            for i, shareholder in enumerate(major_shareholders):
-                if i == 0 and len(shareholder) >= 3:
-                    formatted_shareholders.append([shareholder[1], shareholder[2]])
-                elif len(shareholder) >= 3:
-                    formatted_shareholders.append([shareholder[1], shareholder[2]])
+        # Kết hợp tất cả elements
+        elements = [title, spacer, table]
         
-        # Tạo tiêu đề riêng cho bảng cổ đông lớn với style tương tự như tiêu đề "Thị trường"
-        shareholder_title = Paragraph("Cổ đông lớn (%)", self.styles['MarketDataTitle'])
+        # Chỉ thêm phần cổ đông nếu có
+        if shareholders:
+            elements.append(middle_spacer)
+            elements.extend(shareholders)
         
-        # Thêm spacer nhỏ trước và sau tiêu đề
-        pre_shareholder_title_spacer = Spacer(1, 0.4*cm)
-        post_shareholder_title_spacer = Spacer(1, 0.1*cm)
-        
-        # Tạo bảng cổ đông lớn với căn lề cố định
-        shareholder_table = Table(
-            formatted_shareholders, 
-            colWidths=[4.2*cm, 1.6*cm],  # Điều chỉnh độ rộng cột
-            spaceBefore=3,
-            spaceAfter=3
-        )
-        
-        # Style mới cho bảng cổ đông
-        shareholder_style = TableStyle([
-            # Căn lề
-            ('ALIGN', (0, 0), (0, -1), 'LEFT'),     # Tên cổ đông căn trái
-            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),    # Phần trăm căn phải
-            
-            # Font
-            ('FONTNAME', (0, 0), (0, -1), 'DejaVuSans' if self.font_added else 'Helvetica'),       # Font thường cho tên
-            ('FONTNAME', (1, 0), (1, -1), 'DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold'), # Font đậm cho phần trăm
-            ('FONTSIZE', (0, 0), (-1, -1), 9),      # Kích thước font đồng nhất
-            
-            # Padding
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6), # Giảm padding dưới
-            ('TOPPADDING', (0, 0), (-1, -1), 6),    # Giảm padding trên
-            ('LEFTPADDING', (0, 0), (0, -1), 0),    # Không padding bên trái cột đầu
-            ('RIGHTPADDING', (1, 0), (1, -1), 0),   # Không padding bên phải cột cuối
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'), # Căn giữa theo chiều dọc
-            
-            # Đường viền trên và dưới cả bảng
-            ('LINEABOVE', (0, 0), (-1, 0), 0.5, colors.HexColor('#0066CC')),
-            ('LINEBELOW', (0, -1), (-1, -1), 0.5, colors.HexColor('#0066CC')),
-            
-            # Nền cho toàn bộ bảng
-            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#E6F0FA')),
-        ])
-        
-        # Thêm style cho bảng
-        shareholder_table.setStyle(shareholder_style)
-        
-        # Trả về một list các elements
-        return [title, spacer, table, middle_spacer, pre_shareholder_title_spacer, shareholder_title, post_shareholder_title_spacer, shareholder_table]
+        return elements
         
     def draw_header_background(self, canvas, doc):
         """Vẽ background cho header"""
@@ -574,122 +587,101 @@ class PDFReport:
                 "content": []
             }
         
-        # Tạo document với format mới
-        doc = SimpleDocTemplate(
+        # Tạo các frames
+        frames = [
+            # Header frame - trên cùng màu xanh
+            Frame(0, height - 3*cm, width, 3*cm),
+            
+            # Sidebar frame - cột bên trái
+            Frame(0, 0, 6.5*cm, height - 3*cm, id='sidebar'),
+            
+            # Main content frame - cột bên phải
+            Frame(6.5*cm, 0, width - 6.5*cm, height - 3*cm)
+        ]
+        
+        # Tạo document với multiple frames
+        doc = BaseDocTemplate(
             output_path,
             pagesize=A4,
-            rightMargin=0.5*cm,
-            leftMargin=0.1*cm,
-            topMargin=3*cm,  # Để chỗ cho header
-            bottomMargin=1*cm
+            rightMargin=0,
+            leftMargin=0,
+            topMargin=0,
+            bottomMargin=0,
         )
-        
-        # Tạo các frames cho layout
-        left_column = Frame(
-            0.5*cm,             # Giảm x position để tạo thêm không gian
-            1*cm,               # y position
-            5.5*cm,             # Tăng width từ 5cm lên 5.5cm
-            height - 3.5*cm,    # Tăng height bằng cách giảm khoảng cách từ đỉnh (từ 4cm xuống 3.5cm)
-            id='left_column',
-            leftPadding=0.05*cm,  
-            rightPadding=0*cm,   # Điều chỉnh padding bên phải về 0 thay vì -0.5cm
-            bottomPadding=0.5*cm,
-            topPadding=0.5*cm,
-        )
-        
-        right_column = Frame(
-            7*cm,                # x position
-            1*cm,                # y position
-            width - 8*cm,        # width (page width minus left col width and margins)
-            height - 3.2*cm,       # height (subtract header and margins)
-            id='right_column',
-            leftPadding=0.05*cm,
-            rightPadding=0.05*cm,
-            bottomPadding=0.5*cm,
-            topPadding=0.5*cm,
-        )
-        
-        # Tạo page template với frames
         template = PageTemplate(
-            id='two_column',
-            frames=[left_column, right_column],
+            id='multipagetemplate',
+            frames=frames,
             onPage=lambda canvas, doc: self._draw_page_template(canvas, doc, company_data)
         )
-        
         doc.addPageTemplates([template])
         
-        # Tạo story (các elements sẽ được thêm vào PDF)
+        # Story là danh sách các elements để thêm vào PDF
         story = []
         
-        # 1. Phần bên trái (Sidebar)
-        left_content = []
+        # Thêm spacing để tránh chồng lấp với khung màu xanh
+        story.append(Spacer(1, 0.5*cm))
         
-        # Thêm khoảng trống ở đầu để hạ nội dung xuống thấp hơn
-        left_content.append(Spacer(1, 0.5*cm))
+        # Date hiện tại
+        date_today = datetime.date.today().strftime('%d/%m/%Y')
+        date_label = Paragraph("Báo cáo cập nhật", self.styles['DateLabel'])
+        date_value = Paragraph(date_today, self.styles['DateValue'])
         
-        # Thêm khuyến nghị - giảm kích thước chữ cho phần này và điều chỉnh style
-        self.styles.add(ParagraphStyle(
-            name='ReportDate',
-            fontName='DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold',
-            fontSize=12,  # Giảm từ 14 xuống 12
-            textColor=colors.HexColor('#003366'),
-            alignment=TA_LEFT,
-            spaceBefore=2,  # Giảm từ 6 xuống 2
-            spaceAfter=2,   # Giảm từ 6 xuống 2
-            leading=14,     # Giảm từ 16 xuống 14
-            leftIndent=0,   # Không thụt lề
-        ))
-        
-        date_str = recommendation_data.get('date', datetime.date.today().strftime('%d/%m/%Y'))
-        left_content.append(Paragraph(f"Báo cáo cập nhật<br/>{date_str}", self.styles['ReportDate']))
-        left_content.append(Spacer(1, 0.3*cm))  # Giảm từ 0.5cm xuống 0.3cm
-        
-        # Thêm giá hiện tại - đảm bảo căn trái chính xác 
-        self.styles.add(ParagraphStyle(
-            name='PriceLabel',
-            fontName='DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold',
-            fontSize=10,
-            leading=14,
-            alignment=TA_LEFT,
-            leftIndent=0,        # Không thụt lề
-        ))
-        
+        # Hiển thị giá hiện tại
         price_label = Paragraph("Giá hiện tại", self.styles['PriceLabel'])
+        price_value = Paragraph("<b>{0} VND</b>".format(recommendation_data.get('current_price', 'N/A')), self.styles['PriceValue'])
         
-        self.styles.add(ParagraphStyle(
-            name='PriceValueLeft',
-            fontName='DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold',
-            fontSize=14,
-            textColor=colors.HexColor('#003366'),
-            alignment=TA_LEFT,
-            leading=16,
-            leftIndent=0,        # Không thụt lề
-        ))
+        # Thêm hiển thị giá mục tiêu và suất sinh lời
+        target_price_label = Paragraph("Giá mục tiêu", self.styles['TargetPriceLabel'])
+        target_price = recommendation_data.get('target_price', 'N/A')
+        target_price_value = Paragraph("<b>{0} {1}</b>".format(
+            target_price, 
+            "VND" if target_price != "N/A" else ""
+        ), self.styles['TargetPriceValue'])
         
-        price_value = Paragraph(f"<b>{recommendation_data.get('current_price', '')} VND</b>", self.styles['PriceValueLeft'])
+        profit_label = Paragraph("Suất sinh lời", self.styles['ProfitLabel'])
+        profit_percent = recommendation_data.get('profit_percent', 'N/A')
         
-        left_content.append(price_label)
-        left_content.append(price_value)
-        left_content.append(Spacer(1, 0.5*cm))
+        # Xử lý trường hợp profit_percent là "N/A"
+        if profit_percent == "N/A":
+            profit_value = Paragraph("<b>N/A</b>", self.styles['ProfitValue'])
+        else:
+            try:
+                # Chuyển đổi profit_percent thành số để xác định màu sắc
+                profit_num = float(profit_percent)
+                profit_color = "green" if profit_num > 0 else "red"
+                # Thêm dấu + cho giá trị dương
+                sign = "+" if profit_num > 0 else ""
+                profit_value = Paragraph("<b><font color='{0}'>{1}{2}%</font></b>".format(
+                    profit_color, sign, profit_percent
+                ), self.styles['ProfitValue'])
+            except (ValueError, TypeError):
+                # Nếu không thể chuyển đổi thành số, hiển thị giá trị mặc định
+                profit_value = Paragraph("<b>N/A</b>", self.styles['ProfitValue'])
         
-        # Thêm dữ liệu thị trường
-        if market_data:
-            market_elements = self.create_market_data_table(market_data)
-            if market_elements:
-                for element in market_elements:
-                    left_content.append(element)
-                left_content.append(Spacer(1, 0.3*cm))
+        # Thêm thông tin giá và ngày vào story trong sidebar
+        story.append(date_label)
+        story.append(date_value)
+        story.append(Spacer(1, 0.2*cm))
+        story.append(price_label)
+        story.append(price_value)
+        story.append(Spacer(1, 0.2*cm))
+        story.append(target_price_label)
+        story.append(target_price_value)
+        story.append(Spacer(1, 0.2*cm))
+        story.append(profit_label)
+        story.append(profit_value)
+        story.append(Spacer(1, 0.5*cm))
         
-        # Thêm các elements vào story với nextFrameFlowable để chuyển sang cột bên trái
-        for element in left_content:
-            story.append(element)
+        # Tạo bảng thông tin thị trường - IMPORTANT FIX: extend instead of append
+        story.append(Paragraph("Thị trường", self.styles['MarketDataTitle']))
+        story.append(Spacer(1, 0.1*cm))
+        
+        market_elements = self.create_market_data_table(market_data)
+        if market_elements:
+            story.extend(market_elements)
         
         # Chuyển sang cột bên phải bằng cách thêm FrameBreak
         story.append(FrameBreak())
-        
-        # Không hiển thị tiêu đề "Báo cáo phân tích" và dòng khuyến nghị nữa
-        # Thay vào đó chỉ thêm một khoảng trống nhỏ trước khi hiển thị nội dung phân tích
-        story.append(Spacer(1, 0.3*cm))
         
         # Nhận nội dung phân tích
         content_list = self._set_style_from_analysis_data_sample(analysis_data)
@@ -730,7 +722,7 @@ class PDFReport:
             print(f"Đang vẽ template với dữ liệu: {company_data}")
             width, height = A4
             
-            # Vẽ header màu xanh
+            # Vẽ background header màu xanh
             canvas.setFillColor(self.blue_color)
             canvas.rect(0, height - 3*cm, width, 3*cm, fill=1, stroke=0)
             

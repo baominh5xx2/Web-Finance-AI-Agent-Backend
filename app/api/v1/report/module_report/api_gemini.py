@@ -69,7 +69,7 @@ trong nước) và xuất khẩu đến hơn 50 quốc gia trên toàn cầu (ch
 - KHÔNG ĐƯỢC XUỐNG DÒNG 2 LẦN TRONG MỌI TÌNH HUỐNG.
 - PHẢI SỬ DỤNG 2 TIÊU ĐỀ MARKDOWN: **GIỚI THIỆU VỀ CÔNG TY** và **TÌNH HÌNH TÀI CHÍNH HIỆN NAY** trong nội dung phân tích, không được thay đổi.
 """
-def generate_financial_analysis(symbol,finacne_data_tttc):
+def generate_financial_analysis(custom_prompt=None):
     """Generate financial analysis from the API"""
     # Configure API if not already done
     try:
@@ -102,8 +102,8 @@ def generate_financial_analysis(symbol,finacne_data_tttc):
     )
 
     try:
-        if finacne_data_tttc and symbol:
-            prompt = create_analysis_prompt_NKG_page1(symbol,finacne_data_tttc)
+        if custom_prompt:
+            prompt = custom_prompt
         else:
             prompt = "Provide a general financial market analysis and investment recommendations."
         response = model.generate_content(prompt)
