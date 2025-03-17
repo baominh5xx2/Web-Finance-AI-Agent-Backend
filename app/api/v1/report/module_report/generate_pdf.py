@@ -726,14 +726,14 @@ class PDFReport:
             canvas.rect(0, height - 3*cm, width, 3*cm, fill=1, stroke=0)
             
             # Vẽ tên công ty
-            canvas.setFont('DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold', 18)
+            canvas.setFont('DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold', 16)
             canvas.setFillColor(colors.white)
             company_name = company_data.get('name')
             print(f"Tên công ty: {company_name}")
             canvas.drawString(0.5*cm, height - 1.8*cm, company_name)  # Điều chỉnh vị trí x từ 1cm xuống 0.5cm
             
             # Vẽ thông tin phụ
-            canvas.setFont('DejaVuSans' if self.font_added else 'Helvetica', 10)
+            canvas.setFont('DejaVuSans' if self.font_added else 'Helvetica', 12)
             info_text = company_data.get('info')
             print(f"Thông tin phụ: {info_text}")
             canvas.drawString(0.5*cm, height - 2.5*cm, info_text)  # Điều chỉnh vị trí x từ 1cm xuống 0.5cm

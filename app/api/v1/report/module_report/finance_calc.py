@@ -247,19 +247,28 @@ def GTGD_90_ngay(symbol):
     return f"{avg_volume_x_close:,.2f}"
 # Thêm hàm lấy dữ liệu thị trường dựa trên dữ liệu từ VNINDEX và các nguồn khác
 def predict_price(symbol):
+    # Eps expect 2025
     stock = Vnstock().stock(symbol=symbol, source='VCI')
-    pe = stock.finance.ratio(period='quater',lang='en', dropna=True)
-    pe_pre = pe[('Chỉ tiêu định giá', 'P/E')][:4]
-    pe_value = np.mean(pe_pre)
-    eps = stock.finance.ratio(period='year',lang='en', dropna=True)
-    eps_pre = eps[('Chỉ tiêu định giá', 'EPS (VND)')][0]
-    price_target = pe_value * eps_pre
-    rounded_price_target = round(price_target / 100) * 100
-    stockk = Vnstock().stock(symbol=symbol, source='VCI')
+    eps = stock.finance.ratio(period='year',lang='en', dropna=True).head(5)
+    eps_list = eps[('Chỉ tiêu định giá', 'EPS (VND)')].astype(float)  # Chuyển EPS về kiểu số
+    years = eps[('Meta', 'yearReport')].astype(int)  # Chuyển năm về kiểu số nguyên
+    eps_yearly = pd.DataFrame({"Year": years, "EPS": eps_list}).sort_values("Year")
+    eps_yearly = eps_yearly[eps_yearly["EPS"] > 0]
+    eps_yearly["growth_rate"] = eps_yearly["EPS"].pct_change()
+    avg_growth = eps_yearly["growth_rate"].mean(skipna=True)
+    eps_2025 = eps_yearly["EPS"].iloc[-1] * (1 + avg_growth)
+    
+    # P/E expect 2025
+    ratio_data = stock.finance.ratio(symbol=symbol)
+    industry_pe = ratio_data[('Chỉ tiêu định giá', 'P/E')].mean()  
+    result = eps_2025 * industry_pe
+    rounded_price_target = round(result / 100) * 100
+    # current price
     kk = stock.quote.intraday(symbol=symbol)
     current_price = kk['price'].values[-1]
-    profit = (price_target - current_price) / current_price
-    return rounded_price_target, round(profit,3)
+    profit = (rounded_price_target - current_price) / current_price
+    
+    return int(rounded_price_target), profit
     
 def get_market_data(stock_info=None, symbol=None):
     """Lấy các dữ liệu thị trường bao gồm VNINDEX và thông tin cổ phiếu"""
