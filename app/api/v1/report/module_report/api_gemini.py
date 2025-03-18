@@ -10,7 +10,7 @@ def configure_api():
         raise ValueError("API Key is not set. Please check the .env file.")
     genai.configure(api_key=api_key)
 
-def create_analysis_prompt(symbol,finacne_data_gt):
+def create_analysis_prompt(symbol,finacne_data_thtc):
     """Create the prompt for financial analysis"""
     return f""" 
 Bạn là một chuyên gia phân tích tài chính chuyên về phân tích cơ bản cổ phiếu về công ty Thép Nam Kim với mã chứng khoán là NKG. Hãy đánh giá rủi ro và triển vọng đầu tư của mã cổ phiếu dựa trên các chỉ số tài chính và thông tin sau.
@@ -22,7 +22,7 @@ Cho các dữ liệu báo cáo tài chính sau:
 
 - GIỚI THIỆU VỀ CÔNG TY:
 Một đoạn văn dưới 3 câu, giới thiệu tổng quan về công ty, ngành nghề kinh doanh, vị thế trong ngành. Hãy viết đoạn văn này thật chuyên nghiệp.
-- Hãy lấy các số liệu mới nhất về công ty từ các trang web tài chính như cafef, vietstock, vneconomy cho cái cổ phiếu đang phân tích là {symbol}
+- Hãy lấy các số liệu mới nhất về công ty từ các trang web tài chính như cafef, vietstock, vneconomy cho cái cổ phiếu đang phân tích là {symbol} để nói về sự tăng trưởng của công ty hiện tại, theo cái hướng là khuyến khích người dùng mua.
 - TÌNH HÌNH TÀI CHÍNH HIỆN NAY:
 + Không quá 200 từ
 + Đưa ra được ([+/-]% YoY, [+/-]% QoQ) cho người dùng   

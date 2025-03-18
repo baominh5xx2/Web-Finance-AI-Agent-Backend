@@ -4,6 +4,8 @@ import datetime
 from vnstock import Vnstock
 import datetime
 import pandas as pd
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 def calculate_total_current_assets(dataframes):
     """Calculate total current assets"""
     cash_equivalents = dataframes.get("cash_equivalents", pd.DataFrame())
@@ -38,7 +40,6 @@ def calculate_net_income_before_taxes(operating_profit, other_profit, jv_profit)
 def calculate_net_income_before_extraordinary_items(net_income_after_taxes, other_income):
     """Calculate net income before extraordinary items"""
     return net_income_after_taxes + other_income
-
 def calculate_financial_ratios(net_income, total_equity, total_assets, revenue, long_term_debt, total_debt):
     """Calculate financial ratios"""
     # Avoid division by zero
@@ -246,7 +247,7 @@ def GTGD_90_ngay(symbol):
     avg_volume_x_close = avg_volume_x_close / 1_000_000
     return f"{avg_volume_x_close:,.2f}"
 # Thêm hàm lấy dữ liệu thị trường dựa trên dữ liệu từ VNINDEX và các nguồn khác
-def predict_price(symbol):
+'''def predict_price(symbol):
     # Eps expect 2025
     stock = Vnstock().stock(symbol=symbol, source='VCI')
     eps = stock.finance.ratio(period='year',lang='en', dropna=True).head(5)
@@ -268,7 +269,73 @@ def predict_price(symbol):
     current_price = kk['price'].values[-1]
     profit = (rounded_price_target - current_price) / current_price
     
-    return int(rounded_price_target), profit
+    return int(rounded_price_target), profit'''
+def industry_pe(industry_name, max_workers=10, source='VCI'):
+    def get_company_data(symbol, stock_client):
+        try:
+            data = stock_client.stock(symbol=symbol, source=source)\
+                .finance.ratio(period='year', lang='en', dropna=True)\
+                .loc[:, [
+                    ('Meta', 'yearReport'),
+                    ('Chỉ tiêu định giá', 'P/E'),
+                    ('Chỉ tiêu định giá', 'Market Capital (Bn. VND)')
+                ]].head(1)
+            return data
+        except Exception as e:
+            print(f"Error fetching data for {symbol}: {str(e)}")
+            return None
+
+    try:
+        stock = Vnstock().stock(source='VCI')
+        # Get companies in the specified industry
+        companies = stock.listing.symbols_by_industries()
+        filtered_companies = companies[companies['en_icb_name4'] == industry_name]
+        symbols = filtered_companies['symbol'].tolist()
+        
+        if not symbols:
+            raise ValueError(f"No companies found for industry: {industry_name}")
+        
+        # Initialize stock client
+        stock_client = Vnstock()
+        
+        # Fetch data in parallel
+        with ThreadPoolExecutor(max_workers=min(max_workers, len(symbols))) as executor:
+            func = partial(get_company_data, stock_client=stock_client)
+            results = list(executor.map(func, symbols))
+        
+        # Process results
+        pe_df = pd.concat([r for r in results if r is not None], ignore_index=True)
+        
+        if pe_df.empty:
+            raise ValueError("No valid data retrieved for any company")
+        
+        # Calculate weighted PE
+        pe_df['weighted_pe'] = pe_df[('Chỉ tiêu định giá', 'P/E')] * \
+                              pe_df[('Chỉ tiêu định giá', 'Market Capital (Bn. VND)')]
+        
+        total_market_cap = pe_df[('Chỉ tiêu định giá', 'Market Capital (Bn. VND)')].sum()
+        weighted_pe = pe_df['weighted_pe'].sum() / total_market_cap if total_market_cap > 0 else np.nan
+        
+        return weighted_pe
+        
+    except Exception as e:
+        print(f"Error calculating industry PE: {str(e)}")
+        return np.nan
+def industry_name(symbol):
+    stock = Vnstock().stock(symbol=symbol, source='VCI')
+    industry_names = stock.listing.symbols_by_industries()['en_icb_name4'].values[0]
+    industry_name = industry_names[industry_names['symbol'] == symbol]
+    return industry_name['icb_name4'].values[0]
+    
+def current_price(symbol):
+    stock = Vnstock().stock(symbol=symbol, source='VCI')
+    ratio_data = stock.finance.ratio(symbol=symbol)
+    eps_data = ratio_data[[('Meta', 'yearReport'), ('Chỉ tiêu định giá', 'EPS (VND)')]].dropna()
+    eps_data_filtered = eps_data[eps_data['yearReport'].between(2020, 2024)]
+    eps_by_year = eps_data_filtered.groupby('yearReport')['EPS (VND)'].sum()
+    eps_2024 = eps_by_year.get(2024, None)
+    fair_value_pe = industry_pe(industry_name(symbol), 10, 'VCI') * eps_2024
+    return fair_value_pe
     
 def get_market_data(stock_info=None, symbol=None):
     """Lấy các dữ liệu thị trường bao gồm VNINDEX và thông tin cổ phiếu"""
