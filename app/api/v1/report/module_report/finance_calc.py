@@ -327,7 +327,7 @@ def industry_name(symbol):
     industry_name = industry_names[industry_names['symbol'] == symbol]
     return industry_name['icb_name4'].values[0]
     
-def current_price(symbol):
+def predict_price(symbol):
     stock = Vnstock().stock(symbol=symbol, source='VCI')
     ratio_data = stock.finance.ratio(symbol=symbol)
     eps_data = ratio_data[[('Meta', 'yearReport'), ('Chỉ tiêu định giá', 'EPS (VND)')]].dropna()
