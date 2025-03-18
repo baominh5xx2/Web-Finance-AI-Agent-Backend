@@ -27,6 +27,29 @@ def get_company_industry(symbol):
 def get_company_name(symbol):
     company = Vnstock().stock(symbol=symbol, source='TCBS').company
     return company.profile()['company_name'].values[0]
+
+# Thêm hàm để tạo dữ liệu dự phóng
+def create_projection_data(symbol):
+    """Tạo dữ liệu dự phóng cho báo cáo"""
+    try:
+        # Dữ liệu dự phóng mẫu - trong thực tế sẽ lấy từ database hoặc API
+        projection_data = {
+            'revenue': ['20,609', '+11%', '25,266', '+23%', 'Doanh thu thuần năm 2024 ghi nhận tăng 11% YoY. Đóng góp chủ yếu đến từ sản lượng tăng (+10.1 triệu tấn, +18% YoY), đặc biệt là ở kênh xuất khẩu (620 nghìn tấn, +21% YoY). Trong năm 2025, chúng tôi kỳ vọng sản lượng tiếp tục tăng trưởng 14% YoY, giá tôn mạ và ống thép trong nước tăng trưởng 10% YoY, từ đó đóng góp cho sự tăng trưởng doanh thu.'],
+            'volume': ['882', '20%', '1,014', '15%', 'Sản lượng tôn mạ tăng 20% YoY và đóng lực từ các kênh nội địa và xuất khẩu. Chúng tôi kỳ vọng sản lượng bán hàng tiếp tục tăng trưởng 15% trong năm 2025 do kỳ vọng nhu cầu hồi phục đặc biệt tại thị trường nội địa, nhờ (1) Thị trường BĐS ấm lên; (2) Chính phủ đẩy mạnh giải ngân đầu tư công.'],
+            'coated_steel': ['882', '20%', '1,014', '15%', ''],
+            'steel_pipe': ['130', '-5%', '137', '5%', 'Sản phẩm ống thép của Nam Kim chủ yếu được tiêu thụ tại thị trường nội địa. Năm 2024, sản lượng giảm nhẹ 5% do nhu cầu ống thép xây dựng miền Nam chưa khởi sắc, trong khi hệ thống phân phối của Nam Kim chủ yếu tại khu vực này. Chúng tôi kỳ vọng sản lượng ống thép sẽ tăng 5% trong năm 2025 nhờ hoạt động xây dựng hồi phục, đặc biệt là đối với các dự án tại miền Nam được khởi động phát triển.'],
+            'gross_profit': ['1,832', '66%', '2,653', '45%', 'Trong 2024, giá HRC đã giảm 10.7% khiến biên lợi nhuận gộp của NKG tăng mạnh (do giá HRC giảm đầu vào giá bán đầu ra thường được điều chỉnh trễ hơn với giá HRC giao ngay). Trong năm 2025, chúng tôi cho rằng xu hướng hồi phục của giá thép HRC, kết hợp với chiến lược quản lý hàng tồn kho linh hoạt sẽ giúp Nam Kim cải thiện biên lợi nhuận gộp.'],
+            'gross_margin': ['8.9%', '', '10.5%', '', ''],
+            'sga': ['1,138', '54%', '1,337', '17.4%', 'Năm 2024, giá cước vận chuyển tăng đột biến khiến chi phí bán hàng của NKG tăng đột biến. Chúng tôi kỳ vọng giá cước vận chuyển sẽ quay lại mức ổn định trong năm 2025.'],
+            'operating_profit': ['557', '215%', '1,021', '83%', ''],
+            'profit_before_tax': ['558', '215%', '1,023', '83%', ''],
+            'profit_after_tax': ['453', '286%', '829', '83%', '']
+        }
+        return projection_data
+    except Exception as e:
+        print(f"Lỗi khi tạo dữ liệu dự phóng: {str(e)}")
+        return None
+
 def generate_pdf_report(symbol: str):
     try:
         # Fix the file paths for financial data - ensure proper formatting with os.path.join
@@ -232,18 +255,17 @@ def generate_pdf_report(symbol: str):
             # Tính giá mục tiêu và suất sinh lời sử dụng hàm predict_price
             try:
                 price_target, profit_percent = predict_price(symbol)
-                print(f"Đã tính giá mục tiêu cho {symbol}: {price_target} VND, Suất sinh lời: {profit_percent}%")
+                print(f"Đã tính giá mục tiêu cho {symbol}: {price_target} VND, Suất sinh lời: {profit_percent * 100}%")
                 formatted_price_target = f"{price_target:,.0f}"
-                print(f"Đã tính giá mục tiêu cho {symbol}: {formatted_price_target} VND, Suất sinh lời: {profit_percent * 100}%")
             except Exception as e:
                 print(f"Lỗi khi tính giá mục tiêu: {str(e)}")
                 # Kiểm tra nếu price_value là số thì mới tính toán giá mục tiêu dự phòng
                 if isinstance(price_value, (int, float)) and price_value > 0:
-                    # Fallback: Tính toán giá mục tiêu đơn giản (25% cao hơn giá hiện tại)
+                    # Fallback: Tính toán giá mục tiêu đơn giản (50% cao hơn giá hiện tại)
                     price_target = price_value * 1.5
                     formatted_price_target = f"{price_target:,.0f}"
-                    profit_percent = 100
-                    print(f"Sử dụng giá mục tiêu đơn giản: {formatted_price_target} VND, Suất sinh lời: {profit_percent}%")
+                    profit_percent = 0.5  # 50% được lưu dưới dạng thập phân
+                    print(f"Sử dụng giá mục tiêu đơn giản: {formatted_price_target} VND, Suất sinh lời: {profit_percent * 100}%")
                 else:
                     # Nếu không thể tính toán được giá mục tiêu, sử dụng "N/A"
                     formatted_price_target = "N/A"
@@ -261,7 +283,7 @@ def generate_pdf_report(symbol: str):
                     # Tính giá mục tiêu đơn giản và suất sinh lời
                     price_target = price_value * 1.25
                     formatted_price_target = f"{price_target:,.0f}"
-                    profit_percent = 25
+                    profit_percent = 0.25  # 25% được lưu dưới dạng thập phân
                 else:
                     formatted_current_price = "N/A"
                     formatted_price_target = "N/A"
@@ -352,6 +374,9 @@ def generate_pdf_report(symbol: str):
         market_data = get_market_data(stock_info, symbol)
         print(f"Đã lấy dữ liệu thị trường từ module finance_calc cho {symbol}: {market_data}")
         
+        # Tạo dữ liệu dự phóng
+        projection_data = create_projection_data(symbol)
+        
         # Generate PDF using ReportLab với định dạng mới
         pdf = PDFReport()
         pdf.create_stock_report(
@@ -359,7 +384,8 @@ def generate_pdf_report(symbol: str):
             company_data=company_data,
             recommendation_data=recommendation_data,
             market_data=market_data,
-            analysis_data=analysis_data
+            analysis_data=analysis_data,
+            projection_data=projection_data  # Thêm dữ liệu dự phóng
         )
         
         return output_path
