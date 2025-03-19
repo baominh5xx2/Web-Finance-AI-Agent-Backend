@@ -6,7 +6,8 @@ from .module_report.data_processing import read_data, clean_column_names, standa
 from .module_report.finance_calc import (calculate_total_current_assets, calculate_ppe, calculate_total_assets, 
                                         calculate_ebitda, calculate_financial_ratios, calculate_total_operating_expense,
                                         calculate_net_income_before_taxes, calculate_net_income_before_extraordinary_items,
-                                        get_market_data, current_price, predict_price)
+                                        get_market_data, current_price, predict_price, doanhthu_thuan_p2, loinhuan_gop_p2,
+                                        chiphi_p2, loinhuankinhdoanh_p2)
 from .module_report.generate_pdf import PDFReport
 from .module_report.api_gemini import generate_financial_analysis, create_analysis_prompt
 from .module_report.chart_generator import generate_financial_charts
@@ -25,26 +26,193 @@ def get_company_industry(symbol):
         print(f"Lỗi khi lấy thông tin ngành nghề: {str(e)}")
         return "Không xác định"
 def get_company_name(symbol):
-    company = Vnstock().stock(symbol=symbol, source='TCBS').company
-    return company.profile()['company_name'].values[0]
+    try:
+        company = Vnstock().stock(symbol=symbol, source='TCBS').company
+        profile = company.profile()
+        if profile.empty or 'company_name' not in profile.columns:
+            return f"{symbol}"  # Trả về symbol nếu không lấy được tên
+        return profile['company_name'].values[0]
+    except Exception as e:
+        print(f"Lỗi khi lấy tên công ty cho {symbol}: {str(e)}")
+        return f"{symbol}"
 
 # Thêm hàm để tạo dữ liệu dự phóng
 def create_projection_data(symbol):
     """Tạo dữ liệu dự phóng cho báo cáo"""
     try:
-        # Dữ liệu dự phóng mẫu - trong thực tế sẽ lấy từ database hoặc API
+        # Khởi tạo cấu trúc dữ liệu trống với các giá trị N/A
         projection_data = {
-            'revenue': ['20,609', '+11%', '25,266', '+23%', 'Doanh thu thuần năm 2024 ghi nhận tăng 11% YoY. Đóng góp chủ yếu đến từ sản lượng tăng (+10.1 triệu tấn, +18% YoY), đặc biệt là ở kênh xuất khẩu (620 nghìn tấn, +21% YoY). Trong năm 2025, chúng tôi kỳ vọng sản lượng tiếp tục tăng trưởng 14% YoY, giá tôn mạ và ống thép trong nước tăng trưởng 10% YoY, từ đó đóng góp cho sự tăng trưởng doanh thu.'],
-            'volume': ['882', '20%', '1,014', '15%', 'Sản lượng tôn mạ tăng 20% YoY và đóng lực từ các kênh nội địa và xuất khẩu. Chúng tôi kỳ vọng sản lượng bán hàng tiếp tục tăng trưởng 15% trong năm 2025 do kỳ vọng nhu cầu hồi phục đặc biệt tại thị trường nội địa, nhờ (1) Thị trường BĐS ấm lên; (2) Chính phủ đẩy mạnh giải ngân đầu tư công.'],
-            'coated_steel': ['882', '20%', '1,014', '15%', ''],
-            'steel_pipe': ['130', '-5%', '137', '5%', 'Sản phẩm ống thép của Nam Kim chủ yếu được tiêu thụ tại thị trường nội địa. Năm 2024, sản lượng giảm nhẹ 5% do nhu cầu ống thép xây dựng miền Nam chưa khởi sắc, trong khi hệ thống phân phối của Nam Kim chủ yếu tại khu vực này. Chúng tôi kỳ vọng sản lượng ống thép sẽ tăng 5% trong năm 2025 nhờ hoạt động xây dựng hồi phục, đặc biệt là đối với các dự án tại miền Nam được khởi động phát triển.'],
-            'gross_profit': ['1,832', '66%', '2,653', '45%', 'Trong 2024, giá HRC đã giảm 10.7% khiến biên lợi nhuận gộp của NKG tăng mạnh (do giá HRC giảm đầu vào giá bán đầu ra thường được điều chỉnh trễ hơn với giá HRC giao ngay). Trong năm 2025, chúng tôi cho rằng xu hướng hồi phục của giá thép HRC, kết hợp với chiến lược quản lý hàng tồn kho linh hoạt sẽ giúp Nam Kim cải thiện biên lợi nhuận gộp.'],
-            'gross_margin': ['8.9%', '', '10.5%', '', ''],
-            'sga': ['1,138', '54%', '1,337', '17.4%', 'Năm 2024, giá cước vận chuyển tăng đột biến khiến chi phí bán hàng của NKG tăng đột biến. Chúng tôi kỳ vọng giá cước vận chuyển sẽ quay lại mức ổn định trong năm 2025.'],
-            'operating_profit': ['557', '215%', '1,021', '83%', ''],
-            'profit_before_tax': ['558', '215%', '1,023', '83%', ''],
-            'profit_after_tax': ['453', '286%', '829', '83%', '']
+            'revenue': ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'],
+            'gross_profit': ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'],
+            'gross_margin': ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'],
+            'financial_expense': ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'],
+            'selling_expense': ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'],
+            'admin_expense': ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'],
+            'operating_profit': ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'],
+            'profit_before_tax': ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'],
+            'profit_after_tax': ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']
         }
+        
+        # Lấy dữ liệu doanh thu thuần từ API
+        try:
+            doanh_thu, yoy = doanhthu_thuan_p2(symbol)
+            
+            # In thông tin debug
+            print(f"DEBUG - Dữ liệu từ doanhthu_thuan_p2: doanh_thu={doanh_thu}, yoy={yoy}, types: {type(doanh_thu)}, {type(yoy)}")
+            
+            # Chuyển đổi doanh thu từ đồng sang tỷ đồng - giá trị trả về từ API là đơn vị đồng
+            doanh_thu_ty = doanh_thu / 1_000_000_000 if isinstance(doanh_thu, (int, float, np.int64, np.float64)) else None
+            
+            # Định dạng dữ liệu doanh thu thuần
+            doanh_thu_str = f"{doanh_thu_ty:,.2f}" if doanh_thu_ty is not None else 'N/A'
+            yoy_str = f"+{yoy*100:.1f}%" if isinstance(yoy, (int, float)) and yoy > 0 else f"{yoy*100:.1f}%" if isinstance(yoy, (int, float)) else 'N/A'
+            
+            # Ước tính doanh thu năm 2025 (tăng 10% so với 2024)
+            doanh_thu_2025 = doanh_thu_ty * 1.1 if doanh_thu_ty is not None else None
+            doanh_thu_2025_str = f"{doanh_thu_2025:,.2f}" if doanh_thu_2025 is not None else 'N/A'
+            yoy_2025_str = "+10.0%" if doanh_thu_2025 is not None else 'N/A'
+            
+            # Cập nhật dữ liệu doanh thu thuần
+            projection_data['revenue'] = [doanh_thu_str, yoy_str, doanh_thu_2025_str, yoy_2025_str, 'N/A']
+            
+            print(f"Đã lấy dữ liệu doanh thu thuần cho {symbol}: {doanh_thu_str} tỷ đồng ({yoy_str})")
+            
+            # Lấy dữ liệu lợi nhuận gộp
+            try:
+                bienloinhuangop, loinhuangop, yoy_loinhuangop = loinhuan_gop_p2(symbol)
+                
+                # In thông tin debug
+                print(f"DEBUG - Dữ liệu từ loinhuan_gop_p2: bienloinhuangop={bienloinhuangop}, loinhuangop={loinhuangop}, yoy_loinhuangop={yoy_loinhuangop}")
+                
+                # Chuyển đổi lợi nhuận gộp từ đồng sang tỷ đồng
+                loinhuangop_ty = loinhuangop / 1_000_000_000 if isinstance(loinhuangop, (int, float, np.int64, np.float64)) else None
+                
+                # Định dạng dữ liệu lợi nhuận gộp
+                loinhuangop_str = f"{loinhuangop_ty:,.2f}" if loinhuangop_ty is not None else 'N/A'
+                yoy_loinhuangop_str = f"+{yoy_loinhuangop*100:.1f}%" if isinstance(yoy_loinhuangop, (int, float)) and yoy_loinhuangop > 0 else f"{yoy_loinhuangop*100:.1f}%" if isinstance(yoy_loinhuangop, (int, float)) else 'N/A'
+                
+                # Ước tính lợi nhuận gộp năm 2025 (tăng 10% so với 2024)
+                loinhuangop_2025 = loinhuangop_ty * 1.1 if loinhuangop_ty is not None else None
+                loinhuangop_2025_str = f"{loinhuangop_2025:,.2f}" if loinhuangop_2025 is not None else 'N/A'
+                yoy_loinhuangop_2025_str = "+10.0%" if loinhuangop_2025 is not None else 'N/A'
+                
+                # Cập nhật dữ liệu lợi nhuận gộp
+                projection_data['gross_profit'] = [loinhuangop_str, yoy_loinhuangop_str, loinhuangop_2025_str, yoy_loinhuangop_2025_str, 'N/A']
+                
+                # Định dạng dữ liệu biên lợi nhuận gộp
+                bienloinhuangop_str = f"{bienloinhuangop:.2f}%" if isinstance(bienloinhuangop, (int, float, np.int64, np.float64)) else 'N/A'
+                
+                # Giả định biên lợi nhuận gộp năm 2025 tương đương 2024
+                bienloinhuangop_2025_str = bienloinhuangop_str
+                
+                # Cập nhật dữ liệu biên lợi nhuận gộp
+                projection_data['gross_margin'] = [bienloinhuangop_str, 'N/A', bienloinhuangop_2025_str, 'N/A', 'N/A']
+                
+                print(f"Đã lấy dữ liệu lợi nhuận gộp cho {symbol}: {loinhuangop_str} tỷ đồng ({yoy_loinhuangop_str})")
+                print(f"Đã lấy dữ liệu biên lợi nhuận gộp cho {symbol}: {bienloinhuangop_str}")
+            except Exception as e:
+                print(f"Lỗi khi lấy dữ liệu lợi nhuận gộp: {str(e)}")
+                
+            # Lấy dữ liệu chi phí
+            try:
+                laigop, chiphitaichinh, yoy_chiphitaichinh, chiphibanhang, yoy_laigop, yoy_chiphibanhang, chiphiql, yoy_chiphiql = chiphi_p2(symbol)
+                
+                # In thông tin debug
+                print(f"DEBUG - Dữ liệu từ chiphi_p2: chiphitaichinh={chiphitaichinh}, chiphibanhang={chiphibanhang}, chiphiql={chiphiql}")
+                
+                # Chuyển đổi chi phí từ đồng sang tỷ đồng
+                chiphitaichinh_ty = chiphitaichinh / 1_000_000_000 if isinstance(chiphitaichinh, (int, float, np.int64, np.float64)) else None
+                chiphibanhang_ty = chiphibanhang / 1_000_000_000 if isinstance(chiphibanhang, (int, float, np.int64, np.float64)) else None
+                chiphiql_ty = chiphiql / 1_000_000_000 if isinstance(chiphiql, (int, float, np.int64, np.float64)) else None
+                
+                # Định dạng dữ liệu chi phí tài chính
+                chiphitaichinh_str = f"{chiphitaichinh_ty:,.2f}" if chiphitaichinh_ty is not None else 'N/A'
+                yoy_chiphitaichinh_str = f"+{yoy_chiphitaichinh*100:.1f}%" if isinstance(yoy_chiphitaichinh, (int, float)) and yoy_chiphitaichinh > 0 else f"{yoy_chiphitaichinh*100:.1f}%" if isinstance(yoy_chiphitaichinh, (int, float)) else 'N/A'
+                
+                # Ước tính chi phí tài chính năm 2025 (giữ nguyên so với 2024)
+                chiphitaichinh_2025 = chiphitaichinh_ty if chiphitaichinh_ty is not None else None
+                chiphitaichinh_2025_str = f"{chiphitaichinh_2025:,.2f}" if chiphitaichinh_2025 is not None else 'N/A'
+                
+                # Cập nhật dữ liệu chi phí tài chính
+                projection_data['financial_expense'] = [chiphitaichinh_str, yoy_chiphitaichinh_str, chiphitaichinh_2025_str, "0.0%", 'N/A']
+                
+                # Định dạng dữ liệu chi phí bán hàng
+                chiphibanhang_str = f"{chiphibanhang_ty:,.2f}" if chiphibanhang_ty is not None else 'N/A'
+                yoy_chiphibanhang_str = f"+{yoy_chiphibanhang*100:.1f}%" if isinstance(yoy_chiphibanhang, (int, float)) and yoy_chiphibanhang > 0 else f"{yoy_chiphibanhang*100:.1f}%" if isinstance(yoy_chiphibanhang, (int, float)) else 'N/A'
+                
+                # Ước tính chi phí bán hàng năm 2025 (giữ nguyên so với 2024)
+                chiphibanhang_2025 = chiphibanhang_ty if chiphibanhang_ty is not None else None
+                chiphibanhang_2025_str = f"{chiphibanhang_2025:,.2f}" if chiphibanhang_2025 is not None else 'N/A'
+                
+                # Cập nhật dữ liệu chi phí bán hàng
+                projection_data['selling_expense'] = [chiphibanhang_str, yoy_chiphibanhang_str, chiphibanhang_2025_str, "0.0%", 'N/A']
+                
+                # Định dạng dữ liệu chi phí quản lý
+                chiphiql_str = f"{chiphiql_ty:,.2f}" if chiphiql_ty is not None else 'N/A'
+                yoy_chiphiql_str = f"+{yoy_chiphiql*100:.1f}%" if isinstance(yoy_chiphiql, (int, float)) and yoy_chiphiql > 0 else f"{yoy_chiphiql*100:.1f}%" if isinstance(yoy_chiphiql, (int, float)) else 'N/A'
+                
+                # Ước tính chi phí quản lý năm 2025 (giữ nguyên so với 2024)
+                chiphiql_2025 = chiphiql_ty if chiphiql_ty is not None else None
+                chiphiql_2025_str = f"{chiphiql_2025:,.2f}" if chiphiql_2025 is not None else 'N/A'
+                
+                # Cập nhật dữ liệu chi phí quản lý
+                projection_data['admin_expense'] = [chiphiql_str, yoy_chiphiql_str, chiphiql_2025_str, "0.0%", 'N/A']
+                
+                print(f"Đã lấy dữ liệu chi phí cho {symbol}")
+            except Exception as e:
+                print(f"Lỗi khi lấy dữ liệu chi phí: {str(e)}")
+                
+            # Lấy dữ liệu lợi nhuận từ HĐKD, LNTT và LNST
+            try:
+                loinhuanhdkd, loinhuantruothue, loinhuansautrue, yoy_loinhuanhdkd, yoy_loinhuantruothue, yoy_loinhuansautrue = loinhuankinhdoanh_p2(symbol)
+                
+                # In thông tin debug
+                print(f"DEBUG - Dữ liệu từ loinhuankinhdoanh_p2: loinhuanhdkd={loinhuanhdkd}, loinhuantruothue={loinhuantruothue}, loinhuansautrue={loinhuansautrue}")
+                
+                # Chuyển đổi lợi nhuận từ đồng sang tỷ đồng
+                loinhuanhdkd_ty = loinhuanhdkd / 1_000_000_000 if isinstance(loinhuanhdkd, (int, float, np.int64, np.float64)) else None
+                loinhuantruothue_ty = loinhuantruothue / 1_000_000_000 if isinstance(loinhuantruothue, (int, float, np.int64, np.float64)) else None
+                loinhuansautrue_ty = loinhuansautrue / 1_000_000_000 if isinstance(loinhuansautrue, (int, float, np.int64, np.float64)) else None
+                
+                # Định dạng dữ liệu lợi nhuận từ HĐKD
+                loinhuanhdkd_str = f"{loinhuanhdkd_ty:,.2f}" if loinhuanhdkd_ty is not None else 'N/A'
+                yoy_loinhuanhdkd_str = f"+{yoy_loinhuanhdkd*100:.1f}%" if isinstance(yoy_loinhuanhdkd, (int, float)) and yoy_loinhuanhdkd > 0 else f"{yoy_loinhuanhdkd*100:.1f}%" if isinstance(yoy_loinhuanhdkd, (int, float)) else 'N/A'
+                
+                # Ước tính lợi nhuận từ HĐKD năm 2025 (tăng 10% so với 2024)
+                loinhuanhdkd_2025 = loinhuanhdkd_ty * 1.1 if loinhuanhdkd_ty is not None else None
+                loinhuanhdkd_2025_str = f"{loinhuanhdkd_2025:,.2f}" if loinhuanhdkd_2025 is not None else 'N/A'
+                
+                # Cập nhật dữ liệu lợi nhuận từ HĐKD
+                projection_data['operating_profit'] = [loinhuanhdkd_str, yoy_loinhuanhdkd_str, loinhuanhdkd_2025_str, "+10.0%", 'N/A']
+                
+                # Định dạng dữ liệu lợi nhuận trước thuế
+                loinhuantruothue_str = f"{loinhuantruothue_ty:,.2f}" if loinhuantruothue_ty is not None else 'N/A'
+                yoy_loinhuantruothue_str = f"+{yoy_loinhuantruothue*100:.1f}%" if isinstance(yoy_loinhuantruothue, (int, float)) and yoy_loinhuantruothue > 0 else f"{yoy_loinhuantruothue*100:.1f}%" if isinstance(yoy_loinhuantruothue, (int, float)) else 'N/A'
+                
+                # Ước tính lợi nhuận trước thuế năm 2025 (tăng 10% so với 2024)
+                loinhuantruothue_2025 = loinhuantruothue_ty * 1.1 if loinhuantruothue_ty is not None else None
+                loinhuantruothue_2025_str = f"{loinhuantruothue_2025:,.2f}" if loinhuantruothue_2025 is not None else 'N/A'
+                
+                # Cập nhật dữ liệu lợi nhuận trước thuế
+                projection_data['profit_before_tax'] = [loinhuantruothue_str, yoy_loinhuantruothue_str, loinhuantruothue_2025_str, "+10.0%", 'N/A']
+                
+                # Định dạng dữ liệu lợi nhuận sau thuế
+                loinhuansautrue_str = f"{loinhuansautrue_ty:,.2f}" if loinhuansautrue_ty is not None else 'N/A'
+                yoy_loinhuansautrue_str = f"+{yoy_loinhuansautrue*100:.1f}%" if isinstance(yoy_loinhuansautrue, (int, float)) and yoy_loinhuansautrue > 0 else f"{yoy_loinhuansautrue*100:.1f}%" if isinstance(yoy_loinhuansautrue, (int, float)) else 'N/A'
+                
+                # Ước tính lợi nhuận sau thuế năm 2025 (tăng 10% so với 2024)
+                loinhuansautrue_2025 = loinhuansautrue_ty * 1.1 if loinhuansautrue_ty is not None else None
+                loinhuansautrue_2025_str = f"{loinhuansautrue_2025:,.2f}" if loinhuansautrue_2025 is not None else 'N/A'
+                
+                # Cập nhật dữ liệu lợi nhuận sau thuế
+                projection_data['profit_after_tax'] = [loinhuansautrue_str, yoy_loinhuansautrue_str, loinhuansautrue_2025_str, "+10.0%", 'N/A']
+                
+                print(f"Đã lấy dữ liệu lợi nhuận cho {symbol}")
+            except Exception as e:
+                print(f"Lỗi khi lấy dữ liệu lợi nhuận: {str(e)}")
+        except Exception as e:
+            print(f"Lỗi khi lấy dữ liệu doanh thu thuần: {str(e)}")
+        
         return projection_data
     except Exception as e:
         print(f"Lỗi khi tạo dữ liệu dự phóng: {str(e)}")

@@ -501,3 +501,20 @@ class Page1:
                 content = [p.strip() for p in text.split('\n\n') if p.strip()]
             
         return content
+
+    def format_row(self, row_data):
+        # Đảm bảo row_data[0] (tên khoản mục) luôn tồn tại
+        result = [Paragraph(str(row_data[0]), self.styles['ItemCell'])]
+        
+        # Thêm các cột dữ liệu, đảm bảo luôn đủ 5 cột
+        for i in range(1, 6):
+            if i < len(row_data):
+                result.append(row_data[i])
+            else:
+                result.append('N/A')  # Thêm giá trị mặc định nếu thiếu
+        
+        # Chuyển comment (cột cuối) thành Paragraph nếu có
+        if len(result) > 5 and result[5] and result[5] != 'N/A':
+            result[5] = Paragraph(str(result[5]), self.styles['CommentCell'])
+        
+        return result

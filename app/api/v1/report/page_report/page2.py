@@ -68,6 +68,27 @@ class Page2:
             wordWrap='CJK'  # Better word wrapping for Asian languages
         ))
 
+        # Add styles for bold item name cells (for parent items)
+        self.styles.add(ParagraphStyle(
+            name='BoldItemCell',
+            fontName='DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold',
+            fontSize=9,
+            alignment=TA_LEFT,
+            leading=12,
+            wordWrap='CJK'  # Better word wrapping for Asian languages
+        ))
+
+        # Add styles for sub-item name cells
+        self.styles.add(ParagraphStyle(
+            name='SubItemCell',
+            fontName='DejaVuSans' if self.font_added else 'Helvetica',
+            fontSize=9,
+            alignment=TA_LEFT,
+            leading=12,
+            leftIndent=10,  # Thụt lề để phân biệt mục con
+            wordWrap='CJK'
+        ))
+
     def _draw_page_template(self, canvas, doc, company_data):
         """Draw the page template for page 2"""
         # Add any specific page template drawing if needed
@@ -92,26 +113,41 @@ class Page2:
         ]
         
         # Convert text to Paragraph objects for both item name and comment
-        def format_row(row_data):
-            # Convert the first column (item name) to Paragraph
-            row_data[0] = Paragraph(str(row_data[0]), self.styles['ItemCell'])
+        def format_row(row_data, is_sub_item=False, is_bold=False):
+            # Tạo bản sao của row_data để tránh thay đổi tham chiếu gốc
+            result = row_data.copy()
+            
+            # Đảm bảo dữ liệu có đủ 6 phần tử
+            while len(result) < 6:
+                result.append('N/A')
+                
+            # Convert the first column (item name) to Paragraph with appropriate style
+            if is_bold:
+                style = self.styles['BoldItemCell']
+            elif is_sub_item:
+                style = self.styles['SubItemCell']
+            else:
+                style = self.styles['ItemCell']
+                
+            result[0] = Paragraph(str(result[0]), style)
+            
             # Convert the last column (comment) to Paragraph if it's not empty
-            if len(row_data) > 5 and row_data[5] and row_data[5] != 'N/A':
-                row_data[5] = Paragraph(str(row_data[5]), self.styles['CommentCell'])
-            return row_data
+            if result[5] and result[5] != 'N/A':
+                result[5] = Paragraph(str(result[5]), self.styles['CommentCell'])
+                
+            return result
 
         # Get data from projection_data and format each row
         data = [
-            format_row(['Doanh thu thuần'] + projection_data.get('revenue', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'])),
-            format_row(['Sản lượng (ngàn tấn)'] + projection_data.get('volume', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'])),
-            format_row(['Tôn mạ'] + projection_data.get('coated_steel', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'])),
-            format_row(['Ống thép'] + projection_data.get('steel_pipe', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'])),
-            format_row(['Lợi nhuận gộp'] + projection_data.get('gross_profit', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'])),
-            format_row(['Biên lợi nhuận gộp'] + projection_data.get('gross_margin', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'])),
-            format_row(['Chi phí bán hàng và quản lý'] + projection_data.get('sga', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'])),
-            format_row(['Lợi nhuận từ HĐKD'] + projection_data.get('operating_profit', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'])),
-            format_row(['LNTT'] + projection_data.get('profit_before_tax', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'])),
-            format_row(['LNST'] + projection_data.get('profit_after_tax', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']))
+            format_row(['Doanh thu thuần'] + projection_data.get('revenue', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']), is_bold=True),
+            format_row(['Lợi nhuận gộp'] + projection_data.get('gross_profit', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']), is_bold=True),
+            format_row(['Biên lợi nhuận gộp'] + projection_data.get('gross_margin', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']), True),
+            format_row(['Chi phí tài chính'] + projection_data.get('financial_expense', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']), True),
+            format_row(['Chi phí bán hàng'] + projection_data.get('selling_expense', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']), True),
+            format_row(['Chi phí quản lý'] + projection_data.get('admin_expense', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']), True),
+            format_row(['Lợi nhuận từ HĐKD'] + projection_data.get('operating_profit', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']), is_bold=True),
+            format_row(['    LNTT'] + projection_data.get('profit_before_tax', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']), True),
+            format_row(['    LNST'] + projection_data.get('profit_after_tax', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']), True)
         ]
         
         # Combine headers and data
@@ -131,6 +167,24 @@ class Page2:
             ('SPAN', (3, 0), (4, 0)),  # Merge "2025F" cells
             ('SPAN', (5, 0), (5, 1)),  # Merge "Chú thích" cells
             
+            # Gộp chú thích cho mục Lợi nhuận gộp và các mục con
+            ('SPAN', (5, 3), (5, 7)), # Gộp ô chú thích từ dòng Lợi nhuận gộp đến Chi phí quản lý
+            
+            # Gộp chú thích cho mục Lợi nhuận từ HĐKD và các mục con
+            ('SPAN', (5, 8), (5, 10)), # Gộp ô chú thích từ dòng Lợi nhuận từ HĐKD đến LNST
+            
+            # Ẩn đường viền giữa các ô đã gộp cho Lợi nhuận gộp
+            ('LINEAFTER', (5, 3), (5, 6), 0, colors.white),  # Ẩn đường viền bên phải
+            ('LINEBEFORE', (5, 4), (5, 7), 0, colors.white), # Ẩn đường viền bên trái
+            ('LINEBELOW', (5, 3), (5, 6), 0, colors.white),  # Ẩn đường viền dưới
+            ('LINEABOVE', (5, 4), (5, 7), 0, colors.white),  # Ẩn đường viền trên
+            
+            # Ẩn đường viền giữa các ô đã gộp cho Lợi nhuận từ HĐKD
+            ('LINEAFTER', (5, 8), (5, 9), 0, colors.white),  # Ẩn đường viền bên phải
+            ('LINEBEFORE', (5, 9), (5, 10), 0, colors.white), # Ẩn đường viền bên trái
+            ('LINEBELOW', (5, 8), (5, 9), 0, colors.white),  # Ẩn đường viền dưới
+            ('LINEABOVE', (5, 9), (5, 10), 0, colors.white),  # Ẩn đường viền trên
+            
             # Fonts
             ('FONTNAME', (0, 0), (-1, 1), 'DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold'),
             ('FONTNAME', (0, 2), (-1, -1), 'DejaVuSans' if self.font_added else 'Helvetica'),
@@ -143,14 +197,23 @@ class Page2:
             ('ALIGN', (0, 0), (-1, 1), 'CENTER'),
             ('ALIGN', (1, 2), (4, -1), 'RIGHT'),  # Only align numbers to right
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            # Căn giữa theo chiều dọc cho ô chú thích đã gộp
+            ('VALIGN', (5, 3), (5, 7), 'TOP'),
+            ('VALIGN', (5, 8), (5, 10), 'TOP'),
             
-            # Background colors
-            ('BACKGROUND', (0, 0), (-1, 1), colors.HexColor('#E6F0FA')),
-            ('BACKGROUND', (0, 2), (-1, 2), colors.HexColor('#F5F5F5')),
-            ('BACKGROUND', (0, 4), (-1, 4), colors.HexColor('#F5F5F5')),
-            ('BACKGROUND', (0, 6), (-1, 6), colors.HexColor('#F5F5F5')),
-            ('BACKGROUND', (0, 8), (-1, 8), colors.HexColor('#F5F5F5')),
-            ('BACKGROUND', (0, 10), (-1, 10), colors.HexColor('#F5F5F5')),
+            # Background colors - Đã cập nhật để phù hợp với số dòng mới
+            ('BACKGROUND', (0, 0), (-1, 1), colors.HexColor('#E6F0FA')),  # Header
+            ('BACKGROUND', (0, 2), (-1, 2), colors.HexColor('#F5F5F5')),  # Doanh thu thuần
+            ('BACKGROUND', (0, 3), (-1, 3), colors.HexColor('#F5F5F5')),  # Lợi nhuận gộp
+            ('BACKGROUND', (0, 4), (-1, 7), colors.white),    # Các dòng con của Lợi nhuận gộp
+            ('BACKGROUND', (0, 8), (-1, 8), colors.HexColor('#F5F5F5')),  # Lợi nhuận từ HĐKD 
+            ('BACKGROUND', (0, 9), (-1, 10), colors.white),   # LNTT và LNST (mục con của HĐKD)
+            
+            # Định dạng đặc biệt cho dòng con
+            ('LEFTPADDING', (0, 4), (0, 7), 15),  # Thêm padding bên trái cho dòng con của Lợi nhuận gộp
+            ('TEXTCOLOR', (0, 4), (0, 7), colors.HexColor('#666666')),  # Màu chữ nhạt hơn cho dòng con
+            ('LEFTPADDING', (0, 9), (0, 10), 15),  # Thêm padding bên trái cho LNTT và LNST
+            ('TEXTCOLOR', (0, 9), (0, 10), colors.HexColor('#666666')),  # Màu chữ nhạt hơn cho LNTT và LNST
             
             # Borders
             ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),

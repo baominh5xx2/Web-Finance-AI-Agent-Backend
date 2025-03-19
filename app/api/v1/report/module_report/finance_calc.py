@@ -65,7 +65,7 @@ def get_52_week_high_low(symbol):
     end_date = datetime.datetime.now().strftime('%Y-%m-%d')
     start_date = (datetime.datetime.now() - datetime.timedelta(days=365)).strftime('%Y-%m-%d')
     historic_data = stock.quote.history(
-        symbol='NKG', 
+        symbol=symbol, 
         start=start_date, 
         end=end_date, 
         interval='1W'
@@ -246,30 +246,6 @@ def GTGD_90_ngay(symbol):
     avg_volume_x_close = total_volume_x_close / 90
     avg_volume_x_close = avg_volume_x_close / 1_000_000
     return f"{avg_volume_x_close:,.2f}"
-# Thêm hàm lấy dữ liệu thị trường dựa trên dữ liệu từ VNINDEX và các nguồn khác
-'''def predict_price(symbol):
-    # Eps expect 2025
-    stock = Vnstock().stock(symbol=symbol, source='VCI')
-    eps = stock.finance.ratio(period='year',lang='en', dropna=True).head(5)
-    eps_list = eps[('Chỉ tiêu định giá', 'EPS (VND)')].astype(float)  # Chuyển EPS về kiểu số
-    years = eps[('Meta', 'yearReport')].astype(int)  # Chuyển năm về kiểu số nguyên
-    eps_yearly = pd.DataFrame({"Year": years, "EPS": eps_list}).sort_values("Year")
-    eps_yearly = eps_yearly[eps_yearly["EPS"] > 0]
-    eps_yearly["growth_rate"] = eps_yearly["EPS"].pct_change()
-    avg_growth = eps_yearly["growth_rate"].mean(skipna=True)
-    eps_2025 = eps_yearly["EPS"].iloc[-1] * (1 + avg_growth)
-    
-    # P/E expect 2025
-    ratio_data = stock.finance.ratio(symbol=symbol)
-    industry_pe = ratio_data[('Chỉ tiêu định giá', 'P/E')].mean()  
-    result = eps_2025 * industry_pe
-    rounded_price_target = round(result / 100) * 100
-    # current price
-    kk = stock.quote.intraday(symbol=symbol)
-    current_price = kk['price'].values[-1]
-    profit = (rounded_price_target - current_price) / current_price
-    
-    return int(rounded_price_target), profit'''
 def industry_pe(industry_name, max_workers=10, source='VCI'):
     def get_company_data(symbol, stock_client):
         try:
@@ -322,21 +298,144 @@ def industry_pe(industry_name, max_workers=10, source='VCI'):
         print(f"Error calculating industry PE: {str(e)}")
         return np.nan
 def industry_name(symbol):
-    stock = Vnstock().stock(symbol=symbol, source='VCI')
-    industry_names = stock.listing.symbols_by_industries()['en_icb_name4'].values[0]
-    industry_name = industry_names[industry_names['symbol'] == symbol]
-    return industry_name['icb_name4'].values[0]
+    try:
+        stock = Vnstock().stock(symbol=symbol, source='VCI')
+        symbols_industries = stock.listing.symbols_by_industries()
+        # Lọc dữ liệu theo symbol
+        filtered_data = symbols_industries[symbols_industries['symbol'] == symbol]
+        
+        # Kiểm tra xem kết quả lọc có trống không
+        if filtered_data.empty:
+            print(f"Không tìm thấy thông tin ngành nghề cho {symbol}")
+            return "Không xác định"
+            
+        # Kiểm tra xem cột icb_name4 có tồn tại không
+        if 'icb_name4' not in filtered_data.columns:
+            print(f"Không tìm thấy thông tin icb_name4 cho {symbol}")
+            return "Không xác định"
+            
+        # Truy cập an toàn vào giá trị
+        return filtered_data['icb_name4'].values[0]
+    except Exception as e:
+        print(f"Lỗi khi lấy thông tin ngành nghề của {symbol}: {str(e)}")
+        return "Không xác định"
     
 def predict_price(symbol):
+    try:
+        stock = Vnstock().stock(symbol=symbol, source='VCI')
+        ratio_data = stock.finance.ratio(symbol=symbol)
+        ratio_data.columns.tolist()
+        eps_data = ratio_data[[('Meta', 'yearReport'), ('Chỉ tiêu định giá', 'EPS (VND)')]].dropna().copy()
+        eps_data.columns = ['yearReport', 'EPS']
+        eps_data_filtered = eps_data[eps_data['yearReport'].between(2020, 2024)]
+        eps_by_year = eps_data_filtered.groupby('yearReport')['EPS'].sum()
+        eps_2024 = eps_by_year.get(2024, None)
+        
+        # Kiểm tra nếu eps_2024 là None
+        if eps_2024 is None:
+            print(f"Không có dữ liệu EPS cho năm 2024 của {symbol}")
+            return 0, 0
+        
+        # Lấy ngành nghề và kiểm tra kết quả
+        industry = industry_name(symbol)
+        if industry == "Không xác định":
+            print(f"Không thể lấy thông tin ngành nghề cho {symbol}, sử dụng PE mặc định = 15")
+            fair_value_pe = 15 * eps_2024  # Sử dụng PE mặc định là 15
+        else:
+            # Lấy PE ngành
+            industry_pe_value = industry_pe(industry, 10, 'VCI')
+            if np.isnan(industry_pe_value) or industry_pe_value <= 0:
+                print(f"Không thể tính PE ngành {industry}, sử dụng PE mặc định = 15")
+                industry_pe_value = 15  # Sử dụng PE mặc định nếu không tính được
+            
+            # Tính giá mục tiêu
+            fair_value_pe = industry_pe_value * eps_2024
+        
+        # Lấy giá hiện tại
+        current_price_value = current_price(symbol)
+        
+        # Tính tỷ lệ lợi nhuận dự kiến
+        profit_percent = (fair_value_pe / current_price_value - 1) if current_price_value > 0 else 0
+        
+        return fair_value_pe, profit_percent
+    except Exception as e:
+        print(f"Lỗi khi dự đoán giá mục tiêu cho {symbol}: {str(e)}")
+        return 0, 0
+
+def doanhthu_thuan_p2(symbol):
     stock = Vnstock().stock(symbol=symbol, source='VCI')
-    ratio_data = stock.finance.ratio(symbol=symbol)
-    eps_data = ratio_data[[('Meta', 'yearReport'), ('Chỉ tiêu định giá', 'EPS (VND)')]].dropna()
-    eps_data_filtered = eps_data[eps_data['yearReport'].between(2020, 2024)]
-    eps_by_year = eps_data_filtered.groupby('yearReport')['EPS (VND)'].sum()
-    eps_2024 = eps_by_year.get(2024, None)
-    fair_value_pe = industry_pe(industry_name(symbol), 10, 'VCI') * eps_2024
-    return fair_value_pe
-    
+    doanhthu_thuan = stock.finance.income_statement(period='year', lang='vi', dropna=True).head(1)
+    Yoy = doanhthu_thuan['Tăng trưởng doanh thu (%)'].values[0]
+    return doanhthu_thuan['Doanh thu (Tỷ đồng)'].values[0], Yoy
+def chiphi_p2(symbol):
+    stock = Vnstock().stock(symbol=symbol, source='VCI')
+    chiphis = stock.finance.income_statement(period='year', lang='vi', dropna=True).head(2)
+    chiphitaichinh = chiphis['Chi phí tài chính'].values[0]
+    chiphibanhang = chiphis['Chi phí bán hàng'].values[0]
+    chiphiql = chiphis['Chi phí quản lý DN'].values[0]
+    laigop = chiphis['Lãi gộp'].values[0]
+    yoy_laigop = (laigop - chiphis['Lãi gộp'].values[1]) / chiphis['Lãi gộp'].values[1]
+    yoy_chiphitaichinh = (chiphitaichinh - chiphis['Chi phí tài chính'].values[1]) / chiphis['Chi phí tài chính'].values[1]
+    yoy_chiphibanhang = (chiphibanhang - chiphis['Chi phí bán hàng'].values[1]) / chiphis['Chi phí bán hàng'].values[1]
+    yoy_chiphiql = (chiphiql - chiphis['Chi phí quản lý DN'].values[1]) / chiphis['Chi phí quản lý DN'].values[1]
+    return laigop, chiphitaichinh, yoy_chiphitaichinh, chiphibanhang,  yoy_laigop, yoy_chiphibanhang, chiphiql, yoy_chiphiql
+def loinhuan_gop_p2(symbol):
+    try:
+        stock = Vnstock().stock(symbol=symbol, source='VCI')
+        
+        # Get financial ratios and income statement
+        try:
+            result = stock.finance.ratio(period='year', lang='vi', dropna=True).head(2)
+        except Exception:
+            result = None
+            
+        try:
+            loinhuan = stock.finance.income_statement(period='year', lang='vi', dropna=True).head(2)
+        except Exception:
+            loinhuan = None
+        
+        # Get gross profit margin
+        try:
+            if result is not None and ('Chỉ tiêu khả năng sinh lợi','Biên lợi nhuận gộp (%)') in result.columns:
+                bienloinhuangop = result['Chỉ tiêu khả năng sinh lợi','Biên lợi nhuận gộp (%)'].values[0]
+            else:
+                bienloinhuangop = "N/A"
+        except Exception:
+            bienloinhuangop = "N/A"
+        
+        # Get gross profit and calculate YoY growth
+        try:
+            if loinhuan is not None and 'Lãi gộp' in loinhuan.columns and len(loinhuan['Lãi gộp']) >= 2:
+                loinhuangop = loinhuan['Lãi gộp'].values[0]
+                loinhuangop_pre = loinhuan['Lãi gộp'].values[1]
+                
+                if loinhuangop_pre != 0:
+                    yoy = (loinhuangop - loinhuangop_pre) / loinhuangop_pre
+                else:
+                    yoy = "N/A"
+            else:
+                loinhuangop = "N/A"
+                yoy = "N/A"
+        except Exception:
+            loinhuangop = "N/A"
+            yoy = "N/A"
+            
+        return bienloinhuangop, loinhuangop, yoy
+        
+    except Exception as e:
+        print(f"Error processing data for {symbol}: {str(e)}")
+        return "N/A", "N/A", "N/A"
+
+def loinhuankinhdoanh_p2(symbol):
+    stock = Vnstock().stock(symbol=symbol, source='VCI')
+    res = stock.finance.income_statement(period='year', lang='vi', dropna=True).head(2)
+    loinhuanhdkd = res['Lãi/Lỗ từ hoạt động kinh doanh'].values[0]
+    loinhuansautrue = res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (Tỷ đồng)'].values[0]
+    loinhuantruothue = res['LN trước thuế'].values[0]
+    yoy_loinhuanhdkd = (loinhuanhdkd - res['Lãi/Lỗ từ hoạt động kinh doanh'].values[1]) / res['Lãi/Lỗ từ hoạt động kinh doanh'].values[1]
+    yoy_loinhuansautrue = (loinhuansautrue - res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (Tỷ đồng)'].values[1]) / res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (Tỷ đồng)'].values[1]
+    yoy_loinhuantruothue = (loinhuantruothue - res['LN trước thuế'].values[1]) / res['LN trước thuế'].values[1]
+    return loinhuanhdkd, loinhuantruothue, loinhuansautrue, yoy_loinhuanhdkd, yoy_loinhuantruothue, yoy_loinhuansautrue
 def get_market_data(stock_info=None, symbol=None):
     """Lấy các dữ liệu thị trường bao gồm VNINDEX và thông tin cổ phiếu"""
     # Trả về tất cả giá trị là N/A
@@ -350,7 +449,7 @@ def get_market_data(stock_info=None, symbol=None):
         "GTGD bình quân 90 ngày": "N/A",
         "co_dong_lon": None  # Thêm key để lưu danh sách cổ đông lớn
     }
-    
+
     # Debug: In ra các khóa trong market_data để kiểm tra
     print(f"Initial market_data keys: {list(market_data.keys())}")
     
