@@ -508,6 +508,52 @@ def generate_pdf_report(symbol: str):
         # Tạo dữ liệu dự phóng
         projection_data = create_projection_data(symbol)
         
+        # Tạo dữ liệu mẫu cho các công ty cùng ngành (peer data)
+        peer_data = [
+            {
+                'company_name': f"{symbol} (Công ty chính)",
+                'country': 'Việt Nam',
+                'pe': '15.2',
+                'market_cap': '12.5',
+                'revenue_growth': '8.5%',
+                'eps_growth': '10.2%',
+                'roa': '8.4%',
+                'roe': '15.6%'
+            },
+            {
+                'company_name': 'Công ty A',
+                'country': 'Việt Nam',
+                'pe': '14.5',
+                'market_cap': '10.2',
+                'revenue_growth': '7.8%',
+                'eps_growth': '9.1%',
+                'roa': '7.5%',
+                'roe': '14.2%'
+            },
+            {
+                'company_name': 'Công ty B',
+                'country': 'Việt Nam',
+                'pe': '16.8',
+                'market_cap': '15.6',
+                'revenue_growth': '10.5%',
+                'eps_growth': '12.4%',
+                'roa': '9.2%',
+                'roe': '17.8%'
+            }
+        ]
+
+        # Tạo dữ liệu valuation
+        valuation_data = {
+            'pe_avg': '15.5',
+            'pe_median': '15.2',
+            'pe_10yr_avg': '14.8',
+            'pe_target': '16.0',
+            'eps_target': '5,200',
+            'price_target': formatted_price_target,
+            'current_price': formatted_current_price,
+            'upside': f"{profit_percent * 100:.1f}%" if isinstance(profit_percent, (int, float)) else 'N/A'
+        }
+        
         # Generate PDF using ReportLab với định dạng mới
         pdf = PDFReport()
         pdf.create_stock_report(
@@ -516,7 +562,9 @@ def generate_pdf_report(symbol: str):
             recommendation_data=recommendation_data,
             market_data=market_data,
             analysis_data=analysis_data,
-            projection_data=projection_data  # Thêm dữ liệu dự phóng
+            projection_data=projection_data,  # Dữ liệu dự phóng
+            peer_data=peer_data,              # Dữ liệu các công ty cùng ngành
+            valuation_data=valuation_data     # Dữ liệu định giá
         )
         
         return output_path
