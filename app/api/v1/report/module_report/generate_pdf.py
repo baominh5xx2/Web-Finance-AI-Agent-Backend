@@ -11,6 +11,7 @@ from .finance_calc import get_market_data, current_price
 from vnstock import Vnstock
 from ..page_report.page1 import Page1
 from ..page_report.page2 import Page2
+from ..page_report.page3 import Page3
 
 class PDFReport:
     def __init__(self):
@@ -18,7 +19,7 @@ class PDFReport:
         self.font_added = self._setup_fonts()
         self.page1 = Page1(font_added=self.font_added)
         self.page2 = Page2(font_added=self.font_added)
-    
+        
     def _setup_fonts(self):
         """Đăng ký font DejaVuSans có sẵn trong dự án"""
         try:
