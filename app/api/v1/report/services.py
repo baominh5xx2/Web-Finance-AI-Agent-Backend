@@ -67,13 +67,8 @@ def create_projection_data(symbol):
             doanh_thu_str = f"{doanh_thu_ty:,.2f}" if doanh_thu_ty is not None else 'N/A'
             yoy_str = f"+{yoy*100:.1f}%" if isinstance(yoy, (int, float)) and yoy > 0 else f"{yoy*100:.1f}%" if isinstance(yoy, (int, float)) else 'N/A'
             
-            # Ước tính doanh thu năm 2025 (tăng 10% so với 2024)
-            doanh_thu_2025 = doanh_thu_ty * 1.1 if doanh_thu_ty is not None else None
-            doanh_thu_2025_str = f"{doanh_thu_2025:,.2f}" if doanh_thu_2025 is not None else 'N/A'
-            yoy_2025_str = "+10.0%" if doanh_thu_2025 is not None else 'N/A'
-            
             # Cập nhật dữ liệu doanh thu thuần
-            projection_data['revenue'] = [doanh_thu_str, yoy_str, doanh_thu_2025_str, yoy_2025_str, 'N/A']
+            projection_data['revenue'] = [doanh_thu_str, yoy_str, 'N/A', 'N/A', 'N/A']
             
             print(f"Đã lấy dữ liệu doanh thu thuần cho {symbol}: {doanh_thu_str} tỷ đồng ({yoy_str})")
             
@@ -91,22 +86,14 @@ def create_projection_data(symbol):
                 loinhuangop_str = f"{loinhuangop_ty:,.2f}" if loinhuangop_ty is not None else 'N/A'
                 yoy_loinhuangop_str = f"+{yoy_loinhuangop*100:.1f}%" if isinstance(yoy_loinhuangop, (int, float)) and yoy_loinhuangop > 0 else f"{yoy_loinhuangop*100:.1f}%" if isinstance(yoy_loinhuangop, (int, float)) else 'N/A'
                 
-                # Ước tính lợi nhuận gộp năm 2025 (tăng 10% so với 2024)
-                loinhuangop_2025 = loinhuangop_ty * 1.1 if loinhuangop_ty is not None else None
-                loinhuangop_2025_str = f"{loinhuangop_2025:,.2f}" if loinhuangop_2025 is not None else 'N/A'
-                yoy_loinhuangop_2025_str = "+10.0%" if loinhuangop_2025 is not None else 'N/A'
-                
                 # Cập nhật dữ liệu lợi nhuận gộp
-                projection_data['gross_profit'] = [loinhuangop_str, yoy_loinhuangop_str, loinhuangop_2025_str, yoy_loinhuangop_2025_str, 'N/A']
+                projection_data['gross_profit'] = [loinhuangop_str, yoy_loinhuangop_str, 'N/A', 'N/A', 'N/A']
                 
                 # Định dạng dữ liệu biên lợi nhuận gộp
-                bienloinhuangop_str = f"{bienloinhuangop:.2f}%" if isinstance(bienloinhuangop, (int, float, np.int64, np.float64)) else 'N/A'
-                
-                # Giả định biên lợi nhuận gộp năm 2025 tương đương 2024
-                bienloinhuangop_2025_str = bienloinhuangop_str
+                bienloinhuangop_str = f"{bienloinhuangop * 100:.2f}%" if isinstance(bienloinhuangop, (int, float, np.int64, np.float64)) else 'N/A'
                 
                 # Cập nhật dữ liệu biên lợi nhuận gộp
-                projection_data['gross_margin'] = [bienloinhuangop_str, 'N/A', bienloinhuangop_2025_str, 'N/A', 'N/A']
+                projection_data['gross_margin'] = [bienloinhuangop_str, 'N/A', 'N/A', 'N/A', 'N/A']
                 
                 print(f"Đã lấy dữ liệu lợi nhuận gộp cho {symbol}: {loinhuangop_str} tỷ đồng ({yoy_loinhuangop_str})")
                 print(f"Đã lấy dữ liệu biên lợi nhuận gộp cho {symbol}: {bienloinhuangop_str}")
@@ -121,42 +108,30 @@ def create_projection_data(symbol):
                 print(f"DEBUG - Dữ liệu từ chiphi_p2: chiphitaichinh={chiphitaichinh}, chiphibanhang={chiphibanhang}, chiphiql={chiphiql}")
                 
                 # Chuyển đổi chi phí từ đồng sang tỷ đồng
-                chiphitaichinh_ty = chiphitaichinh / 1_000_000_000 if isinstance(chiphitaichinh, (int, float, np.int64, np.float64)) else None
-                chiphibanhang_ty = chiphibanhang / 1_000_000_000 if isinstance(chiphibanhang, (int, float, np.int64, np.float64)) else None
-                chiphiql_ty = chiphiql / 1_000_000_000 if isinstance(chiphiql, (int, float, np.int64, np.float64)) else None
+                chiphitaichinh_ty = -chiphitaichinh / 1_000_000_000 if isinstance(chiphitaichinh, (int, float, np.int64, np.float64)) else None
+                chiphibanhang_ty = -chiphibanhang / 1_000_000_000 if isinstance(chiphibanhang, (int, float, np.int64, np.float64)) else None
+                chiphiql_ty = -chiphiql / 1_000_000_000 if isinstance(chiphiql, (int, float, np.int64, np.float64)) else None
                 
                 # Định dạng dữ liệu chi phí tài chính
                 chiphitaichinh_str = f"{chiphitaichinh_ty:,.2f}" if chiphitaichinh_ty is not None else 'N/A'
                 yoy_chiphitaichinh_str = f"+{yoy_chiphitaichinh*100:.1f}%" if isinstance(yoy_chiphitaichinh, (int, float)) and yoy_chiphitaichinh > 0 else f"{yoy_chiphitaichinh*100:.1f}%" if isinstance(yoy_chiphitaichinh, (int, float)) else 'N/A'
                 
-                # Ước tính chi phí tài chính năm 2025 (giữ nguyên so với 2024)
-                chiphitaichinh_2025 = chiphitaichinh_ty if chiphitaichinh_ty is not None else None
-                chiphitaichinh_2025_str = f"{chiphitaichinh_2025:,.2f}" if chiphitaichinh_2025 is not None else 'N/A'
-                
                 # Cập nhật dữ liệu chi phí tài chính
-                projection_data['financial_expense'] = [chiphitaichinh_str, yoy_chiphitaichinh_str, chiphitaichinh_2025_str, "0.0%", 'N/A']
+                projection_data['financial_expense'] = [chiphitaichinh_str, yoy_chiphitaichinh_str, 'N/A', 'N/A', 'N/A']
                 
                 # Định dạng dữ liệu chi phí bán hàng
                 chiphibanhang_str = f"{chiphibanhang_ty:,.2f}" if chiphibanhang_ty is not None else 'N/A'
                 yoy_chiphibanhang_str = f"+{yoy_chiphibanhang*100:.1f}%" if isinstance(yoy_chiphibanhang, (int, float)) and yoy_chiphibanhang > 0 else f"{yoy_chiphibanhang*100:.1f}%" if isinstance(yoy_chiphibanhang, (int, float)) else 'N/A'
                 
-                # Ước tính chi phí bán hàng năm 2025 (giữ nguyên so với 2024)
-                chiphibanhang_2025 = chiphibanhang_ty if chiphibanhang_ty is not None else None
-                chiphibanhang_2025_str = f"{chiphibanhang_2025:,.2f}" if chiphibanhang_2025 is not None else 'N/A'
-                
                 # Cập nhật dữ liệu chi phí bán hàng
-                projection_data['selling_expense'] = [chiphibanhang_str, yoy_chiphibanhang_str, chiphibanhang_2025_str, "0.0%", 'N/A']
+                projection_data['selling_expense'] = [chiphibanhang_str, yoy_chiphibanhang_str, 'N/A', 'N/A', 'N/A']
                 
                 # Định dạng dữ liệu chi phí quản lý
                 chiphiql_str = f"{chiphiql_ty:,.2f}" if chiphiql_ty is not None else 'N/A'
                 yoy_chiphiql_str = f"+{yoy_chiphiql*100:.1f}%" if isinstance(yoy_chiphiql, (int, float)) and yoy_chiphiql > 0 else f"{yoy_chiphiql*100:.1f}%" if isinstance(yoy_chiphiql, (int, float)) else 'N/A'
                 
-                # Ước tính chi phí quản lý năm 2025 (giữ nguyên so với 2024)
-                chiphiql_2025 = chiphiql_ty if chiphiql_ty is not None else None
-                chiphiql_2025_str = f"{chiphiql_2025:,.2f}" if chiphiql_2025 is not None else 'N/A'
-                
                 # Cập nhật dữ liệu chi phí quản lý
-                projection_data['admin_expense'] = [chiphiql_str, yoy_chiphiql_str, chiphiql_2025_str, "0.0%", 'N/A']
+                projection_data['admin_expense'] = [chiphiql_str, yoy_chiphiql_str, 'N/A', 'N/A', 'N/A']
                 
                 print(f"Đã lấy dữ liệu chi phí cho {symbol}")
             except Exception as e:
@@ -178,34 +153,22 @@ def create_projection_data(symbol):
                 loinhuanhdkd_str = f"{loinhuanhdkd_ty:,.2f}" if loinhuanhdkd_ty is not None else 'N/A'
                 yoy_loinhuanhdkd_str = f"+{yoy_loinhuanhdkd*100:.1f}%" if isinstance(yoy_loinhuanhdkd, (int, float)) and yoy_loinhuanhdkd > 0 else f"{yoy_loinhuanhdkd*100:.1f}%" if isinstance(yoy_loinhuanhdkd, (int, float)) else 'N/A'
                 
-                # Ước tính lợi nhuận từ HĐKD năm 2025 (tăng 10% so với 2024)
-                loinhuanhdkd_2025 = loinhuanhdkd_ty * 1.1 if loinhuanhdkd_ty is not None else None
-                loinhuanhdkd_2025_str = f"{loinhuanhdkd_2025:,.2f}" if loinhuanhdkd_2025 is not None else 'N/A'
-                
                 # Cập nhật dữ liệu lợi nhuận từ HĐKD
-                projection_data['operating_profit'] = [loinhuanhdkd_str, yoy_loinhuanhdkd_str, loinhuanhdkd_2025_str, "+10.0%", 'N/A']
+                projection_data['operating_profit'] = [loinhuanhdkd_str, yoy_loinhuanhdkd_str, 'N/A', 'N/A', 'N/A']
                 
                 # Định dạng dữ liệu lợi nhuận trước thuế
                 loinhuantruothue_str = f"{loinhuantruothue_ty:,.2f}" if loinhuantruothue_ty is not None else 'N/A'
                 yoy_loinhuantruothue_str = f"+{yoy_loinhuantruothue*100:.1f}%" if isinstance(yoy_loinhuantruothue, (int, float)) and yoy_loinhuantruothue > 0 else f"{yoy_loinhuantruothue*100:.1f}%" if isinstance(yoy_loinhuantruothue, (int, float)) else 'N/A'
                 
-                # Ước tính lợi nhuận trước thuế năm 2025 (tăng 10% so với 2024)
-                loinhuantruothue_2025 = loinhuantruothue_ty * 1.1 if loinhuantruothue_ty is not None else None
-                loinhuantruothue_2025_str = f"{loinhuantruothue_2025:,.2f}" if loinhuantruothue_2025 is not None else 'N/A'
-                
                 # Cập nhật dữ liệu lợi nhuận trước thuế
-                projection_data['profit_before_tax'] = [loinhuantruothue_str, yoy_loinhuantruothue_str, loinhuantruothue_2025_str, "+10.0%", 'N/A']
+                projection_data['profit_before_tax'] = [loinhuantruothue_str, yoy_loinhuantruothue_str, 'N/A', 'N/A', 'N/A']
                 
                 # Định dạng dữ liệu lợi nhuận sau thuế
                 loinhuansautrue_str = f"{loinhuansautrue_ty:,.2f}" if loinhuansautrue_ty is not None else 'N/A'
                 yoy_loinhuansautrue_str = f"+{yoy_loinhuansautrue*100:.1f}%" if isinstance(yoy_loinhuansautrue, (int, float)) and yoy_loinhuansautrue > 0 else f"{yoy_loinhuansautrue*100:.1f}%" if isinstance(yoy_loinhuansautrue, (int, float)) else 'N/A'
                 
-                # Ước tính lợi nhuận sau thuế năm 2025 (tăng 10% so với 2024)
-                loinhuansautrue_2025 = loinhuansautrue_ty * 1.1 if loinhuansautrue_ty is not None else None
-                loinhuansautrue_2025_str = f"{loinhuansautrue_2025:,.2f}" if loinhuansautrue_2025 is not None else 'N/A'
-                
                 # Cập nhật dữ liệu lợi nhuận sau thuế
-                projection_data['profit_after_tax'] = [loinhuansautrue_str, yoy_loinhuansautrue_str, loinhuansautrue_2025_str, "+10.0%", 'N/A']
+                projection_data['profit_after_tax'] = [loinhuansautrue_str, yoy_loinhuansautrue_str, 'N/A', 'N/A', 'N/A']
                 
                 print(f"Đã lấy dữ liệu lợi nhuận cho {symbol}")
             except Exception as e:
