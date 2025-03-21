@@ -142,8 +142,6 @@ class Page3:
             
             # Định dạng lại giá trị P/E để hiển thị đẹp hơn
             pe_value = peer.get('pe', 'N/A')
-            if pe_value != 'N/A' and not pe_value.endswith('x'):
-                pe_value = f"{pe_value}x"
             pe = Paragraph(pe_value, self.styles['TableCell'])
             
             market_cap = Paragraph(f"{peer.get('market_cap', 'N/A')}", self.styles['TableCell'])
@@ -197,22 +195,8 @@ class Page3:
         """Tạo bảng tóm tắt định giá"""
         data = []
         
-        # Định dạng lại các giá trị P/E để thêm 'x' vào cuối nếu cần
-        pe_avg = valuation_data.get('pe_avg', 'N/A')
-        if pe_avg != 'N/A' and not pe_avg.endswith('x'):
-            pe_avg = f"{pe_avg}x"
-            
-        pe_median = valuation_data.get('pe_median', 'N/A')
-        if pe_median != 'N/A' and not pe_median.endswith('x'):
-            pe_median = f"{pe_median}x"
-            
-        pe_10yr_avg = valuation_data.get('pe_10yr_avg', 'N/A')
-        if pe_10yr_avg != 'N/A' and not pe_10yr_avg.endswith('x'):
-            pe_10yr_avg = f"{pe_10yr_avg}x"
-            
+        # Định dạng lại các giá trị P/E để thêm 'x' vào cuối nếu cần      
         pe_target = valuation_data.get('pe_target', 'N/A')
-        if pe_target != 'N/A' and not pe_target.endswith('x'):
-            pe_target = f"{pe_target}x"
         
         # Định dạng giá trị upside với dấu % nếu cần
         upside = valuation_data.get('upside', 'N/A')
@@ -224,13 +208,7 @@ class Page3:
         price_target = valuation_data.get('price_target', 'N/A')
         current_price = valuation_data.get('current_price', 'N/A')
         
-        # Thêm các dòng vào bảng
-        data.append([Paragraph('P/E trung bình ngành:', self.styles['SummaryRow']), 
-                     Paragraph(f"{pe_avg}", self.styles['TableCell'])])
-        data.append([Paragraph('P/E trung vị ngành:', self.styles['SummaryRow']), 
-                     Paragraph(f"{pe_median}", self.styles['TableCell'])])
-        data.append([Paragraph('P/E trung bình 10 năm của công ty:', self.styles['SummaryRow']), 
-                     Paragraph(f"{pe_10yr_avg}", self.styles['TableCell'])])
+        # Thêm các dòng vào bảng - đã xóa các dòng P/E trung bình, trung vị và trung bình 10 năm
         data.append([Paragraph('P/E mục tiêu:', self.styles['SummaryRow']), 
                      Paragraph(f"{pe_target}", self.styles['TableCell'])])
         data.append([Paragraph('EPS mục tiêu (VND):', self.styles['SummaryRow']), 
