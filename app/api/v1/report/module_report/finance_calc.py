@@ -6,6 +6,8 @@ import datetime
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
+import logging
+logging.getLogger('vnstock.common.data.data_explorer').setLevel(logging.ERROR)
 def calculate_total_current_assets(dataframes):
     """Calculate total current assets"""
     cash_equivalents = dataframes.get("cash_equivalents", pd.DataFrame())
@@ -436,6 +438,153 @@ def loinhuankinhdoanh_p2(symbol):
     yoy_loinhuansautrue = (loinhuansautrue - res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (Tỷ đồng)'].values[1]) / res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (Tỷ đồng)'].values[1]
     yoy_loinhuantruothue = (loinhuantruothue - res['LN trước thuế'].values[1]) / res['LN trước thuế'].values[1]
     return loinhuanhdkd, loinhuantruothue, loinhuansautrue, yoy_loinhuanhdkd, yoy_loinhuantruothue, yoy_loinhuansautrue
+def get_cty_cung_nganh_p3(symbol):
+    from concurrent.futures import ThreadPoolExecutor
+    import pandas as pd
+    import logging
+    
+    # Suppress warnings
+    logging.getLogger('vnstock.common.data.data_explorer').setLevel(logging.ERROR)
+    
+    # Initialize Vnstock only once
+    stock = Vnstock().stock(symbol=symbol, source='VCI')
+    
+    # Cache for industry data to avoid repeated calls
+    industry_cache = None
+    
+    def get_company_industry(symbol):
+        nonlocal industry_cache
+        try:
+            if industry_cache is None:
+                industry_cache = stock.listing.symbols_by_industries()
+            
+            # Fix: Filter by symbol only
+            company_info = industry_cache[industry_cache['symbol'].str.upper() == symbol.upper()]
+            if not company_info.empty and 'icb_name4' in company_info.columns:
+                return company_info['icb_name4'].values[0]
+            return "Không xác định"
+        except Exception as e:
+            print(f"Error getting industry for {symbol}: {e}")
+            return "Không xác định"
+    
+    def get_company_name(sym):
+        nonlocal industry_cache
+        try:
+            if industry_cache is None:
+                industry_cache = stock.listing.symbols_by_industries()
+            
+            company_row = industry_cache[industry_cache['symbol'].str.upper() == sym.upper()]
+            if not company_row.empty and 'organ_name' in company_row.columns:
+                return company_row['organ_name'].values[0]
+            return "Unknown"
+        except Exception:
+            return "Unknown"
+    
+    def vonhoa_worker(sym):
+        try:
+            stock_instance = Vnstock().stock(symbol=sym, source='VCI')
+            
+            # Get the financial ratios
+            vonhoa = stock_instance.finance.ratio(period='year', lang='vi', dropna=True)
+            
+            # Check if we have enough data
+            if len(vonhoa) < 2:
+                print(f"Not enough data rows for {sym}: {len(vonhoa)} rows")
+                return sym, None
+            
+            # Access data more safely with error handling
+            try:
+                market_cap = vonhoa[('Chỉ tiêu định giá', 'Vốn hóa (Tỷ đồng)')].iloc[0]
+                roa = vonhoa[('Chỉ tiêu khả năng sinh lợi', 'ROA (%)')].iloc[0]
+                roe = vonhoa[('Chỉ tiêu khả năng sinh lợi', 'ROE (%)')].iloc[0]
+                
+                # Fix: EPS is in 'Chỉ tiêu khả năng sinh lợi', not 'Chỉ tiêu định giá'
+                eps = vonhoa[('Chỉ tiêu định giá', 'EPS (VND)')].iloc[0]
+                eps_pre = vonhoa[('Chỉ tiêu định giá', 'EPS (VND)')].iloc[1]
+                
+                # Get company name
+                company_name = get_company_name(sym)
+                
+                # Calculate EPS growth safely
+                eps_growth = (eps - eps_pre)/eps_pre if eps_pre != 0 else float('nan')
+                
+                return sym, {
+                    'organ_name': company_name,
+                    'market_cap': market_cap,
+                    'ROA': roa,
+                    'ROE': roe,
+                    'EPS': eps,
+                    'EPS_growth': eps_growth
+                }
+            except KeyError as e:
+                print(f"Column not found for {sym}: {e}")
+                # Print available columns for debugging
+                print(f"Available columns: {vonhoa.columns.tolist()}")
+                return sym, None
+            
+        except Exception as e:
+            print(f"Error processing {sym}: {e}")
+            return sym, None
+    
+    # Get target company's industry
+    industry = get_company_industry(symbol)
+    print(f"Industry for {symbol}: {industry}")
+    
+    # Get financial data for target company
+    target_symbol, target_data = vonhoa_worker(symbol)
+    
+    if target_data is None:
+        print(f"Could not retrieve financial data for {symbol}")
+        
+        # Try a simpler approach for the target symbol
+        try:
+            stock_instance = Vnstock().stock(symbol=symbol, source='VCI')
+            vonhoa = stock_instance.finance.ratio(period='year', lang='vi', dropna=True)
+            print(f"Data shape: {vonhoa.shape}")
+            print(f"Available columns: {vonhoa.columns.tolist()[:10]}...")  # Show first 10 columns
+            
+            # Return just the basic information we can get
+            return {symbol: "Basic information only", "columns": vonhoa.columns.tolist()}
+        except Exception as e:
+            print(f"Additional error: {e}")
+            return {symbol: "Financial data unavailable"}
+    
+    target_market_cap = target_data['market_cap']
+    
+    # Get all companies in the same industry
+    if industry_cache is not None and industry != "Không xác định":
+        all_symbols = industry_cache[industry_cache['icb_name4'] == industry]['symbol'].tolist()
+        
+        # Remove the input symbol from the list
+        if symbol in all_symbols:
+            all_symbols.remove(symbol)
+    else:
+        print("No industry data available")
+        all_symbols = []
+    
+    # Use ThreadPoolExecutor to calculate market caps in parallel
+    company_data = {}
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        results = list(executor.map(vonhoa_worker, all_symbols))
+    
+    # Process results
+    for sym, data in results:
+        if data is not None:
+            data['difference'] = abs(data['market_cap'] - target_market_cap)
+            company_data[sym] = data
+    
+    # Sort and get top 5 (only if we have companies to compare with)
+    closest_5 = []
+    if company_data:
+        sorted_companies = sorted(company_data.items(), key=lambda x: x[1]['difference'])
+        closest_5 = sorted_companies[:5]
+    
+    # Format result - include all financial metrics
+    result = {symbol: target_data}
+    for sym, data in closest_5:
+        result[sym] = data
+    
+    return result  
 def get_market_data(stock_info=None, symbol=None):
     """Lấy các dữ liệu thị trường bao gồm VNINDEX và thông tin cổ phiếu"""
     # Trả về tất cả giá trị là N/A
