@@ -458,7 +458,6 @@ def get_cty_cung_nganh_p3(symbol):
             if industry_cache is None:
                 industry_cache = stock.listing.symbols_by_industries()
             
-            # Fix: Filter by symbol only
             company_info = industry_cache[industry_cache['symbol'].str.upper() == symbol.upper()]
             if not company_info.empty and 'icb_name4' in company_info.columns:
                 return company_info['icb_name4'].values[0]
@@ -480,6 +479,16 @@ def get_cty_cung_nganh_p3(symbol):
         except Exception:
             return "Unknown"
     
+    def tangtruongdoanhthu(sym):
+        try:
+            stock_instance = Vnstock().stock(symbol=sym, source='VCI')
+            doanhthu_thuan = stock_instance.finance.income_statement(period='year', lang='vi', dropna=True).head(1)
+            Yoy = doanhthu_thuan['Tăng trưởng doanh thu (%)'].values[0]
+            return Yoy
+        except Exception as e:
+            print(f"Error getting revenue growth for {sym}: {e}")
+            return None
+    
     def vonhoa_worker(sym):
         try:
             stock_instance = Vnstock().stock(symbol=sym, source='VCI')
@@ -498,12 +507,15 @@ def get_cty_cung_nganh_p3(symbol):
                 roa = vonhoa[('Chỉ tiêu khả năng sinh lợi', 'ROA (%)')].iloc[0]
                 roe = vonhoa[('Chỉ tiêu khả năng sinh lợi', 'ROE (%)')].iloc[0]
                 
-                # Fix: EPS is in 'Chỉ tiêu khả năng sinh lợi', not 'Chỉ tiêu định giá'
+                # Get EPS - corrected to use the right column group
                 eps = vonhoa[('Chỉ tiêu định giá', 'EPS (VND)')].iloc[0]
                 eps_pre = vonhoa[('Chỉ tiêu định giá', 'EPS (VND)')].iloc[1]
                 
                 # Get company name
                 company_name = get_company_name(sym)
+                
+                # Get revenue growth
+                revenue_growth = tangtruongdoanhthu(sym)
                 
                 # Calculate EPS growth safely
                 eps_growth = (eps - eps_pre)/eps_pre if eps_pre != 0 else float('nan')
@@ -514,7 +526,8 @@ def get_cty_cung_nganh_p3(symbol):
                     'ROA': roa,
                     'ROE': roe,
                     'EPS': eps,
-                    'EPS_growth': eps_growth
+                    'EPS_growth': eps_growth,
+                    'revenue_growth': revenue_growth
                 }
             except KeyError as e:
                 print(f"Column not found for {sym}: {e}")
@@ -584,7 +597,7 @@ def get_cty_cung_nganh_p3(symbol):
     for sym, data in closest_5:
         result[sym] = data
     
-    return result  
+    return result
 def get_market_data(stock_info=None, symbol=None):
     """Lấy các dữ liệu thị trường bao gồm VNINDEX và thông tin cổ phiếu"""
     # Trả về tất cả giá trị là N/A
