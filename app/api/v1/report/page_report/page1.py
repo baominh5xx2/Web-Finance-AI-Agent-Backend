@@ -363,22 +363,45 @@ class Page1:
             canvas.setFillColor(self.blue_color)
             canvas.rect(0, height - 3*cm, width, 3*cm, fill=1, stroke=0)
             
+            # Chuẩn bị tên công ty
+            company_name = "Công ty Cổ phần"
+            info_text = "Thông tin công ty"
+            
+            # Lấy thông tin từ company_data nếu có
+            if company_data is not None and isinstance(company_data, dict):
+                if 'name' in company_data and company_data['name']:
+                    company_name = str(company_data['name'])
+                elif 'symbol' in company_data and company_data['symbol']:
+                    company_name = f"Công ty Cổ phần {company_data['symbol']}"
+                    
+                if 'info' in company_data and company_data['info']:
+                    info_text = str(company_data['info'])
+            
             # Vẽ tên công ty
             canvas.setFont('DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold', 16)
             canvas.setFillColor(colors.white)
-            company_name = company_data.get('name')
             canvas.drawString(0.5*cm, height - 1.8*cm, company_name)
             
             # Vẽ thông tin phụ
             canvas.setFont('DejaVuSans' if self.font_added else 'Helvetica', 12)
-            info_text = company_data.get('info')
             canvas.drawString(0.5*cm, height - 2.5*cm, info_text)
             
             # Vẽ đường kẻ phân cách giữa sidebar và phần nội dung
             canvas.setStrokeColor(colors.lightgrey)
             canvas.line(6.5*cm, 0, 6.5*cm, height - 3*cm)
         except Exception as e:
+            # Ghi lại lỗi nhưng vẫn tiếp tục
             print(f"Lỗi trong _draw_page_template: {str(e)}")
+            
+            # Để đảm bảo vẫn có header dù bị lỗi
+            try:
+                canvas.setFillColor(self.blue_color)
+                canvas.rect(0, height - 3*cm, width, 3*cm, fill=1, stroke=0)
+                canvas.setFont('DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold', 16)
+                canvas.setFillColor(colors.white)
+                canvas.drawString(0.5*cm, height - 1.8*cm, "Công ty Cổ phần")
+            except:
+                pass
 
     def create_page1(self, doc, company_data, recommendation_data, market_data, analysis_data):
         """Tạo nội dung cho trang 1"""

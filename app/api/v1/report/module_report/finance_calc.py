@@ -267,7 +267,7 @@ def industry_pe(industry_name, max_workers=10, source='VCI'):
         stock = Vnstock().stock(source='VCI')
         # Get companies in the specified industry
         companies = stock.listing.symbols_by_industries()
-        filtered_companies = companies[companies['en_icb_name4'] == industry_name]
+        filtered_companies = companies[companies['icb_name4'] == industry_name]
         symbols = filtered_companies['symbol'].tolist()
         
         if not symbols:
@@ -510,7 +510,7 @@ def get_cty_cung_nganh_p3(symbol):
                 # Get EPS - corrected to use the right column group
                 eps = vonhoa[('Chỉ tiêu định giá', 'EPS (VND)')].iloc[0]
                 eps_pre = vonhoa[('Chỉ tiêu định giá', 'EPS (VND)')].iloc[1]
-                
+                p_e = vonhoa[('Chỉ tiêu định giá', 'P/E')].iloc[0]
                 # Get company name
                 company_name = get_company_name(sym)
                 
@@ -523,6 +523,7 @@ def get_cty_cung_nganh_p3(symbol):
                 return sym, {
                     'organ_name': company_name,
                     'market_cap': market_cap,
+                    'P/E': p_e,
                     'ROA': roa,
                     'ROE': roe,
                     'EPS': eps,

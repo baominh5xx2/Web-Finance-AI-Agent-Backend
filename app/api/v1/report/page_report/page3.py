@@ -139,14 +139,39 @@ class Page3:
         for peer in peer_data:
             company = Paragraph(peer.get('company_name', 'N/A'), self.styles['TableCellLeft'])
             country = Paragraph(peer.get('country', 'N/A'), self.styles['TableCell'])
-            pe = Paragraph(f"{peer.get('pe', 'N/A')}", self.styles['TableCell'])
-            market_cap = Paragraph(f"{peer.get('market_cap', 'N/A')}", self.styles['TableCell'])
-            revenue_growth = Paragraph(f"{peer.get('revenue_growth', 'N/A')}", self.styles['TableCell'])
-            eps_growth = Paragraph(f"{peer.get('eps_growth', 'N/A')}", self.styles['TableCell'])
-            roa = Paragraph(f"{peer.get('roa', 'N/A')}", self.styles['TableCell'])
-            roe = Paragraph(f"{peer.get('roe', 'N/A')}", self.styles['TableCell'])
             
-            data.append([company, country, pe, market_cap, revenue_growth, eps_growth, roa, roe])
+            # Định dạng lại giá trị P/E để hiển thị đẹp hơn
+            pe_value = peer.get('pe', 'N/A')
+            if pe_value != 'N/A' and not pe_value.endswith('x'):
+                pe_value = f"{pe_value}x"
+            pe = Paragraph(pe_value, self.styles['TableCell'])
+            
+            market_cap = Paragraph(f"{peer.get('market_cap', 'N/A')}", self.styles['TableCell'])
+            
+            # Đảm bảo các giá trị % có ký hiệu % nếu chưa có
+            revenue_growth = peer.get('revenue_growth', 'N/A')
+            if revenue_growth != 'N/A' and not revenue_growth.endswith('%'):
+                revenue_growth = f"{revenue_growth}%"
+            
+            eps_growth = peer.get('eps_growth', 'N/A')
+            if eps_growth != 'N/A' and not eps_growth.endswith('%'):
+                eps_growth = f"{eps_growth}%"
+                
+            roa = peer.get('roa', 'N/A')
+            if roa != 'N/A' and not roa.endswith('%'):
+                roa = f"{roa}%"
+                
+            roe = peer.get('roe', 'N/A')
+            if roe != 'N/A' and not roe.endswith('%'):
+                roe = f"{roe}%"
+            
+            # Tạo Paragraph cho các giá trị
+            revenue_growth_cell = Paragraph(revenue_growth, self.styles['TableCell'])
+            eps_growth_cell = Paragraph(eps_growth, self.styles['TableCell'])
+            roa_cell = Paragraph(roa, self.styles['TableCell'])
+            roe_cell = Paragraph(roe, self.styles['TableCell'])
+            
+            data.append([company, country, pe, market_cap, revenue_growth_cell, eps_growth_cell, roa_cell, roe_cell])
         
         # Tạo bảng
         col_widths = [4*cm, 2*cm, 1.5*cm, 2.5*cm, 3*cm, 3*cm, 2*cm, 2*cm]
@@ -172,15 +197,32 @@ class Page3:
         """Tạo bảng tóm tắt định giá"""
         data = []
         
-        # Các dòng dữ liệu định giá
+        # Định dạng lại các giá trị P/E để thêm 'x' vào cuối nếu cần
         pe_avg = valuation_data.get('pe_avg', 'N/A')
+        if pe_avg != 'N/A' and not pe_avg.endswith('x'):
+            pe_avg = f"{pe_avg}x"
+            
         pe_median = valuation_data.get('pe_median', 'N/A')
+        if pe_median != 'N/A' and not pe_median.endswith('x'):
+            pe_median = f"{pe_median}x"
+            
         pe_10yr_avg = valuation_data.get('pe_10yr_avg', 'N/A')
+        if pe_10yr_avg != 'N/A' and not pe_10yr_avg.endswith('x'):
+            pe_10yr_avg = f"{pe_10yr_avg}x"
+            
         pe_target = valuation_data.get('pe_target', 'N/A')
+        if pe_target != 'N/A' and not pe_target.endswith('x'):
+            pe_target = f"{pe_target}x"
+        
+        # Định dạng giá trị upside với dấu % nếu cần
+        upside = valuation_data.get('upside', 'N/A')
+        if upside != 'N/A' and not upside.endswith('%'):
+            upside = f"{upside}%"
+        
+        # Các dòng dữ liệu định giá        
         eps_target = valuation_data.get('eps_target', 'N/A')
         price_target = valuation_data.get('price_target', 'N/A')
         current_price = valuation_data.get('current_price', 'N/A')
-        upside = valuation_data.get('upside', 'N/A')
         
         # Thêm các dòng vào bảng
         data.append([Paragraph('P/E trung bình ngành:', self.styles['SummaryRow']), 
@@ -223,6 +265,13 @@ class Page3:
         story = []
         width, height = A4
         
+        # Kiểm tra đảm bảo có dữ liệu
+        if peer_data is None:
+            peer_data = []  # Mảng rỗng nếu không có dữ liệu
+            
+        if valuation_data is None:
+            valuation_data = {}  # Dict rỗng nếu không có dữ liệu
+        
         # Tiêu đề phần định giá
         title = Paragraph("Phương pháp P/E", self.styles['SectionTitle'])
         story.append(title)
@@ -235,13 +284,15 @@ class Page3:
         story.append(Spacer(1, 10*mm))  # Tăng khoảng trống
         
         # Bảng so sánh với các doanh nghiệp trong ngành
-        peer_table = self.create_peer_comparison_table(peer_data)
-        story.append(peer_table)
-        story.append(Spacer(1, 10*mm))  # Tăng khoảng trống
+        if peer_data:
+            peer_table = self.create_peer_comparison_table(peer_data)
+            story.append(peer_table)
+            story.append(Spacer(1, 10*mm))  # Tăng khoảng trống
         
         # Bảng tóm tắt định giá - chỉ sử dụng một cột cho bảng này
-        valuation_table = self.create_valuation_summary_table(valuation_data)
-        story.append(valuation_table)
+        if valuation_data:
+            valuation_table = self.create_valuation_summary_table(valuation_data)
+            story.append(valuation_table)
         
         # Không sử dụng Table trong Table nữa để tránh vấn đề về định dạng
         return story

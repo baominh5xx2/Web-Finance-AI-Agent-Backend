@@ -74,6 +74,9 @@ class PDFReport:
             bottomMargin=0,
         )
         
+        # Lưu company_data vào biến cục bộ để sử dụng trong các closure
+        _company_data = company_data
+        
         # Tạo template cho trang 1
         template1 = PageTemplate(
             id='page1',
@@ -82,7 +85,7 @@ class PDFReport:
                 Frame(0, 0, 6.5*cm, height - 3*cm, id='sidebar'),
                 Frame(6.5*cm, 0, width - 6.5*cm, height - 3*cm)
             ],
-            onPage=lambda canvas, doc: self.page1._draw_page_template(canvas, doc, company_data)
+            onPage=lambda canvas, doc: self.page1._draw_page_template(canvas, doc, _company_data)
         )
         
         # Tạo template cho trang 2
@@ -91,7 +94,7 @@ class PDFReport:
             frames=[
                 Frame(0, 0, width, height)
             ],
-            onPage=lambda canvas, doc: self.page2._draw_page_template(canvas, doc, company_data)
+            onPage=lambda canvas, doc: self.page2._draw_page_template(canvas, doc, _company_data)
         )
         
         # Tạo template cho trang 3
@@ -100,7 +103,7 @@ class PDFReport:
             frames=[
                 Frame(0, 0, width, height)
             ],
-            onPage=lambda canvas, doc: self.page3._draw_page_template(canvas, doc, company_data)
+            onPage=lambda canvas, doc: self.page3._draw_page_template(canvas, doc, _company_data)
         )
         
         # Thêm các templates vào document

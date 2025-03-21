@@ -3,6 +3,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import matplotlib
+import warnings
+
+# Suppress all matplotlib warnings
+warnings.filterwarnings("ignore", module="matplotlib")
+
 matplotlib.use('Agg')  # Sử dụng backend không cần màn hình
 
 def create_chart_directory(report_dir):
@@ -25,6 +30,9 @@ def format_number_with_suffix(value):
 def generate_revenue_profit_chart(chart_dir, years, revenue, net_income, symbol="VCB"):
     """Tạo biểu đồ doanh thu và lợi nhuận"""
     fig, ax = plt.figure(figsize=(12, 8)), plt.subplot()
+    
+    # Ensure years are strings
+    years = [str(y) for y in years]
     
     # Chuyển đổi dữ liệu sang số nếu cần
     try:
@@ -80,6 +88,9 @@ def generate_profitability_chart(chart_dir, years, roe, roa, ros, symbol="VCB"):
     """Tạo biểu đồ các chỉ số sinh lời"""
     fig, ax = plt.figure(figsize=(12, 8)), plt.subplot()
     
+    # Ensure years are strings
+    years = [str(y) for y in years]
+    
     # Chuyển đổi dữ liệu phần trăm sang số float
     try:
         roe = [float(str(x).replace(',', '').replace('%', '')) if isinstance(x, str) else float(x) for x in roe]
@@ -123,6 +134,9 @@ def generate_profitability_chart(chart_dir, years, roe, roa, ros, symbol="VCB"):
 def generate_assets_liabilities_chart(chart_dir, years, total_assets, total_equity, total_liabilities, symbol="VCB"):
     """Tạo biểu đồ tài sản và nợ"""
     fig, ax = plt.figure(figsize=(12, 8)), plt.subplot()
+    
+    # Ensure years are strings
+    years = [str(y) for y in years]
     
     # Chuyển đổi dữ liệu sang số nếu cần
     try:
@@ -189,6 +203,9 @@ def generate_debt_ratio_chart(chart_dir, years, debt_to_equity, long_term_debt_t
     """Tạo biểu đồ các tỷ lệ nợ"""
     fig, ax = plt.figure(figsize=(12, 8)), plt.subplot()
     
+    # Ensure years are strings
+    years = [str(y) for y in years]
+    
     # Chuyển đổi dữ liệu phần trăm sang số float
     try:
         debt_to_equity = [float(str(x).replace(',', '').replace('%', '')) if isinstance(x, str) else float(x) for x in debt_to_equity]
@@ -229,6 +246,9 @@ def generate_financial_charts(report_dir, symbol, years, financial_data):
     try:
         # Tạo thư mục cho các biểu đồ
         chart_dir = create_chart_directory(report_dir)
+        
+        # Ensure years are properly converted to strings to avoid category warnings
+        years = [str(year) for year in years]
         
         # Extract dữ liệu từ financial_data
         revenue = financial_data.get("revenue", [0] * len(years))
