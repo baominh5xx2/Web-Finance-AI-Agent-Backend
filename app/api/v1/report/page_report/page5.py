@@ -2,7 +2,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import inch, cm
+from reportlab.lib.units import inch, cm, mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 import matplotlib.pyplot as plt
@@ -19,6 +19,8 @@ class Page5:
     def __init__(self, font_added=True):
         self.font_added = font_added
         self.styles = getSampleStyleSheet()
+        # Define blue color for header and footer
+        self.blue_color = colors.HexColor('#0066CC')
         self.heading_style = ParagraphStyle(
             'Heading1',
             parent=self.styles['Heading1'],
@@ -66,7 +68,7 @@ class Page5:
         If not, returns a list of flowable elements for inclusion in a larger document.
         """
         elements = []
-        
+        elements.append(Spacer(1, 1*inch))
         # Main heading
         elements.append(Paragraph('<b>Định giá và chỉ số tài chính</b>', self.heading_style))
         elements.append(Spacer(1, 0.2*inch))
@@ -541,10 +543,37 @@ class Page5:
         return buffer
     
     def _draw_page_template(self, canvas, doc, company_data=None):
-        """Template drawing method for page template compatibility"""
-        # This method is a placeholder for consistency with other page classes
-        # It would be called by page templates
-        pass
+        """Vẽ header và footer cho trang"""
+        width, height = A4
+    
+        # Vẽ header
+        canvas.setFillColor(self.blue_color)
+        canvas.rect(0, height - 20*mm, width, 20*mm, fill=1, stroke=0)
+        
+        # Tên công ty và mã chứng khoán
+        canvas.setFillColor(colors.white)
+        canvas.setFont('DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold', 12)
+        company_name = company_data.get('name', '') if company_data else ''
+        symbol = company_data.get('symbol', '') if company_data else ''
+        header_text = f"{company_name} ({symbol}) - Các Tỷ số Tài chính"
+        canvas.drawString(1*cm, height - 12*mm, header_text)
+        
+        # Ngày tạo báo cáo
+        current_date = dt.datetime.now().strftime("%d/%m/%Y")
+        canvas.setFont('DejaVuSans' if self.font_added else 'Helvetica', 9)
+        canvas.drawRightString(width - 1*cm, height - 12*mm, f"Ngày: {current_date}")
+        
+        # Vẽ footer
+        canvas.setFillColor(self.blue_color)
+        canvas.rect(0, 0, width, 10*mm, fill=1, stroke=0)
+        
+        # Số trang
+        canvas.setFillColor(colors.white)
+        canvas.setFont('DejaVuSans' if self.font_added else 'Helvetica', 9)
+        canvas.drawRightString(width - 1*cm, 3.5*mm, f"Trang 5")
+        
+        # Thông tin công ty
+        canvas.drawString(1*cm, 3.5*mm, "FinBot - Trí tuệ tài chính cho mọi người")
 
 # For testing purposes
 if __name__ == "__main__":

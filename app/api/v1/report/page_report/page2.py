@@ -15,6 +15,9 @@ class Page2:
         self.font_added = font_added
         self.styles = getSampleStyleSheet()
         
+        # Define colors
+        self.blue_color = colors.HexColor('#0066CC')
+        
         # Font configuration
         title_font = 'DejaVuSans-Bold' if font_added else 'Helvetica-Bold'
         normal_font = 'DejaVuSans' if font_added else 'Helvetica'
@@ -90,9 +93,37 @@ class Page2:
         ))
 
     def _draw_page_template(self, canvas, doc, company_data):
-        """Draw the page template for page 2"""
-        # Add any specific page template drawing if needed
-        pass
+        """Vẽ header và footer cho trang"""
+        width, height = A4
+    
+        # Vẽ header
+        canvas.setFillColor(self.blue_color)
+        canvas.rect(0, height - 20*mm, width, 20*mm, fill=1, stroke=0)
+        
+        # Tên công ty và mã chứng khoán
+        canvas.setFillColor(colors.white)
+        canvas.setFont('DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold', 12)
+        company_name = company_data.get('name', '')
+        symbol = company_data.get('symbol', '')
+        header_text = f"{company_name} ({symbol}) - Dự phóng Tài chính"
+        canvas.drawString(1*cm, height - 12*mm, header_text)
+        
+        # Ngày tạo báo cáo
+        current_date = datetime.datetime.now().strftime("%d/%m/%Y")
+        canvas.setFont('DejaVuSans' if self.font_added else 'Helvetica', 9)
+        canvas.drawRightString(width - 1*cm, height - 12*mm, f"Ngày: {current_date}")
+        
+        # Vẽ footer
+        canvas.setFillColor(self.blue_color)
+        canvas.rect(0, 0, width, 10*mm, fill=1, stroke=0)
+        
+        # Số trang
+        canvas.setFillColor(colors.white)
+        canvas.setFont('DejaVuSans' if self.font_added else 'Helvetica', 9)
+        canvas.drawRightString(width - 1*cm, 3.5*mm, f"Trang 2")
+        
+        # Thông tin công ty
+        canvas.drawString(1*cm, 3.5*mm, "FinBot - Trí tuệ tài chính cho mọi người")
 
     def create_projection_table(self, projection_data):
         """Create the business projection table"""
@@ -234,7 +265,7 @@ class Page2:
     def create_page2(self, doc, company_data, projection_data=None):
         """Create the complete second page"""
         elements = []
-        
+        elements.append(Spacer(1, 1*inch))
         # Add projection table
         elements.extend(self.create_projection_table(projection_data))
         
