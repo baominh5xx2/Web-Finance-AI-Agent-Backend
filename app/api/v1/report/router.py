@@ -13,3 +13,9 @@ def get_pdf(symbol: str):
 @router.get("/analysis", response_model=AnalysisResponse)
 def get_analysis():
     return {"analysis": services.get_financial_analysis()}
+
+@router.get("/company-overview")
+def get_company_overview():
+    """Generate a PDF with company overview information."""
+    file_path = services.generate_company_overview_pdf()
+    return FileResponse(file_path, media_type="application/pdf", filename="Company_Overview.pdf")

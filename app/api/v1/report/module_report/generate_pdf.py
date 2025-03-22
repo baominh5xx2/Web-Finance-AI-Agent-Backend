@@ -12,6 +12,8 @@ from vnstock import Vnstock
 from ..page_report.page1 import Page1
 from ..page_report.page2 import Page2
 from ..page_report.page3 import Page3
+from ..page_report.page4 import Page4
+import io
 
 class PDFReport:
     def __init__(self):
@@ -20,6 +22,7 @@ class PDFReport:
         self.page1 = Page1(font_added=self.font_added)
         self.page2 = Page2(font_added=self.font_added)
         self.page3 = Page3(font_added=self.font_added)
+        self.page4 = Page4(font_added=self.font_added)
         
     def _setup_fonts(self):
         """Đăng ký font DejaVuSans có sẵn trong dự án"""
@@ -106,8 +109,17 @@ class PDFReport:
             onPage=lambda canvas, doc: self.page3._draw_page_template(canvas, doc, _company_data)
         )
         
+        # Tạo template cho trang 4
+        template4 = PageTemplate(
+            id='page4',
+            frames=[
+                Frame(0, 0, width, height)
+            ],
+            onPage=lambda canvas, doc: self.page4._draw_page_template(canvas, doc, _company_data)
+        )
+        
         # Thêm các templates vào document
-        doc.addPageTemplates([template1, template2, template3])
+        doc.addPageTemplates([template1, template2, template3, template4])
         
         # Tạo nội dung cho trang 1
         story = self.page1.create_page1(doc, company_data, recommendation_data, market_data, analysis_data)
@@ -130,6 +142,14 @@ class PDFReport:
             # Thêm nội dung trang 3
             page3_content = self.page3.create_page3(doc, company_data, peer_data or [], valuation_data or {}, recommendation_data)
             story.extend(page3_content)
+        
+        # Chuyển sang trang 4
+        story.append(NextPageTemplate('page4'))
+        story.append(PageBreak())
+        
+        # Thêm nội dung trang 4
+        page4_content = self.page4.create_page4(company_data=company_data)
+        story.extend(page4_content)
         
         # Xuất PDF
         doc.build(story)
@@ -184,4 +204,33 @@ class PDFReport:
         
         table.setStyle(table_style)
         return table
+
+def generate_page4_pdf(output_path="company_overview.pdf"):
+    """
+    Generate a PDF file with company overview information using page4.
+    
+    Args:
+        output_path (str): Path where the PDF file will be saved
+        
+    Returns:
+        str: Path to the generated PDF file
+    """
+    # Create a buffer for the PDF
+    buffer = io.BytesIO()
+    
+    # Create Page4 instance and generate content
+    page4 = Page4()
+    page4.create_page4(buffer)
+    
+    # Save the buffer to a file
+    buffer.seek(0)
+    with open(output_path, "wb") as f:
+        f.write(buffer.getvalue())
+    
+    print(f"PDF saved to {output_path}")
+    return output_path
+
+# For testing
+if __name__ == "__main__":
+    generate_page4_pdf()
 

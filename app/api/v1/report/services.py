@@ -8,7 +8,7 @@ from .module_report.finance_calc import (calculate_total_current_assets, calcula
                                         calculate_net_income_before_taxes, calculate_net_income_before_extraordinary_items,
                                         get_market_data, current_price, predict_price, doanhthu_thuan_p2, loinhuan_gop_p2,
                                         chiphi_p2, loinhuankinhdoanh_p2)
-from .module_report.generate_pdf import PDFReport
+from .module_report.generate_pdf import PDFReport, generate_page4_pdf
 from .module_report.api_gemini import generate_financial_analysis, create_analysis_prompt
 from .module_report.chart_generator import generate_financial_charts
 from vnstock import Vnstock
@@ -891,6 +891,31 @@ def get_financial_analysis(symbol=None):
             return generate_financial_analysis(custom_prompt=custom_prompt)
     except Exception as e:
         return f"Error generating analysis: {str(e)}"
+
+def generate_company_overview_pdf(output_path=None):
+    """
+    Generate a PDF file with company overview information.
+    
+    Args:
+        output_path (str, optional): Path where the PDF file will be saved.
+            If None, a default path will be used.
+            
+    Returns:
+        str: Path to the generated PDF file
+    """
+    if output_path is None:
+        # Create a directory for reports if it doesn't exist
+        reports_dir = os.path.join(os.getcwd(), "reports")
+        os.makedirs(reports_dir, exist_ok=True)
+        
+        # Generate a filename based on current date and time
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_path = os.path.join(reports_dir, f"company_overview_{timestamp}.pdf")
+    
+    # Call the function to generate the PDF
+    result_path = generate_page4_pdf(output_path)
+    
+    return result_path
 
 if __name__ == "__main__":
     # Test code
