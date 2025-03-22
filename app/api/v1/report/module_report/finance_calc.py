@@ -248,7 +248,7 @@ def GTGD_90_ngay(symbol):
     avg_volume_x_close = total_volume_x_close / 90
     avg_volume_x_close = avg_volume_x_close / 1_000_000
     return f"{avg_volume_x_close:,.2f}"
-def industry_pe(industry_name, max_workers=10, source='VCI'):
+def industry_pe(industry_name, max_workers=10, source='VCI'): # chưa testing
     def get_company_data(symbol, stock_client):
         try:
             data = stock_client.stock(symbol=symbol, source=source)\
@@ -268,22 +268,17 @@ def industry_pe(industry_name, max_workers=10, source='VCI'):
         # Get companies in the specified industry
         companies = stock.listing.symbols_by_industries()
         filtered_companies = companies[companies['icb_name4'] == industry_name]
+        filtered_companies = filtered_companies[filtered_companies['en_icb_name4'] == industry_name]
         symbols = filtered_companies['symbol'].tolist()
-        
         if not symbols:
             raise ValueError(f"No companies found for industry: {industry_name}")
+        pe_data = []
+        for symbol in symbols:
+            stock = Vnstock().stock(symbol=symbol, source='VCI')
+            data = stock.finance.ratio(period='year', lang='en', dropna=True).loc[:, [('Meta', 'yearReport'), ('Chỉ tiêu định giá', 'P/E'), ('Chỉ tiêu định giá', 'Market Capital (Bn. VND)')]].head(1)
+            pe_data.append(data)
         
-        # Initialize stock client
-        stock_client = Vnstock()
-        
-        # Fetch data in parallel
-        with ThreadPoolExecutor(max_workers=min(max_workers, len(symbols))) as executor:
-            func = partial(get_company_data, stock_client=stock_client)
-            results = list(executor.map(func, symbols))
-        
-        # Process results
-        pe_df = pd.concat([r for r in results if r is not None], ignore_index=True)
-        
+        pe_df = pd.concat(pe_data, ignore_index=True)
         if pe_df.empty:
             raise ValueError("No valid data retrieved for any company")
         

@@ -454,7 +454,7 @@ def generate_pdf_report(symbol: str):
             'eps_target': 'N/A',
             'price_target': formatted_price_target,
             'current_price': formatted_current_price,
-            'upside': f"{float(profit_percent)*100:.2f}" if isinstance(profit_percent, (int, float)) and profit_percent != 'N/A' else 'N/A'
+            'upside': f"{float(profit_percent)*100:.2f}" if isinstance(profit_percent, (int, float)) else 'N/A'
         }
         
         # Danh sách mẫu các công ty để sử dụng khi không lấy được dữ liệu hoặc không đủ dữ liệu

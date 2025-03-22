@@ -121,12 +121,14 @@ class PDFReport:
         story.extend(page2_content)
         
         # Chuyển sang trang 3 nếu có dữ liệu đánh giá
-        if peer_data and valuation_data:
+        # Đảm bảo luôn có trang 3 bằng cách kiểm tra peer_data và valuation_data
+        # Đảm bảo peer_data không phải là None và có ít nhất 1 mục
+        if (peer_data and len(peer_data) > 0) or valuation_data:
             story.append(NextPageTemplate('page3'))
             story.append(PageBreak())
             
             # Thêm nội dung trang 3
-            page3_content = self.page3.create_page3(doc, company_data, peer_data, valuation_data, recommendation_data)
+            page3_content = self.page3.create_page3(doc, company_data, peer_data or [], valuation_data or {}, recommendation_data)
             story.extend(page3_content)
         
         # Xuất PDF
