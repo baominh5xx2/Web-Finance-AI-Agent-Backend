@@ -105,26 +105,9 @@ class Page4:
         return elements
         
     def _create_charts(self):
-        """Create the pie chart and revenue chart"""
-        # Create pie chart
-        plt.figure(figsize=(4, 4))
-        labels = ['Tôn mạ', 'Ống thép']
-        sizes = [87, 13]
-        colors = ['#0052cc', '#80bfff']
-        explode = (0, 0.1)
-        
-        plt.pie(sizes, explode=explode, labels=labels, colors=colors, 
-                autopct='%d%%', shadow=False, startangle=90, textprops={'fontname': 'DejaVu Sans'})
-        plt.axis('equal')
-        plt.title('Cơ cấu sản lượng Nam Kim năm 2024', fontname='DejaVu Sans')
-        
-        pie_buffer = io.BytesIO()
-        plt.savefig(pie_buffer, format='png', bbox_inches='tight')
-        pie_buffer.seek(0)
-        plt.close()
-        
+        """Create the revenue and profit chart only (removed pie chart)"""
         # Create revenue and profit chart
-        plt.figure(figsize=(6, 4))
+        plt.figure(figsize=(8, 5))  # Increased size for better visibility
         
         years = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
         revenue = [5000, 7000, 10000, 12000, 14000, 11000, 14000, 10000, 27000, 21000]
@@ -139,7 +122,7 @@ class Page4:
         x = np.arange(len(years))
         width = 0.4
         
-        fig, ax1 = plt.subplots(figsize=(8, 4))
+        fig, ax1 = plt.subplots(figsize=(10, 6))  # Larger figure for better visibility
         
         # Bar chart for revenue
         bars = ax1.bar(x, revenue, width, label='Doanh thu (tỷ đồng)', color='#0052cc')
@@ -175,10 +158,9 @@ class Page4:
         chart_buffer.seek(0)
         plt.close()
         
-        # Create table with both charts
+        # Create table with just the revenue chart
         chart_table = Table([
-            [Image(pie_buffer, width=3*inch, height=3*inch), 
-             Image(chart_buffer, width=4*inch, height=3*inch)]
+            [Image(chart_buffer, width=7*inch, height=4*inch)]  # Increased size
         ])
         
         chart_table.setStyle(TableStyle([

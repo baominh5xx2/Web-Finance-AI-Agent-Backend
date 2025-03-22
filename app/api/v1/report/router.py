@@ -19,3 +19,9 @@ def get_company_overview():
     """Generate a PDF with company overview information."""
     file_path = services.generate_company_overview_pdf()
     return FileResponse(file_path, media_type="application/pdf", filename="Company_Overview.pdf")
+
+@router.get("/financial-ratios")
+def get_financial_ratios():
+    """Generate a PDF with financial ratios information."""
+    file_path = services.generate_financial_ratios_pdf()
+    return FileResponse(file_path, media_type="application/pdf", filename="Financial_Ratios.pdf")
