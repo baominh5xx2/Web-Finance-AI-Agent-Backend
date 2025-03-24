@@ -9,7 +9,7 @@ import heapq
 class news():
     def __init__(self):
         self.company = Vnstock()
-        self.cp = Vnstock().stock(source='VCI')
+        self.cp = Vnstock().stock(symbol="VCI",source='VCI')
         self.cache_dir = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent.parent / 'api' / 'v1' / 'treemap' / 'cache'
     
     def get_top_symbols_from_cache(self, limit=5):

@@ -264,11 +264,11 @@ def industry_pe(industry_name, max_workers=10, source='VCI'): # chưa testing
             return None
 
     try:
-        stock = Vnstock().stock(source='VCI')
+        stock = Vnstock().stock(symbol="VCI",source='VCI')
         # Get companies in the specified industry
         companies = stock.listing.symbols_by_industries()
         filtered_companies = companies[companies['icb_name4'] == industry_name]
-        filtered_companies = filtered_companies[filtered_companies['en_icb_name4'] == industry_name]
+        filtered_companies = filtered_companies[filtered_companies['icb_name4'] == industry_name]
         symbols = filtered_companies['symbol'].tolist()
         if not symbols:
             raise ValueError(f"No companies found for industry: {industry_name}")

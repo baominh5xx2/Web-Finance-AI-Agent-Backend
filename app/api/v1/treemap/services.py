@@ -19,7 +19,7 @@ import random
 class Treemap:
     def __init__(self):
         print("Initializing Treemap instance...")
-        self.stock = Vnstock().stock(source='VCI')
+        self.stock = Vnstock().stock(symbol="VCI",source='VCI')
         self.cache_dir = os.path.join(os.path.dirname(__file__), 'cache')
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
