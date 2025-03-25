@@ -1,0 +1,17 @@
+{
+  "8081822386": {
+    "messages": [
+      {
+        "role": "user",
+        "content": "chào bạn",
+        "timestamp": 1740980715.7992048
+      },
+      {
+        "role": "assistant",
+        "content": "Chào bạn,\n\nTôi là một nhà phân tích kinh tế chuyên nghiệp. Tôi có thể giúp bạn:\n\n1.  Cung cấp các kiến thức về kinh tế học.\n2.  Vẽ biểu đồ từ dữ liệu bạn cung cấp (sử dụng cú pháp \"vẽ biểu đồ [mô tả]\").\n3.  Tạo báo cáo phân tích công ty chuyên nghiệp dưới dạng PDF (sử dụng cú pháp \"tạo pdf báo cáo phân tích công ty [tên công ty]\").\n\nNếu bạn muốn cung cấp dữ liệu hoặc chỉ số chứng khoán, hãy gõ '/search'.\n",
+        "timestamp": 1740980719.0529969
+      }
+    ],
+    "last_activity": 1740980715.7992048
+  }
+}
