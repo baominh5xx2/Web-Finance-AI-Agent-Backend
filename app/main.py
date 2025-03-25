@@ -16,15 +16,21 @@ from dotenv import load_dotenv
 # Import MongoDB class for database connection
 from app.database.mongodb import MongoDB
 
-# Import routers
+# Import routers API V1
 from app.api.v1.MarketIndices.router import router as market_router
 from app.api.v1.treemap.router import router as treemap_router
 from app.api.v1.treemap_color.router import router as treemap_color_router
 from app.api.v1.marketindices_adjustday.router import router as marketindices_adjustday_router
-# Import news router
 from app.api.v1.news.router import router as news_router
-# Import report router
 from app.api.v1.report.router import router as report_router
+
+# Import routers API V2
+from app.api.v2.MarketIndices.router import router as market_router_v2
+from app.api.v2.treemap.router import router as treemap_router_v2
+from app.api.v2.treemap_color.router import router as treemap_color_router_v2
+from app.api.v2.marketindices_adjustday.router import router as marketindices_adjustday_router_v2
+from app.api.v2.news.router import router as news_router_v2
+from app.api.v2.report.router import router as report_router_v2
 
 # Load environment variables
 load_dotenv()
@@ -55,10 +61,15 @@ app.include_router(market_router, prefix="/api/v1/market", tags=["Market Indices
 app.include_router(treemap_router, prefix="/api/v1/treemap", tags=["Treemap"])
 app.include_router(treemap_color_router, prefix="/api/v1")
 app.include_router(marketindices_adjustday_router, prefix="/api/v1/market-adjust-indices")
-# Make sure the news router is included with the correct prefix
 app.include_router(news_router, prefix="/api/v1/news", tags=["Stock News"])
-# Change prefix to match the requested URL pattern "/api/v1/pdf/{symbol}"
 app.include_router(report_router, prefix="/api/v1", tags=["Financial Reports"])
+
+app.include_router(market_router_v2, prefix="/api/v2/market", tags=["Market Indices"])
+app.include_router(treemap_router_v2, prefix="/api/v2/treemap", tags=["Treemap"])
+app.include_router(treemap_color_router_v2, prefix="/api/v2")
+app.include_router(marketindices_adjustday_router_v2, prefix="/api/v2/market-adjust-indices")
+app.include_router(news_router_v2, prefix="/api/v2/news", tags=["Stock News"])
+app.include_router(report_router_v2, prefix="/api/v2", tags=["Financial Reports"])
 
 # Database startup and shutdown events
 @app.on_event("startup")
