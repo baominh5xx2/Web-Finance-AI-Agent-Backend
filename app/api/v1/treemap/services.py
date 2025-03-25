@@ -1,9 +1,4 @@
-# LẤY GTGD TỪ: price_data = stock.trading.price_board(['VIC'])
-#              total_value = price_data['match']['total_accumulated_value']
-
-# LẤY VỐN HÓA TỪ: ratios = stock.finance.ratio(period='year', lang='vi', dropna=True).head(1)
-# vh = ratios.loc[:, ('Chỉ tiêu định giá', 'Vốn hóa (Tỷ đồng)')].values[0]
-# Lấy tất cả mã chứng khoán từ một chỉ số: k = stock.listing.symbols_by_group('HOSE')
+# API treemap just for the developer to use
 from vnstock import Vnstock
 from typing import List, Dict, Any
 import asyncio

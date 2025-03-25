@@ -8,10 +8,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class MarketIndicesAdjustDayService:
-    def __init__(self):
-        self.vnstock = Vnstock
-        
+class MarketIndicesAdjustDayService: 
     def get_adjusted_data(self, symbol, time) -> List[Dict[str, str]]:
         logger.info(f"Getting adjusted data for symbol: {symbol}, time: {time}")
         try:
@@ -36,7 +33,7 @@ class MarketIndicesAdjustDayService:
             
             # Create stock instance properly
             logger.info(f"Creating VnStock instance for {symbol}")
-            stock = self.vnstock().stock(symbol=symbol, source='VCI')
+            stock = Vnstock().stock(symbol=symbol, source='VCI')
             
             # Get historical data
             logger.info(f"Fetching historical data")

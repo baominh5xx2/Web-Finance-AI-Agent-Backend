@@ -155,7 +155,7 @@ class Market_indices:
             
             try:
                 # Sử dụng instance đã tạo sẵn
-                stock = get_vnstock_instance()
+                stock = Vnstock().stock(symbol="VCI", source='VCI')
                 
                 # Đo thời gian lấy dữ liệu
                 start_fetch_time = time.time()
