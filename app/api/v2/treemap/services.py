@@ -19,6 +19,7 @@ import random
 class Treemap:
     def __init__(self):
         print("Initializing Treemap instance...")
+        self.stock = Vnstock().stock(symbol="VCI",source='VCI')
         self.cache_dir = os.path.join(os.path.dirname(__file__), 'cache')
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
@@ -79,8 +80,7 @@ class Treemap:
 
     def get_all_CP(self, symbol: str):
         try:
-            stock = Vnstock().stock(symbol="VCI", source='VCI')
-            all_cp = stock.listing.symbols_by_group(symbol)
+            all_cp = self.stock.listing.symbols_by_group(symbol)
             return all_cp
         except Exception as e:
             return []
