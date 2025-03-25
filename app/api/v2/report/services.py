@@ -366,15 +366,13 @@ def generate_pdf_report(symbol: str):
             "PROFITABILITY ANALYSIS": profitability_analysis_data
         }
         
-        # Lấy thông tin ngành nghề của công ty
-        industry = get_company_industry(symbol)
-        print(f"Đã lấy thông tin ngành nghề của {symbol}: {industry}")
+        # Lấy tên công ty
         name = get_company_name(symbol)
         # Chuẩn bị dữ liệu cho báo cáo định dạng mới
         company_data = {
             "name": f"{name}",  # Chỉ hiển thị tên công ty, không kèm mã
             "symbol": symbol,
-            "info": f"[ {symbol} | {exchange} | Ngành: {industry} ]"  # Thêm thông tin ngành
+            "info": f"[ {symbol} | {exchange} ]"  # Đã xóa thông tin ngành
         }
         
         # Đảm bảo trường name luôn có giá trị đầy đủ
@@ -386,7 +384,7 @@ def generate_pdf_report(symbol: str):
             company_data = {
                 "name": f"Công ty Cổ phần {symbol}",
                 "symbol": symbol,
-                "info": f"[ {symbol} | {exchange} | Ngành: {industry} ]"
+                "info": f"[ {symbol} | {exchange} ]"
             }
         
         # Lấy giá hiện tại từ API thay vì tính toán
@@ -442,10 +440,11 @@ def generate_pdf_report(symbol: str):
                 formatted_price_target = "N/A"
                 profit_percent = "N/A"
         
-        # Chuẩn bị dữ liệu peers cho trang 3
+        # Đã xóa phần chuẩn bị dữ liệu peers cho trang 3
+        # Cập nhật empty peer_data
         peer_data = []
         
-        # Chuẩn bị dữ liệu định giá
+        # Chuẩn bị dữ liệu định giá đơn giản
         valuation_data = {
             'pe_avg': 'N/A',
             'pe_median': 'N/A',
@@ -456,239 +455,6 @@ def generate_pdf_report(symbol: str):
             'current_price': formatted_current_price,
             'upside': f"{float(profit_percent)*100:.2f}" if isinstance(profit_percent, (int, float)) else 'N/A'
         }
-        
-        # Danh sách mẫu các công ty để sử dụng khi không lấy được dữ liệu hoặc không đủ dữ liệu
-        sample_companies = [
-            {
-                'company_name': 'Công ty Mẫu A',
-                'country': 'Việt Nam',
-                'pe': '12.50',
-                'market_cap': '2.35',
-                'revenue_growth': '8.75',
-                'eps_growth': '12.30',
-                'roa': '7.80',
-                'roe': '15.40'
-            },
-            {
-                'company_name': 'Công ty Mẫu B',
-                'country': 'Việt Nam',
-                'pe': '14.20',
-                'market_cap': '1.85',
-                'revenue_growth': '6.50',
-                'eps_growth': '9.70',
-                'roa': '6.40',
-                'roe': '13.80'
-            },
-            {
-                'company_name': 'Công ty Mẫu C',
-                'country': 'Việt Nam',
-                'pe': '9.80',
-                'market_cap': '3.10',
-                'revenue_growth': '10.20',
-                'eps_growth': '15.50',
-                'roa': '8.90',
-                'roe': '17.60'
-            },
-            {
-                'company_name': 'Công ty Mẫu D',
-                'country': 'Việt Nam',
-                'pe': '16.40',
-                'market_cap': '1.45',
-                'revenue_growth': '5.30',
-                'eps_growth': '7.80',
-                'roa': '5.20',
-                'roe': '11.50'
-            },
-            {
-                'company_name': 'Công ty Mẫu E',
-                'country': 'Việt Nam',
-                'pe': '11.30',
-                'market_cap': '2.75',
-                'revenue_growth': '9.40',
-                'eps_growth': '14.20',
-                'roa': '7.60',
-                'roe': '16.30'
-            }
-        ]
-        
-        try:
-            from app.api.v1.report.module_report.finance_calc import get_cty_cung_nganh_p3
-            import numpy as np  # Ensure numpy is imported here to fix the reference error
-            
-            # Helper functions to format values
-            def format_market_cap(value):
-                """Format market cap from VND to billion USD"""
-                try:
-                    if isinstance(value, (int, float, np.int64, np.float64)):
-                        # Convert from VND to billion USD (approximate conversion)
-                        return f"{value/1000000000000/24:.2f}"
-                    return str(value)
-                except:
-                    return 'N/A'
-            
-            def format_percentage(value):
-                """Format value as percentage with 2 decimal places"""
-                try:
-                    if isinstance(value, (int, float, np.int64, np.float64)):
-                        return f"{value*100:.2f}"
-                    return str(value)
-                except:
-                    return 'N/A'
-            
-            # Lấy dữ liệu từ API
-            try:
-                peer_comparison_data = get_cty_cung_nganh_p3(symbol)
-                print(f"Dữ liệu công ty cùng ngành: {peer_comparison_data}")
-            except Exception as e:
-                print(f"Lỗi khi gọi get_cty_cung_nganh_p3: {str(e)}")
-                peer_comparison_data = {}
-            
-            # Chỉ xử lý nếu dữ liệu trả về không rỗng và không có lỗi
-            if peer_comparison_data and isinstance(peer_comparison_data, dict):
-                print(f"Xử lý dữ liệu cho {len(peer_comparison_data)} công ty")
-                
-                # Tạo danh sách P/E để tính trung bình/trung vị
-                pe_values = []
-                
-                # Xử lý tất cả dữ liệu, bao gồm công ty hiện tại
-                all_entries = []
-                
-                # Xử lý công ty hiện tại trước (nếu có)
-                if symbol in peer_comparison_data:
-                    main_company = peer_comparison_data[symbol]
-                    if isinstance(main_company, dict) and 'organ_name' in main_company:
-                        try:
-                            # Lấy P/E từ dữ liệu trả về
-                            pe_value = main_company.get('P/E', 'N/A')
-                            if isinstance(pe_value, (int, float, np.int64, np.float64)):
-                                pe_formatted = f"{pe_value:.2f}"
-                                pe_values.append(pe_value)
-                            else:
-                                pe_formatted = str(pe_value)
-                                
-                            # Tạo entry cho công ty hiện tại
-                            main_entry = {
-                                'company_name': f"{main_company.get('organ_name', 'N/A')} (Hiện tại)",
-                                'country': 'Việt Nam',
-                                'pe': pe_formatted,
-                                'market_cap': format_market_cap(main_company.get('market_cap', 'N/A')),
-                                'revenue_growth': format_percentage(main_company.get('revenue_growth', 'N/A')),
-                                'eps_growth': format_percentage(main_company.get('EPS_growth', 'N/A')),
-                                'roa': format_percentage(main_company.get('ROA', 'N/A')),
-                                'roe': format_percentage(main_company.get('ROE', 'N/A'))
-                            }
-                            all_entries.append(main_entry)
-                            
-                            # Lưu P/E của công ty hiện tại
-                            if isinstance(pe_value, (int, float, np.int64, np.float64)):
-                                valuation_data['pe_10yr_avg'] = pe_formatted
-                                
-                            # Lưu EPS mục tiêu nếu có
-                            eps = main_company.get('EPS', 'N/A')
-                            if isinstance(eps, (int, float, np.int64, np.float64)):
-                                valuation_data['eps_target'] = f"{eps:.2f}"
-                        except Exception as e:
-                            print(f"Lỗi khi xử lý dữ liệu công ty chính {symbol}: {str(e)}")
-                    
-                # Xử lý các công ty cùng ngành
-                for sym, data in peer_comparison_data.items():
-                    # Bỏ qua công ty hiện tại (đã xử lý ở trên)
-                    if sym == symbol:
-                        continue
-                        
-                    try:
-                        if isinstance(data, dict) and 'organ_name' in data:
-                            # Lấy P/E từ dữ liệu trả về
-                            pe_value = data.get('P/E', 'N/A')
-                            if isinstance(pe_value, (int, float, np.int64, np.float64)):
-                                pe_formatted = f"{pe_value:.2f}"
-                                pe_values.append(pe_value)
-                            else:
-                                pe_formatted = str(pe_value)
-                                
-                            # Tạo entry cho công ty cùng ngành
-                            peer_entry = {
-                                'company_name': data.get('organ_name', 'N/A'),
-                                'country': 'Việt Nam',
-                                'pe': pe_formatted,
-                                'market_cap': format_market_cap(data.get('market_cap', 'N/A')),
-                                'revenue_growth': format_percentage(data.get('revenue_growth', 'N/A')),
-                                'eps_growth': format_percentage(data.get('EPS_growth', 'N/A')),
-                                'roa': format_percentage(data.get('ROA', 'N/A')),
-                                'roe': format_percentage(data.get('ROE', 'N/A'))
-                            }
-                            all_entries.append(peer_entry)
-                    except Exception as e:
-                        print(f"Lỗi khi xử lý dữ liệu công ty {sym}: {str(e)}")
-                
-                # Tính P/E trung bình và trung vị
-                if pe_values:
-                    valuation_data['pe_avg'] = f"{np.mean(pe_values):.2f}"
-                    valuation_data['pe_median'] = f"{np.median(pe_values):.2f}"
-                    
-                    # Đặt P/E mục tiêu là P/E trung vị ngành, không thấp hơn 10
-                    target_pe = max(10, np.median(pe_values))
-                    valuation_data['pe_target'] = f"{target_pe:.2f}"
-                    
-                    # Cập nhật giá mục tiêu nếu có đủ thông tin
-                    if valuation_data['eps_target'] != 'N/A' and valuation_data['pe_target'] != 'N/A':
-                        try:
-                            eps_target = float(valuation_data['eps_target'])
-                            pe_target = float(valuation_data['pe_target'])
-                            price_target = eps_target * pe_target
-                            valuation_data['price_target'] = f"{price_target:,.0f}"
-                            
-                            # Cập nhật upside nếu có giá hiện tại
-                            if valuation_data['current_price'] != 'N/A':
-                                current_price_val = float(valuation_data['current_price'].replace(',', ''))
-                                upside = (price_target - current_price_val) / current_price_val * 100
-                                valuation_data['upside'] = f"{upside:.2f}"
-                        except Exception as e:
-                            print(f"Lỗi khi cập nhật giá mục tiêu: {str(e)}")
-                
-                # Lấy tối đa 5 công ty
-                peer_data = all_entries[:5]
-                print(f"Đã chuẩn bị dữ liệu cho {len(peer_data)} công ty cho báo cáo.")
-            else:
-                print(f"Không nhận được dữ liệu hợp lệ từ get_cty_cung_nganh_p3.")
-            
-            # Đảm bảo luôn có ít nhất 5 công ty trong peer_data
-            if len(peer_data) < 5:
-                print(f"Chỉ có {len(peer_data)} công ty, thêm công ty mẫu để đủ 5 công ty")
-                # Số lượng công ty mẫu cần thêm
-                num_sample_needed = 5 - len(peer_data)
-                # Thêm các công ty mẫu cần thiết
-                for i in range(min(num_sample_needed, len(sample_companies))):
-                    peer_data.append(sample_companies[i])
-        except Exception as e:
-            print(f"Lỗi khi lấy dữ liệu cho trang 3, sử dụng dữ liệu mẫu: {str(e)}")
-            # Nếu có lỗi nghiêm trọng, sử dụng dữ liệu mẫu
-            peer_data = sample_companies[:5]
-            
-            # Tính các giá trị mẫu cho valuation_data
-            valuation_data['pe_avg'] = '13.25'
-            valuation_data['pe_median'] = '12.50'
-            valuation_data['pe_10yr_avg'] = '14.00'
-            valuation_data['pe_target'] = '13.00'
-            
-            # Nếu eps_target đã có từ dữ liệu trước đó thì giữ nguyên, nếu không thì dùng giá trị mẫu
-            if valuation_data['eps_target'] == 'N/A':
-                valuation_data['eps_target'] = '5000.00'
-                
-                # Cập nhật giá mục tiêu từ EPS và PE mục tiêu mẫu
-                price_target = 5000 * 13
-                valuation_data['price_target'] = f"{price_target:,.0f}"
-                
-                # Cập nhật upside nếu có giá hiện tại
-                if valuation_data['current_price'] != 'N/A':
-                    try:
-                        current_price_val = float(valuation_data['current_price'].replace(',', ''))
-                        upside = (price_target - current_price_val) / current_price_val * 100
-                        valuation_data['upside'] = f"{upside:.2f}"
-                    except:
-                        valuation_data['upside'] = '20.00'
-                else:
-                    valuation_data['upside'] = '20.00'
         
         recommendation_data = {
             "date": datetime.date.today().strftime('%d/%m/%Y'),
@@ -773,21 +539,6 @@ def generate_pdf_report(symbol: str):
         
         # Tạo dữ liệu dự phóng
         projection_data = create_projection_data(symbol)
-        
-        # Sử dụng dữ liệu thực từ các biến đã tạo ở trên thay vì dữ liệu mẫu
-        # Dữ liệu peer_data và valuation_data đã được chuẩn bị trước đó
-        # Nếu peer_data rỗng, thêm công ty hiện tại làm ví dụ
-        if not peer_data:
-            peer_data.append({
-                'company_name': f"{company_data['name']} (Hiện tại)",
-                'country': 'Việt Nam',
-                'pe': '15.2',
-                'market_cap': '12.5',
-                'revenue_growth': '8.5',
-                'eps_growth': '10.2',
-                'roa': '8.4',
-                'roe': '15.6'
-            })
         
         # Format lại valuation_data nếu cần thiết
         if isinstance(profit_percent, (int, float)) and profit_percent != 'N/A':

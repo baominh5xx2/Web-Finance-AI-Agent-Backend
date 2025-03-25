@@ -154,15 +154,13 @@ class PDFReport:
         page2_content = self.page2.create_page2(doc, company_data, projection_data)
         story.extend(page2_content)
         
-        # Chuyển sang trang 3 nếu có dữ liệu đánh giá
-        # Đảm bảo luôn có trang 3 bằng cách kiểm tra peer_data và valuation_data
-        # Đảm bảo peer_data không phải là None và có ít nhất 1 mục
-        if (peer_data and len(peer_data) > 0) or valuation_data:
+        # Chuyển sang trang 3 nếu có dữ liệu định giá
+        if valuation_data:
             story.append(NextPageTemplate('page3'))
             story.append(PageBreak())
             
-            # Thêm nội dung trang 3
-            page3_content = self.page3.create_page3(doc, company_data, peer_data or [], valuation_data or {}, recommendation_data)
+            # Thêm nội dung trang 3 - đã xóa peer_data hoặc đặt nó thành list rỗng
+            page3_content = self.page3.create_page3(doc, company_data, [], valuation_data, recommendation_data)
             story.extend(page3_content)
         
         # Chuyển sang trang 4
@@ -192,56 +190,6 @@ class PDFReport:
         # Xuất PDF
         doc.build(story)
         return output_path
-
-    def create_valuation_summary_table(self, valuation_data):
-        """Tạo bảng tóm tắt định giá"""
-        data = []
-        
-        # Các dòng dữ liệu định giá
-        pe_avg = valuation_data.get('pe_avg', 'N/A')
-        pe_median = valuation_data.get('pe_median', 'N/A')
-        pe_10yr_avg = valuation_data.get('pe_10yr_avg', 'N/A')
-        pe_target = valuation_data.get('pe_target', 'N/A')
-        eps_target = valuation_data.get('eps_target', 'N/A')
-        price_target = valuation_data.get('price_target', 'N/A')
-        current_price = valuation_data.get('current_price', 'N/A')
-        upside = valuation_data.get('upside', 'N/A')
-        
-        # Thêm các dòng vào bảng
-        data.append([Paragraph('P/E trung bình ngành:', self.styles['SummaryRow']), 
-                     Paragraph(f"{pe_avg}", self.styles['TableCell'])])
-        data.append([Paragraph('P/E trung vị ngành:', self.styles['SummaryRow']), 
-                     Paragraph(f"{pe_median}", self.styles['TableCell'])])
-        data.append([Paragraph('P/E trung bình 10 năm của công ty:', self.styles['SummaryRow']), 
-                     Paragraph(f"{pe_10yr_avg}", self.styles['TableCell'])])
-        data.append([Paragraph('P/E mục tiêu:', self.styles['SummaryRow']), 
-                     Paragraph(f"{pe_target}", self.styles['TableCell'])])
-        data.append([Paragraph('EPS mục tiêu (VND):', self.styles['SummaryRow']), 
-                     Paragraph(f"{eps_target}", self.styles['TableCell'])])
-        data.append([Paragraph('Giá mục tiêu (VND):', self.styles['SummaryRow']), 
-                     Paragraph(f"{price_target}", self.styles['TableCell'])])
-        data.append([Paragraph('Giá hiện tại (VND):', self.styles['SummaryRow']), 
-                     Paragraph(f"{current_price}", self.styles['TableCell'])])
-        data.append([Paragraph('Tiềm năng tăng/giảm (%):', self.styles['SummaryRow']), 
-                     Paragraph(f"{upside}", self.styles['TableCell'])])
-        
-        # Tạo bảng với chiều rộng khớp với bảng so sánh
-        table = Table(data, colWidths=[12*cm, 8*cm])  # Điều chỉnh tổng chiều rộng cho phù hợp
-        
-        # Thiết lập style cho bảng
-        table_style = TableStyle([
-            ('ALIGN', (1, 0), (1, -1), 'CENTER'),
-            ('BACKGROUND', (0, 0), (-1, -1), self.light_blue),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEFTPADDING', (0, 0), (-1, -1), 5),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 5),
-            ('TOPPADDING', (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-        ])
-        
-        table.setStyle(table_style)
-        return table
 
 def generate_page4_pdf(output_path="company_overview.pdf"):
     """
@@ -318,9 +266,4 @@ def generate_page6_pdf(output_path="additional_info.pdf"):
     print(f"PDF saved to {output_path}")
     return output_path
 
-# For testing
-if __name__ == "__main__":
-    generate_page4_pdf()
-    generate_page5_pdf()
-    generate_page6_pdf()
 

@@ -120,76 +120,6 @@ class Page3:
         
         # Thông tin công ty
         canvas.drawString(1*cm, 3.5*mm, "FinBot - Trí tuệ tài chính cho mọi người")
-        
-    def create_peer_comparison_table(self, peer_data):
-        """Tạo bảng so sánh với các doanh nghiệp trong ngành"""
-        # Headers cho bảng
-        headers = [
-            'Công ty', 'Quốc gia', 'P/E', 'Vốn hóa (tỷ USD)', 'Tăng trưởng doanh thu (%)', 
-            'Tăng trưởng EPS TTM (%)', 'ROA (%)', 'ROE (%)'
-        ]
-        
-        # Chuyển đổi header thành Paragraph
-        header_cells = [Paragraph(h, self.styles['TableHeader']) for h in headers]
-        
-        # Tạo các dòng dữ liệu
-        data = [header_cells]
-        
-        # Thêm dữ liệu từ các công ty trong cùng ngành
-        for peer in peer_data:
-            company = Paragraph(peer.get('company_name', 'N/A'), self.styles['TableCellLeft'])
-            country = Paragraph(peer.get('country', 'N/A'), self.styles['TableCell'])
-            
-            # Định dạng lại giá trị P/E để hiển thị đẹp hơn
-            pe_value = peer.get('pe', 'N/A')
-            pe = Paragraph(pe_value, self.styles['TableCell'])
-            
-            market_cap = Paragraph(f"{peer.get('market_cap', 'N/A')}", self.styles['TableCell'])
-            
-            # Đảm bảo các giá trị % có ký hiệu % nếu chưa có
-            revenue_growth = peer.get('revenue_growth', 'N/A')
-            if revenue_growth != 'N/A' and not revenue_growth.endswith('%'):
-                revenue_growth = f"{revenue_growth}%"
-            
-            eps_growth = peer.get('eps_growth', 'N/A')
-            if eps_growth != 'N/A' and not eps_growth.endswith('%'):
-                eps_growth = f"{eps_growth}%"
-                
-            roa = peer.get('roa', 'N/A')
-            if roa != 'N/A' and not roa.endswith('%'):
-                roa = f"{roa}%"
-                
-            roe = peer.get('roe', 'N/A')
-            if roe != 'N/A' and not roe.endswith('%'):
-                roe = f"{roe}%"
-            
-            # Tạo Paragraph cho các giá trị
-            revenue_growth_cell = Paragraph(revenue_growth, self.styles['TableCell'])
-            eps_growth_cell = Paragraph(eps_growth, self.styles['TableCell'])
-            roa_cell = Paragraph(roa, self.styles['TableCell'])
-            roe_cell = Paragraph(roe, self.styles['TableCell'])
-            
-            data.append([company, country, pe, market_cap, revenue_growth_cell, eps_growth_cell, roa_cell, roe_cell])
-        
-        # Tạo bảng
-        col_widths = [4*cm, 2*cm, 1.5*cm, 2.5*cm, 3*cm, 3*cm, 2*cm, 2*cm]
-        table = Table(data, colWidths=col_widths)
-        
-        # Thiết lập style cho bảng
-        table_style = TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), self.blue_color),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 5),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, self.light_blue])
-        ])
-        
-        table.setStyle(table_style)
-        return table
     
     def create_valuation_summary_table(self, valuation_data):
         """Tạo bảng tóm tắt định giá"""
@@ -242,35 +172,24 @@ class Page3:
         """Tạo nội dung cho trang định giá và khuyến nghị"""
         story = []
         width, height = A4
-        
-        # Kiểm tra đảm bảo có dữ liệu
-        if peer_data is None:
-            peer_data = []  # Mảng rỗng nếu không có dữ liệu
             
         if valuation_data is None:
             valuation_data = {}  # Dict rỗng nếu không có dữ liệu
         
         # Tiêu đề phần định giá
-        title = Paragraph("Phương pháp P/E", self.styles['SectionTitle'])
+        title = Paragraph("Phương pháp định giá", self.styles['SectionTitle'])
         story.append(title)
         story.append(Spacer(1, 10*mm))  # Tăng khoảng trống giữa tiêu đề và văn bản giải thích
         
         # Giải thích phương pháp định giá
-        explanation_text = """Chúng tôi sử dụng phương pháp so sánh P/E để định giá cổ phiếu. P/E mục tiêu được xác định dựa trên P/E trung bình ngành, có điều chỉnh theo đặc thù hoạt động và vị thế của công ty trong ngành. EPS mục tiêu được dự phóng dựa trên kết quả kinh doanh quá khứ và triển vọng tăng trưởng."""
+        explanation_text = """Chúng tôi sử dụng phương pháp dự báo dòng tiền với các chỉ số cơ bản doanh nghiệp để định giá cổ phiếu. Giá mục tiêu được xác định dựa trên kết quả kinh doanh quá khứ và triển vọng tăng trưởng của công ty."""
         explanation = Paragraph(explanation_text, self.styles['ValuationText'])
         story.append(explanation)
         story.append(Spacer(1, 10*mm))  # Tăng khoảng trống
-        
-        # Bảng so sánh với các doanh nghiệp trong ngành
-        if peer_data:
-            peer_table = self.create_peer_comparison_table(peer_data)
-            story.append(peer_table)
-            story.append(Spacer(1, 10*mm))  # Tăng khoảng trống
         
         # Bảng tóm tắt định giá - chỉ sử dụng một cột cho bảng này
         if valuation_data:
             valuation_table = self.create_valuation_summary_table(valuation_data)
             story.append(valuation_table)
         
-        # Không sử dụng Table trong Table nữa để tránh vấn đề về định dạng
         return story

@@ -91,7 +91,7 @@ def get_index_data(symbol='VNINDEX'):
     """
     try:
         # Khởi tạo đối tượng Stock
-        vci_stock = Vnstock().stock(source='VCI')
+        vci_stock = Vnstock().stock(symbol="VCI",source='VCI')
         
         # Lấy ngày hiện tại và ngày 7 ngày trước đó để đảm bảo có dữ liệu
         current_date = datetime.datetime.now().strftime('%Y-%m-%d')
@@ -159,7 +159,7 @@ def get_market_cap(symbol):
         
     try:
         # Khởi tạo đối tượng Stock
-        vci_stock = Vnstock().stock(source='VCI')
+        vci_stock = Vnstock().stock(symbol="VCI",source='VCI')
         
         # Lấy dữ liệu cho symbol
         stock_data = vci_stock.trading.price_board([symbol])
@@ -273,7 +273,6 @@ def industry_pe(industry_name, max_workers=10, source='VCI'): # chưa testing
         if not symbols:
             raise ValueError(f"No companies found for industry: {industry_name}")
         pe_data = []
-        symbols = symbols[:3]
         for symbol in symbols:
             stock = Vnstock().stock(symbol=symbol, source='VCI')
             data = stock.finance.ratio(period='year', lang='en', dropna=True).loc[:, [('Meta', 'yearReport'), ('Chỉ tiêu định giá', 'P/E'), ('Chỉ tiêu định giá', 'Market Capital (Bn. VND)')]].head(1)
