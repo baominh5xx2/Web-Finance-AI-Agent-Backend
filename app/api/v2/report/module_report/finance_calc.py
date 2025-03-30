@@ -366,7 +366,7 @@ def doanhthu_thuan_p2(symbol):
     stock = Vnstock().stock(symbol=symbol, source='VCI')
     doanhthu_thuan = stock.finance.income_statement(period='year', lang='vi', dropna=True).head(1)
     Yoy = doanhthu_thuan['Tăng trưởng doanh thu (%)'].values[0]
-    return doanhthu_thuan['Doanh thu (Tỷ đồng)'].values[0], Yoy
+    return doanhthu_thuan['Doanh thu (đồng)'].values[0], Yoy
 
 def chiphi_p2(symbol):
     stock = Vnstock().stock(symbol=symbol, source='VCI')
@@ -432,10 +432,10 @@ def loinhuankinhdoanh_p2(symbol):
     stock = Vnstock().stock(symbol=symbol, source='VCI')
     res = stock.finance.income_statement(period='year', lang='vi', dropna=True).head(2)
     loinhuanhdkd = res['Lãi/Lỗ từ hoạt động kinh doanh'].values[0]
-    loinhuansautrue = res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (Tỷ đồng)'].values[0]
+    loinhuansautrue = res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (đồng)'].values[0]
     loinhuantruothue = res['LN trước thuế'].values[0]
     yoy_loinhuanhdkd = (loinhuanhdkd - res['Lãi/Lỗ từ hoạt động kinh doanh'].values[1]) / res['Lãi/Lỗ từ hoạt động kinh doanh'].values[1]
-    yoy_loinhuansautrue = (loinhuansautrue - res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (Tỷ đồng)'].values[1]) / res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (Tỷ đồng)'].values[1]
+    yoy_loinhuansautrue = (loinhuansautrue - res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (đồng)'].values[1]) / res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (đồng)'].values[1]
     yoy_loinhuantruothue = (loinhuantruothue - res['LN trước thuế'].values[1]) / res['LN trước thuế'].values[1]
     return loinhuanhdkd, loinhuantruothue, loinhuansautrue, yoy_loinhuanhdkd, yoy_loinhuantruothue, yoy_loinhuansautrue
 
