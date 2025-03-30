@@ -403,7 +403,85 @@ class Page1:
             except:
                 pass
 
-    def create_page1(self, doc, company_data, recommendation_data, market_data, analysis_data):
+    def create_financial_projection_table(self, projection_data=None):
+        """Create a table for financial projections"""
+        if not projection_data:
+            # Default data structure from the image
+            data = [
+                ['Năm', '2023', '2024', '2025F', '2026F'],
+                ['Doanh thu (tỷ VND)', '18,596', '20,609', '25,266', '29,016'],
+                ['LN từ HĐKD (tỷ VND)', '177', '557', '1,021', '1,271'],
+                ['Lợi nhuận ròng (tỷ VND)', '117', '453', '829', '998'],
+                ['EPS (đồng)', '446', '1,434', '1,853', '2,125'],
+                ['BPS (đồng)', '20,598', '18,584', '18,486', '19,594'],
+                ['ROA (%)', '1.0', '2.7', '4.0', '4.4'],
+                ['NPM (%)', '0.6', '2.2', '3.3', '3.4'],
+                ['ROE (%)', '2.2', '7.7', '10.0', '10.8'],
+            ]
+        else:
+            # Handle custom projection data if provided
+            data = [['Năm', '2023', '2024', '2025F', '2026F']]
+            
+            # Map projection_data keys to display names
+            key_mapping = {
+                'revenue': 'Doanh thu (tỷ VND)',
+                'operating_profit': 'LN từ HĐKD (tỷ VND)',
+                'profit_after_tax': 'Lợi nhuận ròng (tỷ VND)',
+                'eps': 'EPS (đồng)',
+                'bps': 'BPS (đồng)',
+                'roa': 'ROA (%)',
+                'npm': 'NPM (%)',
+                'roe': 'ROE (%)',
+            }
+            
+            # Add rows for each metric if available in projection_data
+            for key, display_name in key_mapping.items():
+                if key in projection_data:
+                    row = [display_name]
+                    row.extend(projection_data[key])
+                    data.append(row)
+        
+        # Set column widths
+        colWidths = [5*cm, 2.0*cm, 2.0*cm, 2.0*cm, 2.0*cm]
+        
+        # Create table
+        table = Table(data, colWidths=colWidths, spaceBefore=0.3*cm, spaceAfter=0.5*cm)
+        
+        # Create style for table
+        style = TableStyle([
+            # Headers
+            ('BACKGROUND', (0, 0), (-1, 0), self.blue_color),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold'),
+            
+            # Main cells
+            ('BACKGROUND', (0, 1), (-1, -1), self.light_blue),
+            ('FONTNAME', (0, 1), (0, -1), 'DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold'),
+            ('FONTNAME', (1, 1), (-1, -1), 'DejaVuSans' if self.font_added else 'Helvetica'),
+            
+            # Alignment
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (-1, -1), 'RIGHT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            
+            # Inner borders
+            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.white),
+            ('BOX', (0, 0), (-1, -1), 0.25, colors.white),
+            
+            # Font size
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            
+            # Padding
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+        ])
+        
+        table.setStyle(style)
+        return table
+
+    def create_page1(self, doc, company_data, recommendation_data, market_data, analysis_data, projection_data=None):
         """Tạo nội dung cho trang 1"""
         width, height = A4
         
@@ -499,6 +577,15 @@ class Page1:
             else:
                 story.append(Paragraph(processed_text, self.styles['NormalVN']))
                 story.append(Spacer(1, 0.2*cm))
+        
+        # Add projection table title
+        story.append(Spacer(1, 0.4*cm))
+        story.append(Paragraph("Dự phóng tài chính", self.styles['SectionTitle']))
+        story.append(Spacer(1, 0.1*cm))
+        
+        # Add financial projection table
+        projection_table = self.create_financial_projection_table(projection_data)
+        story.append(projection_table)
         
         return story
 

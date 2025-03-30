@@ -427,7 +427,53 @@ def loinhuan_gop_p2(symbol):
     except Exception as e:
         print(f"Error processing data for {symbol}: {str(e)}")
         return "N/A", "N/A", "N/A"
-
+def get_new_symbol(symbol):
+    company = Vnstock().stock(symbol=symbol, source='TCBS').company
+    news = company.news().head(5)
+    return news['title']
+def analyze_stock(symbol):
+    # Fetch income statement data
+    stock = Vnstock().stock(symbol=symbol, source='VCI')
+    data = stock.finance.income_statement(symbol=symbol)
+    
+    # Select and rename columns
+    table_data = data[[('yearReport'), ('lengthReport'), ('Revenue (Bn. VND)'), ('Operating Profit/Loss'), 
+                       ('Profit before tax'), ('Net Profit For the Year')]].dropna()
+    table_data.rename(columns={'yearReport': 'Year', 'lengthReport': 'Quarter'}, inplace=True)
+    
+    # Summarize data by year from 2020 to 2024
+    data_year = table_data.groupby('Year')[['Revenue (Bn. VND)', 'Operating Profit/Loss', 'Profit before tax', 'Net Profit For the Year']].sum()
+    data_year = data_year.loc[2020:2024]
+    
+    # Calculate CAGR for each metric from 2020 to 2024
+    def calculate_cagr(start_value, end_value, num_years):
+        return (end_value / start_value) ** (1 / num_years) - 1
+    
+    cagr_values = {}
+    for label in ['Revenue (Bn. VND)', 'Operating Profit/Loss', 'Profit before tax', 'Net Profit For the Year']:
+        start_value = data_year.loc[2020, label]
+        end_value = data_year.loc[2024, label]
+        cagr_values[label] = calculate_cagr(start_value, end_value, 4)
+    
+    # Project 2025 values using CAGR
+    projections_2025 = {}
+    for label in ['Revenue (Bn. VND)', 'Operating Profit/Loss', 'Profit before tax', 'Net Profit For the Year']:
+        projections_2025[label] = data_year.loc[2024, label] * (1 + cagr_values[label])
+    
+    # Calculate %YoY for 2024 and projected 2025
+    yoy_values = {}
+    for label in ['Revenue (Bn. VND)', 'Operating Profit/Loss', 'Profit before tax', 'Net Profit For the Year']:
+        yoy_2024 = ((data_year.loc[2024, label] - data_year.loc[2023, label]) / data_year.loc[2023, label]) * 100
+        yoy_2025 = ((projections_2025[label] - data_year.loc[2024, label]) / data_year.loc[2024, label]) * 100
+        yoy_values[label] = {'%YoY 2024': yoy_2024, '%YoY 2025F': yoy_2025}
+    
+    # Print results
+    for label in ['Revenue (Bn. VND)', 'Operating Profit/Loss', 'Profit before tax', 'Net Profit For the Year']:
+        print(f"{label}:")
+        print(f"  CAGR (2020-2024): {cagr_values[label]:.2%}")
+        print(f"  Dự phóng 2025: {projections_2025[label]:,.0f}")
+        print(f"  %YoY 2024: {yoy_values[label]['%YoY 2024']:.2f}%")
+        print(f"  %YoY 2025F: {yoy_values[label]['%YoY 2025F']:.2f}%\n")
 def loinhuankinhdoanh_p2(symbol):
     stock = Vnstock().stock(symbol=symbol, source='VCI')
     res = stock.finance.income_statement(period='year', lang='vi', dropna=True).head(2)

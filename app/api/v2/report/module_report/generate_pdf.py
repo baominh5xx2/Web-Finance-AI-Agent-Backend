@@ -144,7 +144,7 @@ class PDFReport:
         doc.addPageTemplates([template1, template2, template3, template4, template5, template6])
         
         # Tạo nội dung cho trang 1
-        story = self.page1.create_page1(doc, company_data, recommendation_data, market_data, analysis_data)
+        story = self.page1.create_page1(doc, company_data, recommendation_data, market_data, analysis_data, projection_data)
         
         # Chuyển sang trang 2
         story.append(NextPageTemplate('page2'))

@@ -1,7 +1,7 @@
 import os
 import google.generativeai as genai
 from dotenv import load_dotenv
-from .finance_calc import current_price
+from .finance_calc import current_price,get_new_symbol
 def configure_api():
     """Configure and authenticate the API"""
     load_dotenv()
@@ -51,7 +51,7 @@ Có kết luận rõ ràng về tiềm năng đầu tư của mã cổ phiếu.
 - KHÔNG ĐƯỢC XUỐNG DÒNG 2 LẦN TRONG MỌI TÌNH HUỐNG.
 """
 
-def create_nkg_analysis_prompt(balance_sheet, income_statement, profitability_analysis, current_price, profit_data=None):
+def create_nkg_analysis_prompt(balance_sheet, income_statement, profitability_analysis, current_price, profit_data=None,news=None):
     """Create the prompt specifically for NKG stock analysis"""
     
     # Extract profit indicators if provided
@@ -87,7 +87,7 @@ Hãy đánh giá rủi ro và triển vọng đầu tư của mã cổ phiếu N
 4. Khả năng chống chịu biến động giá nguyên liệu đầu vào
 5. Tiềm năng tăng trưởng từ xuất khẩu thép
 
-Yêu cầu phân tích:
+Yêu cầu phân tích 3 PHẦN LỚN SAU:
 
 **Định giá cập nhật với khuyến nghị MUA, giá mục tiêu dài hạn**
 - Hãy viết về một đoạn văn giới thiệu thông tin mới nhất về công ty thép nam kim với mã cổ phiếu là NKG. Tìm các chỉ số mới nhất như là giá hiện tại: {current_price}, giá mục tiêu là 23,972 VND,... để đánh giá tình hình hiện tại của công ty. không quá 300 từ
@@ -102,10 +102,15 @@ Phân tích ngắn gọn về:
 - Tỷ lệ ROE/ROA của Nam Kim Steel so với các công ty cùng ngành
 - Hiệu quả hoạt động và quản trị chi phí
 - Tập trung bình luận chỉ số
+- Phải đưa ra được số liệu cụ thể.
+- Bình luận các chỉ số dựa trên hiểu biết của bạn và các chỉ số đã cung cấp.
 
+**CÁC TIN TỨC VỀ CÔNG TY THÉP NAM KIM**
+- Đây là thông tin mới nhất về công ty thép nam kim: {news}.
+- Hãy viết về một đoạn văn giới thiệu thông tin mới nhất về công ty thép nam kim với mã cổ phiếu là NKG. Tìm các chỉ số mới nhất như là giá hiện tại: {current_price}, giá mục tiêu là 23,972 VND,... để đánh giá tình hình hiện tại của công ty. không quá 300 từ
 Định dạng đầu ra cần tuân thủ:
 1. Bắt đầu phân tích với tiêu đề "**Định giá cập nhật với khuyến nghị MUA, giá mục tiêu dài hạn**"
-2. Nội dung phải súc tích, logic, tổng cộng không quá 300 từ
+2. Nội dung phải súc tích, logic, tổng cộng không quá 600 từ
 3. Có kết luận rõ ràng về tiềm năng đầu tư cổ phiếu NKG
 4. TUYỆT ĐỐI PHẢI TIẾT KIỆM SỐ TRANG SỬ DỤNG. Viết các nội dung gần với nhau nhất có thể.
 5. KHÔNG ĐƯỢC XUỐNG DÒNG 2 LẦN TRONG MỌI TÌNH HUỐNG.
@@ -161,7 +166,8 @@ def generate_financial_analysis(balance_sheet=None, income_statement=None, profi
                     income_statement, 
                     profitability_analysis,
                     current_price("NKG"),
-                    profit_data
+                    profit_data,
+                    get_new_symbol("NKG")
                 )
             except Exception as e:
                 print(f"Error getting profit data for NKG: {str(e)}")
@@ -170,7 +176,8 @@ def generate_financial_analysis(balance_sheet=None, income_statement=None, profi
                     balance_sheet, 
                     income_statement, 
                     profitability_analysis,
-                    current_price("NKG")
+                    current_price("NKG"),   
+                    get_new_symbol("NKG")
                 )
         elif balance_sheet and income_statement and profitability_analysis:
             prompt = create_analysis_prompt(balance_sheet, income_statement, profitability_analysis)
