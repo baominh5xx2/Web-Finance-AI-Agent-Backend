@@ -599,11 +599,12 @@ def get_financial_analysis(symbol=None):
                 "ROA": ["8%", "10%", "12%"],
             }
             
-            # Generate analysis using the financial data
+            # Generate analysis using the financial data and pass the symbol parameter
             return generate_financial_analysis(
                 balance_sheet=balance_sheet,
                 income_statement=income_statement,
-                profitability_analysis=profitability_analysis
+                profitability_analysis=profitability_analysis,
+                symbol=symbol
             )
         else:
             # Provide a general market analysis if no symbol is specified
