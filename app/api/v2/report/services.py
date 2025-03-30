@@ -341,7 +341,10 @@ def generate_pdf_report(symbol: str):
         
         # Request AI analysis
         analysis = generate_financial_analysis(
-            custom_prompt=f"Analyze financial performance of {symbol} based on: Balance Sheet: {balance_sheet_data}, Income Statement: {income_statement_data}, Profitability Analysis: {profitability_analysis_data}"
+            balance_sheet=balance_sheet_data, 
+            income_statement=income_statement_data, 
+            profitability_analysis=profitability_analysis_data,
+            symbol=symbol
         )
         
         # Create output directory
@@ -469,53 +472,19 @@ def generate_pdf_report(symbol: str):
         if analysis:
             # Loại bỏ các dòng lời chào nếu có
             if isinstance(analysis, str):
-                # Loại bỏ các dòng lời chào đầu tiên
-                lines = analysis.split('\n')
-                clean_lines = []
-                skip_intro = True
-                for line in lines:
-                    # Bỏ qua các dòng cho đến khi gặp tiêu đề đầu tiên
-                    if skip_intro and not line.startswith('**Định giá cập nhật với khuyến nghị MUA**'):
-                        continue
-                    skip_intro = False
-                    clean_lines.append(line)
-                
-                analysis = '\n'.join(clean_lines)
-            
-            # Tạo tiêu đề cho các phần phân tích chính
-            analysis_sections = [
-                "**Định giá cập nhật với khuyến nghị MUA**",
-                "**TÌNH HÌNH TÀI CHÍNH HIỆN NAY**"
-            ]
+                # Đảm bảo phân tích bắt đầu với tiêu đề "Định giá cập nhật với khuyến nghị MUA"
+                # Nếu không có, thêm vào
+                if not "**Định giá cập nhật với khuyến nghị MUA" in analysis:
+                    analysis = "**Định giá cập nhật với khuyến nghị MUA, giá mục tiêu dài hạn**\n" + analysis
             
             # Chia phân tích thành các phần
             paragraphs = analysis.split('\n\n')
             
-            # Kiểm tra xem phân tích đã có tiêu đề Markdown hay chưa
-            if paragraphs and not any(p.startswith('**') for p in paragraphs):
-                # Không có tiêu đề Markdown, thêm tiêu đề vào nội dung
-                formatted_paragraphs = []
-                section_idx = 0
-                paragraphs_per_section = max(1, len(paragraphs) // len(analysis_sections))
-                
-                for i, para in enumerate(paragraphs):
-                    if i % paragraphs_per_section == 0 and section_idx < len(analysis_sections):
-                        # Thêm tiêu đề kết hợp với đoạn đầu tiên của phần
-                        formatted_paragraphs.append(f"{analysis_sections[section_idx]} {para}")
-                        section_idx += 1
-                    else:
-                        # Thêm đoạn thông thường
-                        formatted_paragraphs.append(para)
-                
-                # Đảm bảo sử dụng tất cả các tiêu đề
-                while section_idx < len(analysis_sections):
-                    formatted_paragraphs.append(analysis_sections[section_idx])
-                    section_idx += 1
-                
-                analysis_paragraphs = formatted_paragraphs
-            else:
-                # Đã có tiêu đề Markdown, giữ nguyên định dạng
-                analysis_paragraphs = paragraphs
+            # Xử lý từng đoạn để định dạng đúng
+            for paragraph in paragraphs:
+                if paragraph.strip():
+                    # Kiểm tra nếu đoạn có định dạng markdown và xử lý phù hợp
+                    analysis_paragraphs.append(paragraph.strip())
         
         # Loại bỏ các lời chào khỏi tiêu đề và khuyến nghị 
         # Lưu ý: Các giá trị này không được sử dụng nữa vì đã xóa bỏ hiển thị trong generate_pdf.py

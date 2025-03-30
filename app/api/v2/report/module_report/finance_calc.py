@@ -438,7 +438,68 @@ def loinhuankinhdoanh_p2(symbol):
     yoy_loinhuansautrue = (loinhuansautrue - res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (đồng)'].values[1]) / res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (đồng)'].values[1]
     yoy_loinhuantruothue = (loinhuantruothue - res['LN trước thuế'].values[1]) / res['LN trước thuế'].values[1]
     return loinhuanhdkd, loinhuantruothue, loinhuansautrue, yoy_loinhuanhdkd, yoy_loinhuantruothue, yoy_loinhuansautrue
+def analyze_stock_data_2025_2026_p2(symbol):
+    # Fetch data
+    stock = Vnstock().stock(symbol=symbol, source='VCI')
+    data1 = stock.finance.ratio(symbol=symbol)
+    data2 = stock.finance.income_statement(symbol=symbol)
 
+    # Process data1
+    table_data1 = data1[[
+        ('Meta', 'yearReport'), ('Meta', 'lengthReport'), 
+        ('Chỉ tiêu khả năng sinh lợi', 'Net Profit Margin (%)'), 
+        ('Chỉ tiêu khả năng sinh lợi', 'ROE (%)'), 
+        ('Chỉ tiêu khả năng sinh lợi', 'ROA (%)'), 
+        ('Chỉ tiêu định giá', 'P/E'), 
+        ('Chỉ tiêu định giá', 'P/B'),
+        ('Chỉ tiêu định giá', 'EPS (VND)'), 
+        ('Chỉ tiêu định giá', 'BVPS (VND)')
+    ]].dropna()
+    table_data1.columns = table_data1.columns.droplevel(0)
+    table_data1.rename(columns={'yearReport': 'Year', 'lengthReport': 'Quarter'}, inplace=True)
+
+    # Process data2
+    table_data2 = data2[[
+        ('yearReport'), ('lengthReport'), 
+        ('Revenue (Bn. VND)'), ('Revenue YoY (%)'), 
+        ('Net Profit For the Year')
+    ]].dropna()
+    table_data2.rename(columns={'yearReport': 'Year', 'lengthReport': 'Quarter'}, inplace=True)
+
+    # Merge data
+    table_data = pd.merge(table_data2, table_data1, on=['Year', 'Quarter'], how='inner')
+
+    # Calculate totals by year
+    totals_by_year = table_data.groupby('Year')[['Revenue (Bn. VND)', 'Net Profit For the Year', 'EPS (VND)', 'BVPS (VND)']].sum()
+    totals_by_year = totals_by_year.loc[2020:2024]
+
+    # CAGR calculation function
+    def calculate_cagr(start_value, end_value, num_years):
+        return (end_value / start_value) ** (1 / num_years) - 1
+
+    # Calculate CAGR for each metric
+    num_years = totals_by_year.index[-1] - totals_by_year.index[0]
+    cagr_values = {}
+    for column in ['Revenue (Bn. VND)', 'Net Profit For the Year', 'EPS (VND)', 'BVPS (VND)']:
+        start_value = totals_by_year[column].iloc[0]
+        end_value = totals_by_year[column].iloc[-1]
+        cagr_values[column] = calculate_cagr(start_value, end_value, num_years)
+
+    # Project future values
+    projections_cagr = {}
+    for column in ['Revenue (Bn. VND)', 'Net Profit For the Year', 'EPS (VND)', 'BVPS (VND)']:
+        projections_cagr[column] = {
+            '2025F': totals_by_year[column].iloc[-1] * (1 + cagr_values[column]),
+            '2026F': totals_by_year[column].iloc[-1] * (1 + cagr_values[column]) ** 2
+        }
+
+    # Display results
+    print("Tổng các chỉ tiêu theo từng năm (2020-2024):")
+    print(totals_by_year)
+    print("\nCAGR cho từng chỉ tiêu:")
+    print(cagr_values)
+    print("\nDự phóng 2025F và 2026F theo CAGR:")
+    print(projections_cagr)
 def get_market_data(stock_info=None, symbol=None):
     """Lấy các dữ liệu thị trường bao gồm VNINDEX và thông tin cổ phiếu"""
     # Trả về tất cả giá trị là N/A
