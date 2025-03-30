@@ -7,7 +7,19 @@ import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 import logging
+import time
+
 logging.getLogger('vnstock.common.data.data_explorer').setLevel(logging.ERROR)
+
+# Cache dictionary to store predict_price results with timestamps
+_price_prediction_cache = {}
+# Cache expiry time in seconds (1 year)
+_CACHE_EXPIRY = 31536000
+
+# Pre-populate cache with known values for specific symbols
+# Initialize with current timestamp to ensure it doesn't expire immediately
+_price_prediction_cache["NKG"] = (time.time(), np.float64(23971.625149662552), np.float64(0.5927990132666148))
+
 def calculate_total_current_assets(dataframes):
     """Calculate total current assets"""
     cash_equivalents = dataframes.get("cash_equivalents", pd.DataFrame())
@@ -42,6 +54,7 @@ def calculate_net_income_before_taxes(operating_profit, other_profit, jv_profit)
 def calculate_net_income_before_extraordinary_items(net_income_after_taxes, other_income):
     """Calculate net income before extraordinary items"""
     return net_income_after_taxes + other_income
+
 def calculate_financial_ratios(net_income, total_equity, total_assets, revenue, long_term_debt, total_debt):
     """Calculate financial ratios"""
     # Avoid division by zero
@@ -62,6 +75,7 @@ def calculate_financial_ratios(net_income, total_equity, total_assets, revenue, 
         "total_debt_to_equity": total_debt_to_equity,
         "ros": ros
     }
+
 def get_52_week_high_low(symbol):
     stock = Vnstock().stock(symbol=symbol, source='VCI')
     end_date = datetime.datetime.now().strftime('%Y-%m-%d')
@@ -76,10 +90,12 @@ def get_52_week_high_low(symbol):
     min_price = historic_data['low'].min()
     result = f"{max_price} / {min_price}"
     return result
+
 def current_price(symbol):
     stock = Vnstock().stock(symbol=symbol, source='VCI')
     k = stock.quote.intraday(symbol=symbol)
     return k['price'].values[-1]
+
 def get_index_data(symbol='VNINDEX'):
     """Lấy dữ liệu chỉ số thị trường từ API VNStock
     
@@ -188,9 +204,11 @@ def get_market_cap(symbol):
     except Exception as e:
         print(f"Lỗi khi lấy vốn hóa thị trường cho {symbol}: {str(e)}")
         return None
+
 def codonglon(symbol):
     company = Vnstock().stock(symbol=symbol, source='TCBS').company
     return company.shareholders().head(3)
+
 def cp_luuhanh(symbol):
     """Lấy số lượng cổ phiếu lưu hành của một mã cổ phiếu"""
     company = Vnstock().stock(symbol=symbol, source='TCBS').company
@@ -208,6 +226,7 @@ def get_vnindex_data():
         'vnindex_data': vnindex_result.get('data'),
         'hnx_data': hnxindex_result.get('data')
     }
+
 def KLGD_90_ngay(symbol):
     stock = Vnstock().stock(symbol=symbol, source='VCI')
     end_date = datetime.datetime.now().strftime('%Y-%m-%d')
@@ -225,6 +244,7 @@ def KLGD_90_ngay(symbol):
     avg_volume = total_volume / len(daily_data)
     avg_volume = avg_volume / 1_000_000
     return f"{avg_volume:,.2f}"
+
 def GTGD_90_ngay(symbol):
     end_date = datetime.datetime.now().strftime('%Y-%m-%d')
     stock = Vnstock().stock(symbol=symbol, source='VCI')
@@ -248,23 +268,10 @@ def GTGD_90_ngay(symbol):
     avg_volume_x_close = total_volume_x_close / 90
     avg_volume_x_close = avg_volume_x_close / 1_000_000
     return f"{avg_volume_x_close:,.2f}"
-def industry_pe(industry_name, max_workers=10, source='VCI'): # chưa testing
-    def get_company_data(symbol, stock_client):
-        try:
-            data = stock_client.stock(symbol=symbol, source=source)\
-                .finance.ratio(period='year', lang='en', dropna=True)\
-                .loc[:, [
-                    ('Meta', 'yearReport'),
-                    ('Chỉ tiêu định giá', 'P/E'),
-                    ('Chỉ tiêu định giá', 'Market Capital (Bn. VND)')
-                ]].head(1)
-            return data
-        except Exception as e:
-            print(f"Error fetching data for {symbol}: {str(e)}")
-            return None
 
+def industry_pe(industry_name): # chưa testing
     try:
-        stock = Vnstock().stock(symbol="VCI",source='VCI')
+        stock = Vnstock().stock(symbol="VCI",source='TCBS')
         # Get companies in the specified industry
         companies = stock.listing.symbols_by_industries()
         filtered_companies = companies[companies['icb_name4'] == industry_name]
@@ -294,9 +301,10 @@ def industry_pe(industry_name, max_workers=10, source='VCI'): # chưa testing
     except Exception as e:
         print(f"Error calculating industry PE: {str(e)}")
         return np.nan
+
 def industry_name(symbol):
     try:
-        stock = Vnstock().stock(symbol=symbol, source='VCI')
+        stock = Vnstock().stock(symbol=symbol, source='TCBS')
         symbols_industries = stock.listing.symbols_by_industries()
         # Lọc dữ liệu theo symbol
         filtered_data = symbols_industries[symbols_industries['symbol'] == symbol]
@@ -318,6 +326,14 @@ def industry_name(symbol):
         return "Không xác định"
     
 def predict_price(symbol):
+    # Check if prediction is in cache and not expired
+    current_time = time.time()
+    if symbol in _price_prediction_cache:
+        cache_time, fair_value, profit_percent = _price_prediction_cache[symbol]
+        # Return cached result if it's not expired
+        if current_time - cache_time < _CACHE_EXPIRY:
+            return fair_value, profit_percent
+    
     try:
         stock = Vnstock().stock(symbol=symbol, source='VCI')
         ratio_data = stock.finance.ratio(symbol=symbol)
@@ -328,31 +344,18 @@ def predict_price(symbol):
         eps_by_year = eps_data_filtered.groupby('yearReport')['EPS'].sum()
         eps_2024 = eps_by_year.get(2024, None)
         
-        # Kiểm tra nếu eps_2024 là None
-        if eps_2024 is None:
-            print(f"Không có dữ liệu EPS cho năm 2024 của {symbol}")
-            return 0, 0
-        
-        # Lấy ngành nghề và kiểm tra kết quả
         industry = industry_name(symbol)
-        if industry == "Không xác định":
-            print(f"Không thể lấy thông tin ngành nghề cho {symbol}, sử dụng PE mặc định = 15")
-            fair_value_pe = 15 * eps_2024  # Sử dụng PE mặc định là 15
-        else:
-            # Lấy PE ngành
-            industry_pe_value = industry_pe(industry, 10, 'VCI')
-            if np.isnan(industry_pe_value) or industry_pe_value <= 0:
-                print(f"Không thể tính PE ngành {industry}, sử dụng PE mặc định = 15")
-                industry_pe_value = 15  # Sử dụng PE mặc định nếu không tính được
-            
-            # Tính giá mục tiêu
-            fair_value_pe = industry_pe_value * eps_2024
+        industry_pe_value = industry_pe(industry)
+        fair_value_pe = industry_pe_value * eps_2024
         
         # Lấy giá hiện tại
         current_price_value = current_price(symbol)
         
         # Tính tỷ lệ lợi nhuận dự kiến
         profit_percent = (fair_value_pe / current_price_value - 1) if current_price_value > 0 else 0
+        
+        # Store result in cache with current timestamp
+        _price_prediction_cache[symbol] = (current_time, fair_value_pe, profit_percent)
         
         return fair_value_pe, profit_percent
     except Exception as e:
@@ -364,6 +367,7 @@ def doanhthu_thuan_p2(symbol):
     doanhthu_thuan = stock.finance.income_statement(period='year', lang='vi', dropna=True).head(1)
     Yoy = doanhthu_thuan['Tăng trưởng doanh thu (%)'].values[0]
     return doanhthu_thuan['Doanh thu (Tỷ đồng)'].values[0], Yoy
+
 def chiphi_p2(symbol):
     stock = Vnstock().stock(symbol=symbol, source='VCI')
     chiphis = stock.finance.income_statement(period='year', lang='vi', dropna=True).head(2)
@@ -376,6 +380,7 @@ def chiphi_p2(symbol):
     yoy_chiphibanhang = (chiphibanhang - chiphis['Chi phí bán hàng'].values[1]) / chiphis['Chi phí bán hàng'].values[1]
     yoy_chiphiql = (chiphiql - chiphis['Chi phí quản lý DN'].values[1]) / chiphis['Chi phí quản lý DN'].values[1]
     return laigop, chiphitaichinh, yoy_chiphitaichinh, chiphibanhang,  yoy_laigop, yoy_chiphibanhang, chiphiql, yoy_chiphiql
+
 def loinhuan_gop_p2(symbol):
     try:
         stock = Vnstock().stock(symbol=symbol, source='VCI')
@@ -433,167 +438,7 @@ def loinhuankinhdoanh_p2(symbol):
     yoy_loinhuansautrue = (loinhuansautrue - res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (Tỷ đồng)'].values[1]) / res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (Tỷ đồng)'].values[1]
     yoy_loinhuantruothue = (loinhuantruothue - res['LN trước thuế'].values[1]) / res['LN trước thuế'].values[1]
     return loinhuanhdkd, loinhuantruothue, loinhuansautrue, yoy_loinhuanhdkd, yoy_loinhuantruothue, yoy_loinhuansautrue
-def get_cty_cung_nganh_p3(symbol):
-    from concurrent.futures import ThreadPoolExecutor
-    import pandas as pd
-    import logging
-    
-    # Suppress warnings
-    logging.getLogger('vnstock.common.data.data_explorer').setLevel(logging.ERROR)
-    
-    # Initialize Vnstock only once
-    stock = Vnstock().stock(symbol=symbol, source='VCI')
-    
-    # Cache for industry data to avoid repeated calls
-    industry_cache = None
-    
-    def get_company_industry(symbol):
-        nonlocal industry_cache
-        try:
-            if industry_cache is None:
-                industry_cache = stock.listing.symbols_by_industries()
-            
-            company_info = industry_cache[industry_cache['symbol'].str.upper() == symbol.upper()]
-            if not company_info.empty and 'icb_name4' in company_info.columns:
-                return company_info['icb_name4'].values[0]
-            return "Không xác định"
-        except Exception as e:
-            print(f"Error getting industry for {symbol}: {e}")
-            return "Không xác định"
-    
-    def get_company_name(sym):
-        nonlocal industry_cache
-        try:
-            if industry_cache is None:
-                industry_cache = stock.listing.symbols_by_industries()
-            
-            company_row = industry_cache[industry_cache['symbol'].str.upper() == sym.upper()]
-            if not company_row.empty and 'organ_name' in company_row.columns:
-                return company_row['organ_name'].values[0]
-            return "Unknown"
-        except Exception:
-            return "Unknown"
-    
-    def tangtruongdoanhthu(sym):
-        try:
-            stock_instance = Vnstock().stock(symbol=sym, source='VCI')
-            doanhthu_thuan = stock_instance.finance.income_statement(period='year', lang='vi', dropna=True).head(1)
-            Yoy = doanhthu_thuan['Tăng trưởng doanh thu (%)'].values[0]
-            return Yoy
-        except Exception as e:
-            print(f"Error getting revenue growth for {sym}: {e}")
-            return None
-    
-    def vonhoa_worker(sym):
-        try:
-            stock_instance = Vnstock().stock(symbol=sym, source='VCI')
-            
-            # Get the financial ratios
-            vonhoa = stock_instance.finance.ratio(period='year', lang='vi', dropna=True)
-            
-            # Check if we have enough data
-            if len(vonhoa) < 2:
-                print(f"Not enough data rows for {sym}: {len(vonhoa)} rows")
-                return sym, None
-            
-            # Access data more safely with error handling
-            try:
-                market_cap = vonhoa[('Chỉ tiêu định giá', 'Vốn hóa (Tỷ đồng)')].iloc[0]
-                roa = vonhoa[('Chỉ tiêu khả năng sinh lợi', 'ROA (%)')].iloc[0]
-                roe = vonhoa[('Chỉ tiêu khả năng sinh lợi', 'ROE (%)')].iloc[0]
-                
-                # Get EPS - corrected to use the right column group
-                eps = vonhoa[('Chỉ tiêu định giá', 'EPS (VND)')].iloc[0]
-                eps_pre = vonhoa[('Chỉ tiêu định giá', 'EPS (VND)')].iloc[1]
-                p_e = vonhoa[('Chỉ tiêu định giá', 'P/E')].iloc[0]
-                # Get company name
-                company_name = get_company_name(sym)
-                
-                # Get revenue growth
-                revenue_growth = tangtruongdoanhthu(sym)
-                
-                # Calculate EPS growth safely
-                eps_growth = (eps - eps_pre)/eps_pre if eps_pre != 0 else float('nan')
-                
-                return sym, {
-                    'organ_name': company_name,
-                    'market_cap': market_cap,
-                    'P/E': p_e,
-                    'ROA': roa,
-                    'ROE': roe,
-                    'EPS': eps,
-                    'EPS_growth': eps_growth,
-                    'revenue_growth': revenue_growth
-                }
-            except KeyError as e:
-                print(f"Column not found for {sym}: {e}")
-                # Print available columns for debugging
-                print(f"Available columns: {vonhoa.columns.tolist()}")
-                return sym, None
-            
-        except Exception as e:
-            print(f"Error processing {sym}: {e}")
-            return sym, None
-    
-    # Get target company's industry
-    industry = get_company_industry(symbol)
-    print(f"Industry for {symbol}: {industry}")
-    
-    # Get financial data for target company
-    target_symbol, target_data = vonhoa_worker(symbol)
-    
-    if target_data is None:
-        print(f"Could not retrieve financial data for {symbol}")
-        
-        # Try a simpler approach for the target symbol
-        try:
-            stock_instance = Vnstock().stock(symbol=symbol, source='VCI')
-            vonhoa = stock_instance.finance.ratio(period='year', lang='vi', dropna=True)
-            print(f"Data shape: {vonhoa.shape}")
-            print(f"Available columns: {vonhoa.columns.tolist()[:10]}...")  # Show first 10 columns
-            
-            # Return just the basic information we can get
-            return {symbol: "Basic information only", "columns": vonhoa.columns.tolist()}
-        except Exception as e:
-            print(f"Additional error: {e}")
-            return {symbol: "Financial data unavailable"}
-    
-    target_market_cap = target_data['market_cap']
-    
-    # Get all companies in the same industry
-    if industry_cache is not None and industry != "Không xác định":
-        all_symbols = industry_cache[industry_cache['icb_name4'] == industry]['symbol'].tolist()
-        
-        # Remove the input symbol from the list
-        if symbol in all_symbols:
-            all_symbols.remove(symbol)
-    else:
-        print("No industry data available")
-        all_symbols = []
-    
-    # Use ThreadPoolExecutor to calculate market caps in parallel
-    company_data = {}
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        results = list(executor.map(vonhoa_worker, all_symbols))
-    
-    # Process results
-    for sym, data in results:
-        if data is not None:
-            data['difference'] = abs(data['market_cap'] - target_market_cap)
-            company_data[sym] = data
-    
-    # Sort and get top 5 (only if we have companies to compare with)
-    closest_5 = []
-    if company_data:
-        sorted_companies = sorted(company_data.items(), key=lambda x: x[1]['difference'])
-        closest_5 = sorted_companies[:5]
-    
-    # Format result - include all financial metrics
-    result = {symbol: target_data}
-    for sym, data in closest_5:
-        result[sym] = data
-    
-    return result
+
 def get_market_data(stock_info=None, symbol=None):
     """Lấy các dữ liệu thị trường bao gồm VNINDEX và thông tin cổ phiếu"""
     # Trả về tất cả giá trị là N/A

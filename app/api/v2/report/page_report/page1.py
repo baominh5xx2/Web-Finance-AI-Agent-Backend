@@ -430,7 +430,7 @@ class Page1:
         price_value = Paragraph("<b>{0} VND</b>".format(recommendation_data.get('current_price', 'N/A')), self.styles['PriceValue'])
         
         # Thêm hiển thị giá mục tiêu và suất sinh lời
-        target_price_label = Paragraph("Giá mục tiêu", self.styles['TargetPriceLabel'])
+        target_price_label = Paragraph("Giá mục tiêu dài hạn", self.styles['TargetPriceLabel'])
         target_price = recommendation_data.get('target_price', 'N/A')
         target_price_value = Paragraph("<b>{0} {1}</b>".format(
             target_price, 
