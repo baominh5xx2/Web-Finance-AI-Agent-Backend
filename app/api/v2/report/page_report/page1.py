@@ -438,10 +438,11 @@ class Page1:
             for key, display_name in key_mapping.items():
                 if key in projection_data:
                     row = [display_name]
-                    row.extend(projection_data[key])
+                    # Only use the first 4 values from each array (removing the 5th column)
+                    row.extend(projection_data[key][:4])
                     data.append(row)
         
-        # Set column widths
+        # Set column widths - only use 5 columns total (label + 4 data columns)
         colWidths = [5*cm, 2.0*cm, 2.0*cm, 2.0*cm, 2.0*cm]
         
         # Create table

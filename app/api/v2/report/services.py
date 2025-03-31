@@ -36,41 +36,21 @@ def get_company_name(symbol):
         print(f"Lỗi khi lấy tên công ty cho {symbol}: {str(e)}")
         return f"{symbol}"
 
-# Thêm hàm để tạo dữ liệu dự phóng
 def create_projection_data(symbol):
     """Tạo dữ liệu dự phóng cho báo cáo"""
     try:
         # Khởi tạo cấu trúc dữ liệu trống với các giá trị N/A
         projection_data = {
-            'revenue': ['N/A', 'N/A', 'N/A', 'N/A'],
-            'operating_profit': ['N/A', 'N/A', 'N/A', 'N/A'],
-            'profit_after_tax': ['N/A', 'N/A', 'N/A', 'N/A'],
-            'eps': ['N/A', 'N/A', 'N/A', 'N/A'],
-            'bps': ['N/A', 'N/A', 'N/A', 'N/A'],
-            'opm': ['N/A', 'N/A', 'N/A', 'N/A'],
-            'npm': ['N/A', 'N/A', 'N/A', 'N/A'],
-            'roe': ['N/A', 'N/A', 'N/A', 'N/A'],
-            'per': ['N/A', 'N/A', 'N/A', 'N/A'],
-            'pbr': ['N/A', 'N/A', 'N/A', 'N/A'],
-            'ev_ebitda': ['N/A', 'N/A', 'N/A', 'N/A']
+            'revenue': ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'],
+            'gross_profit': ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'],
+            'gross_margin': ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'],
+            'financial_expense': ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'],
+            'selling_expense': ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'],
+            'admin_expense': ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'],
+            'operating_profit': ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'],
+            'profit_before_tax': ['N/A', 'N/A', 'N/A', 'N/A', 'N/A'],
+            'profit_after_tax': ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']
         }
-        
-        # For NKG, use the data from the image if it's NKG
-        if symbol == "NKG":
-            projection_data = {
-                'revenue': ['18,596', '20,609', '25,266', '29,016'],
-                'operating_profit': ['177', '557', '1,021', '1,271'],
-                'profit_after_tax': ['117', '453', '829', '998'],
-                'eps': ['446', '1,434', '1,853', '2,125'],
-                'bps': ['20,598', '18,584', '18,486', '19,594'],
-                'opm': ['1.0', '2.7', '4.0', '4.4'],
-                'npm': ['0.6', '2.2', '3.3', '3.4'],
-                'roe': ['2.2', '7.7', '10.0', '10.8'],
-                'per': ['23.8', '11.2', '8.6', '7.5'],
-                'pbr': ['1.6', '0.9', '0.9', '0.8'],
-                'ev_ebitda': ['11.9', '11.6', '6.4', '5.5']
-            }
-            return projection_data
         
         # Lấy dữ liệu doanh thu thuần từ API
         try:
@@ -82,14 +62,80 @@ def create_projection_data(symbol):
             # Chuyển đổi doanh thu từ đồng sang tỷ đồng - giá trị trả về từ API là đơn vị đồng
             doanh_thu_ty = doanh_thu / 1_000_000_000 if isinstance(doanh_thu, (int, float, np.int64, np.float64)) else None
             
-            # Định dạng dữ liệu doanh thu thuần (chỉ cập nhật năm hiện tại)
-            doanh_thu_str = f"{doanh_thu_ty:,.0f}" if doanh_thu_ty is not None else 'N/A'
+            # Định dạng dữ liệu doanh thu thuần
+            doanh_thu_str = f"{doanh_thu_ty:,.2f}" if doanh_thu_ty is not None else 'N/A'
+            yoy_str = f"+{yoy*100:.1f}%" if isinstance(yoy, (int, float)) and yoy > 0 else f"{yoy*100:.1f}%" if isinstance(yoy, (int, float)) else 'N/A'
             
-            # Cập nhật dữ liệu doanh thu thuần - giữ nguyên dữ liệu mẫu cho các năm tương lai
-            projection_data['revenue'][0] = doanh_thu_str
+            # Cập nhật dữ liệu doanh thu thuần
+            projection_data['revenue'] = [doanh_thu_str, yoy_str, 'N/A', 'N/A', 'N/A']
             
-            print(f"Đã lấy dữ liệu doanh thu thuần cho {symbol}: {doanh_thu_str} tỷ đồng")
+            print(f"Đã lấy dữ liệu doanh thu thuần cho {symbol}: {doanh_thu_str} tỷ đồng ({yoy_str})")
             
+            # Lấy dữ liệu lợi nhuận gộp
+            try:
+                bienloinhuangop, loinhuangop, yoy_loinhuangop = loinhuan_gop_p2(symbol)
+                
+                # In thông tin debug
+                print(f"DEBUG - Dữ liệu từ loinhuan_gop_p2: bienloinhuangop={bienloinhuangop}, loinhuangop={loinhuangop}, yoy_loinhuangop={yoy_loinhuangop}")
+                
+                # Chuyển đổi lợi nhuận gộp từ đồng sang tỷ đồng
+                loinhuangop_ty = loinhuangop / 1_000_000_000 if isinstance(loinhuangop, (int, float, np.int64, np.float64)) else None
+                
+                # Định dạng dữ liệu lợi nhuận gộp
+                loinhuangop_str = f"{loinhuangop_ty:,.2f}" if loinhuangop_ty is not None else 'N/A'
+                yoy_loinhuangop_str = f"+{yoy_loinhuangop*100:.1f}%" if isinstance(yoy_loinhuangop, (int, float)) and yoy_loinhuangop > 0 else f"{yoy_loinhuangop*100:.1f}%" if isinstance(yoy_loinhuangop, (int, float)) else 'N/A'
+                
+                # Cập nhật dữ liệu lợi nhuận gộp
+                projection_data['gross_profit'] = [loinhuangop_str, yoy_loinhuangop_str, 'N/A', 'N/A', 'N/A']
+                
+                # Định dạng dữ liệu biên lợi nhuận gộp
+                bienloinhuangop_str = f"{bienloinhuangop * 100:.2f}%" if isinstance(bienloinhuangop, (int, float, np.int64, np.float64)) else 'N/A'
+                
+                # Cập nhật dữ liệu biên lợi nhuận gộp
+                projection_data['gross_margin'] = [bienloinhuangop_str, 'N/A', 'N/A', 'N/A', 'N/A']
+                
+                print(f"Đã lấy dữ liệu lợi nhuận gộp cho {symbol}: {loinhuangop_str} tỷ đồng ({yoy_loinhuangop_str})")
+                print(f"Đã lấy dữ liệu biên lợi nhuận gộp cho {symbol}: {bienloinhuangop_str}")
+            except Exception as e:
+                print(f"Lỗi khi lấy dữ liệu lợi nhuận gộp: {str(e)}")
+                
+            # Lấy dữ liệu chi phí
+            try:
+                laigop, chiphitaichinh, yoy_chiphitaichinh, chiphibanhang, yoy_laigop, yoy_chiphibanhang, chiphiql, yoy_chiphiql = chiphi_p2(symbol)
+                
+                # In thông tin debug
+                print(f"DEBUG - Dữ liệu từ chiphi_p2: chiphitaichinh={chiphitaichinh}, chiphibanhang={chiphibanhang}, chiphiql={chiphiql}")
+                
+                # Chuyển đổi chi phí từ đồng sang tỷ đồng
+                chiphitaichinh_ty = -chiphitaichinh / 1_000_000_000 if isinstance(chiphitaichinh, (int, float, np.int64, np.float64)) else None
+                chiphibanhang_ty = -chiphibanhang / 1_000_000_000 if isinstance(chiphibanhang, (int, float, np.int64, np.float64)) else None
+                chiphiql_ty = -chiphiql / 1_000_000_000 if isinstance(chiphiql, (int, float, np.int64, np.float64)) else None
+                
+                # Định dạng dữ liệu chi phí tài chính
+                chiphitaichinh_str = f"{chiphitaichinh_ty:,.2f}" if chiphitaichinh_ty is not None else 'N/A'
+                yoy_chiphitaichinh_str = f"+{yoy_chiphitaichinh*100:.1f}%" if isinstance(yoy_chiphitaichinh, (int, float)) and yoy_chiphitaichinh > 0 else f"{yoy_chiphitaichinh*100:.1f}%" if isinstance(yoy_chiphitaichinh, (int, float)) else 'N/A'
+                
+                # Cập nhật dữ liệu chi phí tài chính
+                projection_data['financial_expense'] = [chiphitaichinh_str, yoy_chiphitaichinh_str, 'N/A', 'N/A', 'N/A']
+                
+                # Định dạng dữ liệu chi phí bán hàng
+                chiphibanhang_str = f"{chiphibanhang_ty:,.2f}" if chiphibanhang_ty is not None else 'N/A'
+                yoy_chiphibanhang_str = f"+{yoy_chiphibanhang*100:.1f}%" if isinstance(yoy_chiphibanhang, (int, float)) and yoy_chiphibanhang > 0 else f"{yoy_chiphibanhang*100:.1f}%" if isinstance(yoy_chiphibanhang, (int, float)) else 'N/A'
+                
+                # Cập nhật dữ liệu chi phí bán hàng
+                projection_data['selling_expense'] = [chiphibanhang_str, yoy_chiphibanhang_str, 'N/A', 'N/A', 'N/A']
+                
+                # Định dạng dữ liệu chi phí quản lý
+                chiphiql_str = f"{chiphiql_ty:,.2f}" if chiphiql_ty is not None else 'N/A'
+                yoy_chiphiql_str = f"+{yoy_chiphiql*100:.1f}%" if isinstance(yoy_chiphiql, (int, float)) and yoy_chiphiql > 0 else f"{yoy_chiphiql*100:.1f}%" if isinstance(yoy_chiphiql, (int, float)) else 'N/A'
+                
+                # Cập nhật dữ liệu chi phí quản lý
+                projection_data['admin_expense'] = [chiphiql_str, yoy_chiphiql_str, 'N/A', 'N/A', 'N/A']
+                
+                print(f"Đã lấy dữ liệu chi phí cho {symbol}")
+            except Exception as e:
+                print(f"Lỗi khi lấy dữ liệu chi phí: {str(e)}")
+                
             # Lấy dữ liệu lợi nhuận từ HĐKD, LNTT và LNST
             try:
                 loinhuanhdkd, loinhuantruothue, loinhuansautrue, yoy_loinhuanhdkd, yoy_loinhuantruothue, yoy_loinhuansautrue = loinhuankinhdoanh_p2(symbol)
@@ -99,29 +145,218 @@ def create_projection_data(symbol):
                 
                 # Chuyển đổi lợi nhuận từ đồng sang tỷ đồng
                 loinhuanhdkd_ty = loinhuanhdkd / 1_000_000_000 if isinstance(loinhuanhdkd, (int, float, np.int64, np.float64)) else None
+                loinhuantruothue_ty = loinhuantruothue / 1_000_000_000 if isinstance(loinhuantruothue, (int, float, np.int64, np.float64)) else None
                 loinhuansautrue_ty = loinhuansautrue / 1_000_000_000 if isinstance(loinhuansautrue, (int, float, np.int64, np.float64)) else None
                 
-                # Định dạng dữ liệu lợi nhuận từ HĐKD và lợi nhuận sau thuế (chỉ cập nhật năm hiện tại)
-                loinhuanhdkd_str = f"{loinhuanhdkd_ty:,.0f}" if loinhuanhdkd_ty is not None else 'N/A'
-                loinhuansautrue_str = f"{loinhuansautrue_ty:,.0f}" if loinhuansautrue_ty is not None else 'N/A'
+                # Định dạng dữ liệu lợi nhuận từ HĐKD
+                loinhuanhdkd_str = f"{loinhuanhdkd_ty:,.2f}" if loinhuanhdkd_ty is not None else 'N/A'
+                yoy_loinhuanhdkd_str = f"+{yoy_loinhuanhdkd*100:.1f}%" if isinstance(yoy_loinhuanhdkd, (int, float)) and yoy_loinhuanhdkd > 0 else f"{yoy_loinhuanhdkd*100:.1f}%" if isinstance(yoy_loinhuanhdkd, (int, float)) else 'N/A'
                 
-                # Cập nhật dữ liệu lợi nhuận từ HĐKD và lợi nhuận sau thuế
-                projection_data['operating_profit'][0] = loinhuanhdkd_str
-                projection_data['profit_after_tax'][0] = loinhuansautrue_str
+                # Cập nhật dữ liệu lợi nhuận từ HĐKD
+                projection_data['operating_profit'] = [loinhuanhdkd_str, yoy_loinhuanhdkd_str, 'N/A', 'N/A', 'N/A']
+                
+                # Định dạng dữ liệu lợi nhuận trước thuế
+                loinhuantruothue_str = f"{loinhuantruothue_ty:,.2f}" if loinhuantruothue_ty is not None else 'N/A'
+                yoy_loinhuantruothue_str = f"+{yoy_loinhuantruothue*100:.1f}%" if isinstance(yoy_loinhuantruothue, (int, float)) and yoy_loinhuantruothue > 0 else f"{yoy_loinhuantruothue*100:.1f}%" if isinstance(yoy_loinhuantruothue, (int, float)) else 'N/A'
+                
+                # Cập nhật dữ liệu lợi nhuận trước thuế
+                projection_data['profit_before_tax'] = [loinhuantruothue_str, yoy_loinhuantruothue_str, 'N/A', 'N/A', 'N/A']
+                
+                # Định dạng dữ liệu lợi nhuận sau thuế
+                loinhuansautrue_str = f"{loinhuansautrue_ty:,.2f}" if loinhuansautrue_ty is not None else 'N/A'
+                yoy_loinhuansautrue_str = f"+{yoy_loinhuansautrue*100:.1f}%" if isinstance(yoy_loinhuansautrue, (int, float)) and yoy_loinhuansautrue > 0 else f"{yoy_loinhuansautrue*100:.1f}%" if isinstance(yoy_loinhuansautrue, (int, float)) else 'N/A'
+                
+                # Cập nhật dữ liệu lợi nhuận sau thuế
+                projection_data['profit_after_tax'] = [loinhuansautrue_str, yoy_loinhuansautrue_str, 'N/A', 'N/A', 'N/A']
                 
                 print(f"Đã lấy dữ liệu lợi nhuận cho {symbol}")
             except Exception as e:
                 print(f"Lỗi khi lấy dữ liệu lợi nhuận: {str(e)}")
-                
         except Exception as e:
             print(f"Lỗi khi lấy dữ liệu doanh thu thuần: {str(e)}")
-        
-        # Lấy thêm các dữ liệu khác từ API nếu có thể
-        # Đây chỉ là triển khai cơ bản, có thể mở rộng sau này
         
         return projection_data
     except Exception as e:
         print(f"Lỗi khi tạo dữ liệu dự phóng: {str(e)}")
+        return None
+
+def get_projection_data_for_page1(symbol):
+    """
+    Fetches financial projection data specifically for page1's table.
+    This function is independent from other pages to ensure modularity.
+    
+    Args:
+        symbol: Stock symbol to fetch data for
+        
+    Returns:
+        Dictionary with projection data formatted for page1
+    """
+    try:
+        print(f"Đang lấy dữ liệu dự phóng cho bảng page1, mã {symbol}")
+        projection_data = {
+            'revenue': ['N/A', 'N/A', 'N/A', 'N/A'],
+            'operating_profit': ['N/A', 'N/A', 'N/A', 'N/A'],
+            'profit_after_tax': ['N/A', 'N/A', 'N/A', 'N/A'],
+            'eps': ['N/A', 'N/A', 'N/A', 'N/A'],
+            'bps': ['N/A', 'N/A', 'N/A', 'N/A'],
+            'roa': ['N/A', 'N/A', 'N/A', 'N/A'],
+            'npm': ['N/A', 'N/A', 'N/A', 'N/A'],
+            'roe': ['N/A', 'N/A', 'N/A', 'N/A'],
+        }
+        
+        # Use finance_calc functions to fetch financial data
+        from .module_report.finance_calc import analyze_stock_data_2025_2026_p2
+        
+        try:
+            # Get historical financial data
+            stock = Vnstock().stock(symbol=symbol, source='VCI')
+            
+            # Get existing financial data for 2023-2024
+            data1 = stock.finance.ratio(symbol=symbol)
+            data2 = stock.finance.income_statement(symbol=symbol)
+            
+            # Process data for ratios
+            table_data1 = data1[[
+                ('Meta', 'yearReport'), ('Meta', 'lengthReport'), 
+                ('Chỉ tiêu khả năng sinh lợi', 'Net Profit Margin (%)'), 
+                ('Chỉ tiêu khả năng sinh lợi', 'ROE (%)'), 
+                ('Chỉ tiêu khả năng sinh lợi', 'ROA (%)'), 
+                ('Chỉ tiêu định giá', 'EPS (VND)'), 
+                ('Chỉ tiêu định giá', 'BVPS (VND)')
+            ]].dropna()
+            table_data1.columns = table_data1.columns.droplevel(0)
+            table_data1.rename(columns={'yearReport': 'Year', 'lengthReport': 'Quarter'}, inplace=True)
+            
+            # Process data for income statement
+            table_data2 = data2[[
+                ('yearReport'), ('lengthReport'), 
+                ('Revenue (Bn. VND)'), 
+                ('Operating Profit/Loss'), 
+                ('Net Profit For the Year')
+            ]].dropna()
+            table_data2.rename(columns={'yearReport': 'Year', 'lengthReport': 'Quarter'}, inplace=True)
+            
+            # Calculate totals by year
+            income_by_year = table_data2.groupby('Year')[['Revenue (Bn. VND)', 'Operating Profit/Loss', 'Net Profit For the Year']].sum()
+            ratios_by_year = table_data1.groupby('Year')[['EPS (VND)', 'BVPS (VND)', 'ROA (%)', 'Net Profit Margin (%)', 'ROE (%)']].mean()
+            
+            # Format values for 2023-2024
+            for year in [2023, 2024]:
+                if year in income_by_year.index:
+                    # Note: Revenue is already in billions according to column name 'Revenue (Bn. VND)'
+                    revenue_value = income_by_year.loc[year, 'Revenue (Bn. VND)'] / 1_000_000_000
+                    projection_data['revenue'][year - 2023] = f"{revenue_value:,.2f}"
+                    
+                    # Convert Operating Profit/Loss to billions (divide by 1,000,000,000)
+                    op_profit_value = income_by_year.loc[year, 'Operating Profit/Loss'] / 1_000_000_000
+                    projection_data['operating_profit'][year - 2023] = f"{op_profit_value:,.2f}"
+                    
+                    # Convert Net Profit For the Year to billions (divide by 1,000,000,000)
+                    net_profit_value = income_by_year.loc[year, 'Net Profit For the Year'] / 1_000_000_000
+                    projection_data['profit_after_tax'][year - 2023] = f"{net_profit_value:,.2f}"
+                
+                if year in ratios_by_year.index:
+                    # Format EPS
+                    projection_data['eps'][year - 2023] = f"{ratios_by_year.loc[year, 'EPS (VND)']:,.0f}"
+                    
+                    # Format BPS
+                    projection_data['bps'][year - 2023] = f"{ratios_by_year.loc[year, 'BVPS (VND)']:,.0f}"
+                    
+                    # Format ROA
+                    projection_data['roa'][year - 2023] = f"{ratios_by_year.loc[year, 'ROA (%)']:,.1f}"
+                    
+                    # Format NPM
+                    projection_data['npm'][year - 2023] = f"{ratios_by_year.loc[year, 'Net Profit Margin (%)']:,.1f}"
+                    
+                    # Format ROE
+                    projection_data['roe'][year - 2023] = f"{ratios_by_year.loc[year, 'ROE (%)']:,.1f}"
+            
+            # Generate forecasts for 2025-2026
+            # Calculate CAGR for projections
+            def calculate_cagr(start_value, end_value, num_years):
+                if start_value <= 0 or end_value <= 0:
+                    return 0.1  # Default growth if we can't calculate CAGR
+                return (end_value / start_value) ** (1 / num_years) - 1
+            
+            # Project values for 2025-2026 using 2023-2024 CAGR
+            for metric, years_data in [
+                ('Revenue (Bn. VND)', income_by_year),
+                ('Operating Profit/Loss', income_by_year),
+                ('Net Profit For the Year', income_by_year)
+            ]:
+                if 2023 in years_data.index and 2024 in years_data.index:
+                    start_value = years_data.loc[2023, metric]
+                    end_value = years_data.loc[2024, metric]
+                    
+                    if start_value > 0 and end_value > 0:
+                        cagr = calculate_cagr(start_value, end_value, 1)
+                        
+                        # Project 2025
+                        val_2025 = end_value * (1 + cagr)
+                        
+                        # Project 2026
+                        val_2026 = val_2025 * (1 + cagr)
+                        
+                        # Map to projection data dictionary
+                        if metric == 'Revenue (Bn. VND)':
+                            # Revenue is already in billions
+                            projection_data['revenue'][2] = f"{val_2025 / 1_000_000_000:,.2f}"
+                            projection_data['revenue'][3] = f"{val_2026 / 1_000_000_000:,.2f}"
+                        elif metric == 'Operating Profit/Loss':
+                            # Convert to billions
+                            projection_data['operating_profit'][2] = f"{val_2025 / 1_000_000_000:,.2f}"
+                            projection_data['operating_profit'][3] = f"{val_2026 / 1_000_000_000:,.2f}"
+                        elif metric == 'Net Profit For the Year':
+                            # Convert to billions
+                            projection_data['profit_after_tax'][2] = f"{val_2025 / 1_000_000_000:,.2f}"
+                            projection_data['profit_after_tax'][3] = f"{val_2026 / 1_000_000_000:,.2f}"
+            
+            # Do the same for ratios
+            for metric, years_data in [
+                ('EPS (VND)', ratios_by_year),
+                ('BVPS (VND)', ratios_by_year),
+                ('ROA (%)', ratios_by_year),
+                ('Net Profit Margin (%)', ratios_by_year),
+                ('ROE (%)', ratios_by_year)
+            ]:
+                if 2023 in years_data.index and 2024 in years_data.index:
+                    start_value = years_data.loc[2023, metric]
+                    end_value = years_data.loc[2024, metric]
+                    
+                    if start_value > 0 and end_value > 0:
+                        cagr = calculate_cagr(start_value, end_value, 1)
+                        
+                        # Project 2025
+                        val_2025 = end_value * (1 + cagr)
+                        
+                        # Project 2026
+                        val_2026 = val_2025 * (1 + cagr)
+                        
+                        # Map to projection data dictionary
+                        if metric == 'EPS (VND)':
+                            projection_data['eps'][2] = f"{val_2025:,.0f}"
+                            projection_data['eps'][3] = f"{val_2026:,.0f}"
+                        elif metric == 'BVPS (VND)':
+                            projection_data['bps'][2] = f"{val_2025:,.0f}"
+                            projection_data['bps'][3] = f"{val_2026:,.0f}"
+                        elif metric == 'ROA (%)':
+                            projection_data['roa'][2] = f"{val_2025:,.1f}"
+                            projection_data['roa'][3] = f"{val_2026:,.1f}"
+                        elif metric == 'Net Profit Margin (%)':
+                            projection_data['npm'][2] = f"{val_2025:,.1f}"
+                            projection_data['npm'][3] = f"{val_2026:,.1f}"
+                        elif metric == 'ROE (%)':
+                            projection_data['roe'][2] = f"{val_2025:,.1f}"
+                            projection_data['roe'][3] = f"{val_2026:,.1f}"
+        
+        except Exception as e:
+            print(f"Lỗi khi xử lý dữ liệu tài chính: {str(e)}")
+        
+        print(f"Đã tạo xong dữ liệu dự phóng cho bảng page1")
+        return projection_data
+        
+    except Exception as e:
+        print(f"Lỗi khi lấy dữ liệu dự phóng cho page1: {str(e)}")
         return None
 
 def generate_pdf_report(symbol: str):
@@ -449,8 +684,14 @@ def generate_pdf_report(symbol: str):
         market_data = get_market_data(stock_info, symbol)
         print(f"Đã lấy dữ liệu thị trường từ module finance_calc cho {symbol}: {market_data}")
         
-        # Tạo dữ liệu dự phóng
-        projection_data = create_projection_data(symbol)
+        # Lấy dữ liệu dự phóng cho từng trang - đảm bảo độc lập
+        # Dữ liệu dự phóng cho page1
+        page1_projection_data = get_projection_data_for_page1(symbol)
+        print(f"Đã lấy dữ liệu dự phóng độc lập cho page1: {symbol}")
+        
+        # Dữ liệu dự phóng cho page2 - sử dụng create_projection_data dành riêng cho page2
+        page2_projection_data = create_projection_data(symbol)
+        print(f"Đã lấy dữ liệu dự phóng độc lập cho page2: {symbol}")
         
         # Format lại valuation_data nếu cần thiết
         if isinstance(profit_percent, (int, float)) and profit_percent != 'N/A':
@@ -464,7 +705,8 @@ def generate_pdf_report(symbol: str):
             recommendation_data=recommendation_data,
             market_data=market_data,
             analysis_data=analysis_data,
-            projection_data=projection_data,  # Dữ liệu dự phóng
+            projection_data=page1_projection_data,  # Dữ liệu dự phóng cho page1
+            page2_projection_data=page2_projection_data,  # Dữ liệu dự phóng riêng cho page2
             peer_data=peer_data,              # Dữ liệu các công ty cùng ngành
             valuation_data=valuation_data     # Dữ liệu định giá
         )
@@ -494,7 +736,8 @@ def generate_pdf_report(symbol: str):
             recommendation_data=recommendation_data,
             market_data={},
             analysis_data=analysis_data,
-            projection_data=None
+            projection_data=None,
+            page2_projection_data=None
         )
         
         return error_path

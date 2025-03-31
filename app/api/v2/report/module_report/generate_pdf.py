@@ -67,7 +67,7 @@ class PDFReport:
             print(f"Lỗi khi đăng ký font: {str(e)}")
             return False
     
-    def create_stock_report(self, output_path, company_data, recommendation_data, market_data=None, analysis_data=None, projection_data=None, peer_data=None, valuation_data=None):
+    def create_stock_report(self, output_path, company_data, recommendation_data, market_data=None, analysis_data=None, projection_data=None, page2_projection_data=None, peer_data=None, valuation_data=None):
         """Tạo báo cáo chứng khoán theo mẫu mới"""
         width, height = A4
         
@@ -143,15 +143,17 @@ class PDFReport:
         # Thêm các templates vào document
         doc.addPageTemplates([template1, template2, template3, template4, template5, template6])
         
-        # Tạo nội dung cho trang 1
+        # Tạo nội dung cho trang 1 - sử dụng projection_data cho page1
         story = self.page1.create_page1(doc, company_data, recommendation_data, market_data, analysis_data, projection_data)
         
         # Chuyển sang trang 2
         story.append(NextPageTemplate('page2'))
         story.append(PageBreak())
         
-        # Thêm nội dung trang 2 nếu có dữ liệu dự phóng
-        page2_content = self.page2.create_page2(doc, company_data, projection_data)
+        # Thêm nội dung trang 2 - sử dụng page2_projection_data riêng biệt cho page2
+        # Fallback to projection_data if page2_projection_data is None (for backwards compatibility)
+        page2_data = page2_projection_data if page2_projection_data is not None else projection_data
+        page2_content = self.page2.create_page2(doc, company_data, page2_data)
         story.extend(page2_content)
         
         # Chuyển sang trang 3 nếu có dữ liệu định giá
