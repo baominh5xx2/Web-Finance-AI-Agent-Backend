@@ -515,12 +515,19 @@ def analyze_stock_data_2025_2026_p2(symbol):
     # Merge data
     table_data = pd.merge(table_data2, table_data1, on=['Year', 'Quarter'], how='inner')
 
-    # Calculate totals by year
+    # Calculate totals by year for cumulative metrics
     totals_by_year = table_data.groupby('Year')[['Revenue (Bn. VND)', 'Net Profit For the Year', 'EPS (VND)', 'BVPS (VND)']].sum()
     totals_by_year = totals_by_year.loc[2020:2024]
 
+    # Calculate averages by year for ratio metrics
+    ratios_by_year = table_data.groupby('Year')[['ROA (%)', 'Net Profit Margin (%)', 'ROE (%)']].mean()
+    ratios_by_year = ratios_by_year.loc[2020:2024]
+
     # CAGR calculation function
     def calculate_cagr(start_value, end_value, num_years):
+        if start_value <= 0 or end_value <= 0:
+            # Alternative: use average growth rate if CAGR can't be calculated
+            return (end_value - start_value) / (abs(start_value) * num_years) if start_value != 0 else 0
         return (end_value / start_value) ** (1 / num_years) - 1
 
     # Calculate CAGR for each metric
@@ -530,22 +537,42 @@ def analyze_stock_data_2025_2026_p2(symbol):
         start_value = totals_by_year[column].iloc[0]
         end_value = totals_by_year[column].iloc[-1]
         cagr_values[column] = calculate_cagr(start_value, end_value, num_years)
+    
+    # Calculate CAGR for ratio metrics
+    for column in ['ROA (%)', 'Net Profit Margin (%)', 'ROE (%)']:
+        start_value = ratios_by_year[column].iloc[0]
+        end_value = ratios_by_year[column].iloc[-1]
+        cagr_values[column] = calculate_cagr(start_value, end_value, num_years)
 
     # Project future values
-    projections_cagr = {}
+    results = {}
     for column in ['Revenue (Bn. VND)', 'Net Profit For the Year', 'EPS (VND)', 'BVPS (VND)']:
-        projections_cagr[column] = {
-            '2025F': totals_by_year[column].iloc[-1] * (1 + cagr_values[column]),
-            '2026F': totals_by_year[column].iloc[-1] * (1 + cagr_values[column]) ** 2
+        current_value = totals_by_year[column].iloc[-1]
+        results[column] = {
+            '2024': current_value,
+            '2025F': current_value * (1 + cagr_values[column]),
+            '2026F': current_value * (1 + cagr_values[column]) ** 2
         }
-
-    # Display results
-    print("Tổng các chỉ tiêu theo từng năm (2020-2024):")
-    print(totals_by_year)
-    print("\nCAGR cho từng chỉ tiêu:")
-    print(cagr_values)
-    print("\nDự phóng 2025F và 2026F theo CAGR:")
-    print(projections_cagr)
+    
+    # Project ROA, NPM, and ROE using their own CAGRs
+    for column in ['ROA (%)', 'Net Profit Margin (%)', 'ROE (%)']:
+        current_value = ratios_by_year[column].iloc[-1]
+        results[column] = {
+            '2024': current_value,
+            '2025F': current_value * (1 + cagr_values[column]),
+            '2026F': current_value * (1 + cagr_values[column]) ** 2
+        }
+    
+    # Format the output as a DataFrame
+    results_df = pd.DataFrame(results).T
+    
+    # Add CAGR column
+    results_df['CAGR (%)'] = [cagr_values[metric] * 100 for metric in results_df.index]
+    
+    # Format number display
+    pd.options.display.float_format = '{:,.2f}'.format
+    
+    return results_df
 def get_market_data(stock_info=None, symbol=None):
     """Lấy các dữ liệu thị trường bao gồm VNINDEX và thông tin cổ phiếu"""
     # Trả về tất cả giá trị là N/A

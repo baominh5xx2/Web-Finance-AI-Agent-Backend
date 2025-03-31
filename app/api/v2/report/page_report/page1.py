@@ -405,45 +405,60 @@ class Page1:
 
     def create_financial_projection_table(self, projection_data=None):
         """Create a table for financial projections"""
-        if not projection_data:
-            # Default data structure from the image
-            data = [
-                ['Năm', '2023', '2024', '2025F', '2026F'],
-                ['Doanh thu (tỷ VND)', '18,596', '20,609', '25,266', '29,016'],
-                ['LN từ HĐKD (tỷ VND)', '177', '557', '1,021', '1,271'],
-                ['Lợi nhuận ròng (tỷ VND)', '117', '453', '829', '998'],
-                ['EPS (đồng)', '446', '1,434', '1,853', '2,125'],
-                ['BPS (đồng)', '20,598', '18,584', '18,486', '19,594'],
-                ['ROA (%)', '1.0', '2.7', '4.0', '4.4'],
-                ['NPM (%)', '0.6', '2.2', '3.3', '3.4'],
-                ['ROE (%)', '2.2', '7.7', '10.0', '10.8'],
-            ]
-        else:
-            # Handle custom projection data if provided
-            data = [['Năm', '2023', '2024', '2025F', '2026F']]
-            
-            # Map projection_data keys to display names
-            key_mapping = {
-                'revenue': 'Doanh thu (tỷ VND)',
-                'operating_profit': 'LN từ HĐKD (tỷ VND)',
-                'profit_after_tax': 'Lợi nhuận ròng (tỷ VND)',
-                'eps': 'EPS (đồng)',
-                'bps': 'BPS (đồng)',
-                'roa': 'ROA (%)',
-                'npm': 'NPM (%)',
-                'roe': 'ROE (%)',
-            }
-            
-            # Add rows for each metric if available in projection_data
-            for key, display_name in key_mapping.items():
-                if key in projection_data:
-                    row = [display_name]
-                    # Only use the first 4 values from each array (removing the 5th column)
-                    row.extend(projection_data[key][:4])
-                    data.append(row)
+        # Map keys to display names for table
+        key_mapping = {
+            'revenue': 'Doanh thu (tỷ VND)',
+            'profit_after_tax': 'Lợi nhuận ròng (tỷ VND)',
+            'eps': 'EPS (đồng)',
+            'bps': 'BPS (đồng)',
+            'roa': 'ROA (%)',
+            'npm': 'NPM (%)',
+            'roe': 'ROE (%)',
+        }
         
-        # Set column widths - only use 5 columns total (label + 4 data columns)
-        colWidths = [5*cm, 2.0*cm, 2.0*cm, 2.0*cm, 2.0*cm]
+        # Create header row
+        data = [['Năm', '2024', '2025F', '2026F']]
+        
+        # If projection_data is None, initialize with N/A values
+        if not projection_data:
+            projection_data = {}
+            for key in key_mapping.keys():
+                projection_data[key] = ['N/A', 'N/A', 'N/A', 'N/A']
+        
+        # Add rows for each metric
+        for key, display_name in key_mapping.items():
+            row = [display_name]
+            
+            # Get values from projection_data or use N/A if key doesn't exist
+            if key in projection_data:
+                # Only use columns 1-3 (2024, 2025F, 2026F) from each array, skipping column 0 (2023)
+                values = projection_data[key][1:4]
+                
+                # Special processing for percentage values (ROA, NPM, ROE)
+                if key in ['roa', 'npm', 'roe']:
+                    formatted_values = []
+                    for val in values:
+                        if val == 'N/A':
+                            formatted_values.append('N/A')
+                        else:
+                            try:
+                                # Try to convert to float and format as percentage
+                                numeric_val = float(val.replace(',', '.').replace('%', ''))
+                                formatted_values.append(f"{numeric_val:.1f}%")
+                            except (ValueError, AttributeError):
+                                # If conversion fails, use the original value
+                                formatted_values.append(val)
+                    row.extend(formatted_values)
+                else:
+                    row.extend(values)
+            else:
+                # If key doesn't exist in projection_data, use N/A for all columns
+                row.extend(['N/A', 'N/A', 'N/A'])
+                
+            data.append(row)
+        
+        # Set column widths - only use 4 columns total (label + 3 data columns)
+        colWidths = [5*cm, 2.5*cm, 2.5*cm, 2.5*cm]
         
         # Create table
         table = Table(data, colWidths=colWidths, spaceBefore=0.3*cm, spaceAfter=0.5*cm)
