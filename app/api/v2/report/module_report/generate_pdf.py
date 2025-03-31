@@ -161,8 +161,8 @@ class PDFReport:
             story.append(NextPageTemplate('page3'))
             story.append(PageBreak())
             
-            # Thêm nội dung trang 3 - đã xóa peer_data hoặc đặt nó thành list rỗng
-            page3_content = self.page3.create_page3(doc, company_data, [], valuation_data, recommendation_data)
+            # Thêm nội dung trang 3 - sử dụng peer_data thay vì list rỗng
+            page3_content = self.page3.create_page3(doc, company_data, peer_data, valuation_data, recommendation_data)
             story.extend(page3_content)
         
         # Chuyển sang trang 4

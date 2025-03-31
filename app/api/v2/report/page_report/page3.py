@@ -49,7 +49,7 @@ class Page3:
         self.styles.add(ParagraphStyle(
             name='TableHeader',
             fontName=title_font,
-            fontSize=10,
+            fontSize=9,
             textColor=colors.white,
             alignment=TA_CENTER,
             leading=12
@@ -58,25 +58,33 @@ class Page3:
         self.styles.add(ParagraphStyle(
             name='TableCell',
             fontName=normal_font,
-            fontSize=9,
+            fontSize=8,
             alignment=TA_CENTER,
-            leading=11
+            leading=10
         ))
         
         self.styles.add(ParagraphStyle(
             name='TableCellLeft',
             fontName=normal_font,
-            fontSize=9,
+            fontSize=8,
             alignment=TA_LEFT,
-            leading=11
+            leading=10
         ))
         
         self.styles.add(ParagraphStyle(
             name='SummaryRow',
             fontName=title_font,
-            fontSize=9,
+            fontSize=8,
             alignment=TA_LEFT,
-            leading=11
+            leading=10
+        ))
+        
+        self.styles.add(ParagraphStyle(
+            name='PeerTableCompanyCell',
+            fontName=title_font,
+            fontSize=8,
+            alignment=TA_LEFT,
+            leading=10
         ))
         
         self.styles.add(ParagraphStyle(
@@ -167,7 +175,79 @@ class Page3:
         
         table.setStyle(table_style)
         return table
-   
+
+    def create_industry_peers_table(self, peer_data):
+        """Create a table for industry peer comparison"""
+        if not peer_data or len(peer_data) == 0:
+            # If no peer data, return empty list
+            return []
+            
+        # Set up column headers
+        headers = [
+            Paragraph('Công ty', self.styles['TableHeader']), 
+            Paragraph('P/E', self.styles['TableHeader']), 
+            Paragraph('Vốn hóa (tỷ)', self.styles['TableHeader']), 
+            Paragraph('Tăng trưởng<br/>Doanh thu', self.styles['TableHeader']), 
+            Paragraph('Tăng trưởng<br/>EPS', self.styles['TableHeader']), 
+            Paragraph('ROA', self.styles['TableHeader']), 
+            Paragraph('ROE', self.styles['TableHeader'])
+        ]
+        
+        # Create data rows
+        data = [headers]
+        
+        # Add each peer company to the table
+        for i, peer in enumerate(peer_data):
+            # Use Paragraph objects to ensure proper font rendering
+            # First row (current company) uses bold style
+            style_to_use = self.styles['PeerTableCompanyCell'] if i == 0 else self.styles['TableCellLeft']
+            
+            row = [
+                Paragraph(peer.get('company_name', 'N/A'), style_to_use),
+                Paragraph(peer.get('pe', 'N/A'), self.styles['TableCell']),
+                Paragraph(peer.get('market_cap', 'N/A'), self.styles['TableCell']),
+                Paragraph(peer.get('revenue_growth', 'N/A'), self.styles['TableCell']),
+                Paragraph(peer.get('eps_growth', 'N/A'), self.styles['TableCell']),
+                Paragraph(peer.get('roa', 'N/A'), self.styles['TableCell']),
+                Paragraph(peer.get('roe', 'N/A'), self.styles['TableCell'])
+            ]
+            data.append(row)
+            
+        # Set column widths
+        colWidths = [7*cm, 1.5*cm, 2*cm, 2.5*cm, 2.5*cm, 1.5*cm, 1.5*cm]
+        
+        # Create table
+        table = Table(data, colWidths=colWidths, repeatRows=1)
+        
+        # Style the table
+        table_style = TableStyle([
+            # Headers
+            ('BACKGROUND', (0, 0), (-1, 0), self.blue_color),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            
+            # Grid
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            
+            # Alignment
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            
+            # Padding
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('LEFTPADDING', (0, 0), (-1, -1), 3),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 3),
+            
+            # Alternating row colors
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ])
+        
+        # Add alternating row colors
+        for i in range(1, len(data), 2):
+            table_style.add('BACKGROUND', (0, i), (-1, i), self.light_blue)
+            
+        table.setStyle(table_style)
+        return table
+
     def create_page3(self, doc, company_data, peer_data, valuation_data, recommendation_data):
         """Tạo nội dung cho trang định giá và khuyến nghị"""
         story = []
@@ -191,5 +271,17 @@ class Page3:
         if valuation_data:
             valuation_table = self.create_valuation_summary_table(valuation_data)
             story.append(valuation_table)
+            story.append(Spacer(1, 15*mm))  # Khoảng cách trước bảng doanh nghiệp cùng ngành
         
+        # Thêm bảng so sánh doanh nghiệp cùng ngành
+        if peer_data and len(peer_data) > 0:
+            # Tiêu đề bảng so sánh doanh nghiệp
+            peer_title = Paragraph("So sánh doanh nghiệp cùng ngành", self.styles['SectionTitle'])
+            story.append(peer_title)
+            story.append(Spacer(1, 5*mm))
+            
+            # Tạo bảng so sánh
+            peer_table = self.create_industry_peers_table(peer_data)
+            story.append(peer_table)
+            
         return story
