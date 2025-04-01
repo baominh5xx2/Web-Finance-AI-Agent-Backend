@@ -7,7 +7,7 @@ from .module_report.finance_calc import (calculate_total_current_assets, calcula
                                         calculate_ebitda, calculate_financial_ratios, calculate_total_operating_expense,
                                         calculate_net_income_before_taxes, calculate_net_income_before_extraordinary_items,
                                         get_market_data, current_price, predict_price, doanhthu_thuan_p2, loinhuan_gop_p2,
-                                        chiphi_p2, loinhuankinhdoanh_p2)
+                                        chiphi_p2, loinhuankinhdoanh_p2,analyze_stock_data_2025_2026_p1)
 from .module_report.generate_pdf import PDFReport, generate_page4_pdf, generate_page5_pdf, generate_page6_pdf
 from .module_report.api_gemini import generate_financial_analysis, create_analysis_prompt
 from .module_report.chart_generator import generate_financial_charts
@@ -216,11 +216,8 @@ def get_projection_data_from_analyze_function(symbol):
     }
     
     try:
-        # Import the analyze_stock_data_2025_2026_p2 function
-        from .module_report.finance_calc import analyze_stock_data_2025_2026_p2
-        
-        # Get data from analyze_stock_data_2025_2026_p2
-        results_df = analyze_stock_data_2025_2026_p2(symbol)
+        # Get data from analyze_stock_data_2025_2026_p1
+        results_df = analyze_stock_data_2025_2026_p1(symbol)
         
         if results_df is not None and not results_df.empty:
             # Get 2022 and 2023 data from results_df if available

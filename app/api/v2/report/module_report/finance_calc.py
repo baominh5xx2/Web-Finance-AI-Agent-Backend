@@ -477,14 +477,16 @@ def analyze_stock(symbol):
 def loinhuankinhdoanh_p2(symbol):
     stock = Vnstock().stock(symbol=symbol, source='VCI')
     res = stock.finance.income_statement(period='year', lang='vi', dropna=True).head(2)
-    loinhuanhdkd = res['Lãi/Lỗ từ hoạt động kinh doanh'].values[0]
+    loinhuanhdkd = res['Lãi/Lỗ từ hoạt động kinh doanh'].values[0]  
     loinhuansautrue = res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (đồng)'].values[0]
     loinhuantruothue = res['LN trước thuế'].values[0]
     yoy_loinhuanhdkd = (loinhuanhdkd - res['Lãi/Lỗ từ hoạt động kinh doanh'].values[1]) / res['Lãi/Lỗ từ hoạt động kinh doanh'].values[1]
     yoy_loinhuansautrue = (loinhuansautrue - res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (đồng)'].values[1]) / res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (đồng)'].values[1]
     yoy_loinhuantruothue = (loinhuantruothue - res['LN trước thuế'].values[1]) / res['LN trước thuế'].values[1]
     return loinhuanhdkd, loinhuantruothue, loinhuansautrue, yoy_loinhuanhdkd, yoy_loinhuantruothue, yoy_loinhuansautrue
-def analyze_stock_data_2025_2026_p2(symbol):
+#def combined_data_page1(symbol):
+    
+def analyze_stock_data_2025_2026_p1(symbol):
     # Fetch data
     stock = Vnstock().stock(symbol=symbol, source='VCI')
     data1 = stock.finance.ratio(symbol=symbol)
@@ -577,6 +579,7 @@ def analyze_stock_data_2025_2026_p2(symbol):
     pd.options.display.float_format = '{:,.2f}'.format
     
     return results_df
+
 def get_market_data(stock_info=None, symbol=None):
     """Lấy các dữ liệu thị trường bao gồm VNINDEX và thông tin cổ phiếu"""
     # Trả về tất cả giá trị là N/A
