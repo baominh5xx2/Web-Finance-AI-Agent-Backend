@@ -544,20 +544,24 @@ def analyze_stock_data_2025_2026_p2(symbol):
         end_value = ratios_by_year[column].iloc[-1]
         cagr_values[column] = calculate_cagr(start_value, end_value, num_years)
 
-    # Project future values
+    # Project future values and include 2022, 2023 historical data
     results = {}
     for column in ['Revenue (Bn. VND)', 'Net Profit For the Year', 'EPS (VND)', 'BVPS (VND)']:
-        current_value = totals_by_year[column].iloc[-1]
+        current_value = totals_by_year[column].iloc[-1]  # 2024 value
         results[column] = {
+            '2022': totals_by_year[column].loc[2022],
+            '2023': totals_by_year[column].loc[2023],
             '2024': current_value,
             '2025F': current_value * (1 + cagr_values[column]),
             '2026F': current_value * (1 + cagr_values[column]) ** 2
         }
     
-    # Project ROA, NPM, and ROE using their own CAGRs
+    # Project ROA, NPM, and ROE including historical data
     for column in ['ROA (%)', 'Net Profit Margin (%)', 'ROE (%)']:
-        current_value = ratios_by_year[column].iloc[-1]
+        current_value = ratios_by_year[column].iloc[-1]  # 2024 value
         results[column] = {
+            '2022': ratios_by_year[column].loc[2022],
+            '2023': ratios_by_year[column].loc[2023],
             '2024': current_value,
             '2025F': current_value * (1 + cagr_values[column]),
             '2026F': current_value * (1 + cagr_values[column]) ** 2

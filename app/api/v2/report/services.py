@@ -180,26 +180,6 @@ def create_projection_data(symbol):
         print(f"Lỗi khi tạo dữ liệu dự phóng: {str(e)}")
         return None
 
-def get_projection_data_for_page1(symbol):
-    """
-    Fetches financial projection data specifically for page1's table.
-    This function is independent from other pages to ensure modularity.
-    
-    Args:
-        symbol: Stock symbol to fetch data for
-        
-    Returns:
-        Dictionary with projection data formatted for page1
-    """
-    try:
-        print(f"Đang lấy dữ liệu dự phóng cho bảng page1, mã {symbol}")
-        # Use the new function that fetches data from analyze_stock_data_2025_2026_p2
-        return get_projection_data_from_analyze_function(symbol)
-        
-    except Exception as e:
-        print(f"Lỗi khi lấy dữ liệu dự phóng cho page1: {str(e)}")
-        return None
-
 def get_projection_data_from_analyze_function(symbol):
     """
     Uses the analyze_stock_data_2025_2026_p2 function to generate financial projection data for page1.
@@ -211,17 +191,28 @@ def get_projection_data_from_analyze_function(symbol):
         Dictionary with projection data formatted for page1
     """
     # Initialize empty projection data
-    # Note: We still keep the data structure with 4 values (including 2023 data at index 0)
-    # even though the UI will only display columns 1-3 (2024, 2025F, 2026F)
+    # Structure: [2023, 2024, 2025F, 2026F] - we'll handle 2022 separately
     projection_data = {
         'revenue': ['N/A', 'N/A', 'N/A', 'N/A'],
         'operating_profit': ['N/A', 'N/A', 'N/A', 'N/A'],
         'profit_after_tax': ['N/A', 'N/A', 'N/A', 'N/A'],
         'eps': ['N/A', 'N/A', 'N/A', 'N/A'],
         'bps': ['N/A', 'N/A', 'N/A', 'N/A'],
-        'roa': ['N/A', 'N/A', 'N/A', 'N/A'],
         'npm': ['N/A', 'N/A', 'N/A', 'N/A'],
+        'roa': ['N/A', 'N/A', 'N/A', 'N/A'],
         'roe': ['N/A', 'N/A', 'N/A', 'N/A'],
+    }
+    
+    # Also create a dictionary for 2022 data which we'll return separately
+    data_2022 = {
+        'revenue': 'N/A',
+        'operating_profit': 'N/A',
+        'profit_after_tax': 'N/A',
+        'eps': 'N/A',
+        'bps': 'N/A',
+        'npm': 'N/A',
+        'roa': 'N/A',
+        'roe': 'N/A',
     }
     
     try:
@@ -232,7 +223,46 @@ def get_projection_data_from_analyze_function(symbol):
         results_df = analyze_stock_data_2025_2026_p2(symbol)
         
         if results_df is not None and not results_df.empty:
-            # Get 2023 data separately
+            # Get 2022 and 2023 data from results_df if available
+            # First, process historical data (2022-2023) from results_df
+            mapping = {
+                'Revenue (Bn. VND)': 'revenue',
+                'Net Profit For the Year': 'profit_after_tax',
+                'EPS (VND)': 'eps',
+                'BVPS (VND)': 'bps',
+                'Net Profit Margin (%)': 'npm',
+                'ROA (%)': 'roa',
+                'ROE (%)': 'roe'
+            }
+            
+            # Process historical data (2022-2023) if available in results_df
+            for df_key, proj_key in mapping.items():
+                if df_key in results_df.index:
+                    # Check for 2022 data
+                    if '2022' in results_df.columns:
+                        # Similar formatting as for other years
+                        if df_key in ['Revenue (Bn. VND)', 'Net Profit For the Year']:
+                            value = results_df.loc[df_key, '2022'] / 1_000_000_000
+                            data_2022[proj_key] = f"{value:,.2f}"
+                        elif df_key in ['EPS (VND)', 'BVPS (VND)']:
+                            data_2022[proj_key] = f"{results_df.loc[df_key, '2022']:,.0f}"
+                        else:  # Percentage values (ROA, NPM, ROE)
+                            # Multiply by 100 to convert from decimal to percentage
+                            value = results_df.loc[df_key, '2022'] * 100 if isinstance(results_df.loc[df_key, '2022'], (int, float)) else results_df.loc[df_key, '2022']
+                            data_2022[proj_key] = f"{value:,.1f}"
+                    
+                    # Check for 2023 data
+                    if '2023' in results_df.columns:
+                        if df_key in ['Revenue (Bn. VND)', 'Net Profit For the Year']:
+                            value = results_df.loc[df_key, '2023'] / 1_000_000_000
+                            projection_data[proj_key][0] = f"{value:,.2f}"
+                        elif df_key in ['EPS (VND)', 'BVPS (VND)']:
+                            projection_data[proj_key][0] = f"{results_df.loc[df_key, '2023']:,.0f}"
+                        else:  # Percentage values (ROA, NPM, ROE)
+                            value = results_df.loc[df_key, '2023'] * 100 if isinstance(results_df.loc[df_key, '2023'], (int, float)) else results_df.loc[df_key, '2023']
+                            projection_data[proj_key][0] = f"{value:,.1f}"
+            
+            # If 2023 wasn't in results_df, try to get it separately
             try:
                 stock = Vnstock().stock(symbol=symbol, source='VCI')
                 data1 = stock.finance.ratio(symbol=symbol)
@@ -257,62 +287,75 @@ def get_projection_data_from_analyze_function(symbol):
                 ]].dropna()
                 table_data2.rename(columns={'yearReport': 'Year', 'lengthReport': 'Quarter'}, inplace=True)
                 
-                # Calculate totals by year for 2023
-                income_by_year_2023 = table_data2[table_data2['Year'] == 2023].groupby('Year')[['Revenue (Bn. VND)', 'Operating Profit/Loss', 'Net Profit For the Year']].sum()
-                ratios_by_year_2023 = table_data1[table_data1['Year'] == 2023].groupby('Year')[['EPS (VND)', 'BVPS (VND)', 'ROA (%)', 'Net Profit Margin (%)', 'ROE (%)']].mean()
-                
-                # Format 2023 values if available
-                if not income_by_year_2023.empty:
-                    # Revenue is already in billions
-                    projection_data['revenue'][0] = f"{income_by_year_2023['Revenue (Bn. VND)'].iloc[0]:,.2f}"
+                # Process 2023 data if it's not already set
+                if '2023' not in results_df.columns or projection_data['revenue'][0] == 'N/A':
+                    # Calculate totals by year for 2023
+                    income_by_year_2023 = table_data2[table_data2['Year'] == 2023].groupby('Year')[['Revenue (Bn. VND)', 'Operating Profit/Loss', 'Net Profit For the Year']].sum()
+                    ratios_by_year_2023 = table_data1[table_data1['Year'] == 2023].groupby('Year')[['EPS (VND)', 'BVPS (VND)', 'ROA (%)', 'Net Profit Margin (%)', 'ROE (%)']].mean()
                     
-                    # Operating profit
-                    op_profit_value = income_by_year_2023['Operating Profit/Loss'].iloc[0] / 1_000_000_000
-                    projection_data['operating_profit'][0] = f"{op_profit_value:,.2f}"
+                    # Format 2023 values if available
+                    if not income_by_year_2023.empty:
+                        # Revenue is already in billions
+                        projection_data['revenue'][0] = f"{income_by_year_2023['Revenue (Bn. VND)'].iloc[0]:,.2f}"
+                        
+                        # Operating profit
+                        op_profit_value = income_by_year_2023['Operating Profit/Loss'].iloc[0] / 1_000_000_000
+                        projection_data['operating_profit'][0] = f"{op_profit_value:,.2f}"
+                        
+                        # Net profit
+                        net_profit_value = income_by_year_2023['Net Profit For the Year'].iloc[0] / 1_000_000_000
+                        projection_data['profit_after_tax'][0] = f"{net_profit_value:,.2f}"
                     
-                    # Net profit
-                    net_profit_value = income_by_year_2023['Net Profit For the Year'].iloc[0] / 1_000_000_000
-                    projection_data['profit_after_tax'][0] = f"{net_profit_value:,.2f}"
-                
-                if not ratios_by_year_2023.empty:
-                    projection_data['eps'][0] = f"{ratios_by_year_2023['EPS (VND)'].iloc[0]:,.0f}"
-                    projection_data['bps'][0] = f"{ratios_by_year_2023['BVPS (VND)'].iloc[0]:,.0f}"
-                    projection_data['roa'][0] = f"{ratios_by_year_2023['ROA (%)'].iloc[0]:,.1f}"
-                    projection_data['npm'][0] = f"{ratios_by_year_2023['Net Profit Margin (%)'].iloc[0]:,.1f}"
-                    projection_data['roe'][0] = f"{ratios_by_year_2023['ROE (%)'].iloc[0]:,.1f}"
+                    if not ratios_by_year_2023.empty:
+                        projection_data['eps'][0] = f"{ratios_by_year_2023['EPS (VND)'].iloc[0]:,.0f}"
+                        projection_data['bps'][0] = f"{ratios_by_year_2023['BVPS (VND)'].iloc[0]:,.0f}"
+                        projection_data['npm'][0] = f"{ratios_by_year_2023['Net Profit Margin (%)'].iloc[0]:,.1f}"
+                        projection_data['roa'][0] = f"{ratios_by_year_2023['ROA (%)'].iloc[0]:,.1f}"
+                        projection_data['roe'][0] = f"{ratios_by_year_2023['ROE (%)'].iloc[0]:,.1f}"
+                        
+                # Try to get 2022 data if not already set
+                if all(v == 'N/A' for v in data_2022.values()):
+                    # Calculate totals by year for 2022
+                    income_by_year_2022 = table_data2[table_data2['Year'] == 2022].groupby('Year')[['Revenue (Bn. VND)', 'Operating Profit/Loss', 'Net Profit For the Year']].sum()
+                    ratios_by_year_2022 = table_data1[table_data1['Year'] == 2022].groupby('Year')[['EPS (VND)', 'BVPS (VND)', 'ROA (%)', 'Net Profit Margin (%)', 'ROE (%)']].mean()
+                    
+                    # Format 2022 values if available
+                    if not income_by_year_2022.empty:
+                        # Revenue is already in billions
+                        data_2022['revenue'] = f"{income_by_year_2022['Revenue (Bn. VND)'].iloc[0]:,.2f}"
+                        
+                        # Operating profit
+                        op_profit_value = income_by_year_2022['Operating Profit/Loss'].iloc[0] / 1_000_000_000
+                        data_2022['operating_profit'] = f"{op_profit_value:,.2f}"
+                        
+                        # Net profit
+                        net_profit_value = income_by_year_2022['Net Profit For the Year'].iloc[0] / 1_000_000_000
+                        data_2022['profit_after_tax'] = f"{net_profit_value:,.2f}"
+                    
+                    if not ratios_by_year_2022.empty:
+                        data_2022['eps'] = f"{ratios_by_year_2022['EPS (VND)'].iloc[0]:,.0f}"
+                        data_2022['bps'] = f"{ratios_by_year_2022['BVPS (VND)'].iloc[0]:,.0f}"
+                        data_2022['npm'] = f"{ratios_by_year_2022['Net Profit Margin (%)'].iloc[0]:,.1f}"
+                        data_2022['roa'] = f"{ratios_by_year_2022['ROA (%)'].iloc[0]:,.1f}"
+                        data_2022['roe'] = f"{ratios_by_year_2022['ROE (%)'].iloc[0]:,.1f}"
             except Exception as e:
-                print(f"Lỗi khi lấy dữ liệu 2023: {str(e)}")
+                print(f"Lỗi khi lấy dữ liệu 2022-2023: {str(e)}")
             
-            # Process 2024, 2025F, 2026F data from results_df
-            # Map DataFrame indices to projection_data keys
-            mapping = {
-                'Revenue (Bn. VND)': 'revenue',
-                'Net Profit For the Year': 'profit_after_tax',
-                'EPS (VND)': 'eps',
-                'BVPS (VND)': 'bps',
-                'ROA (%)': 'roa',
-                'Net Profit Margin (%)': 'npm',
-                'ROE (%)': 'roe'
-            }
-            
-            # Format each value from results_df to projection_data
+            # Process the forecast years (2024, 2025F, 2026F)
             for df_key, proj_key in mapping.items():
                 if df_key in results_df.index:
-                    # Format 2024 data (column 1 in projection_data, index '2024' in results_df)
+                    # Format 2024 data
                     if '2024' in results_df.columns:
-                        # Scale revenue and profit values to billions for display
                         if df_key in ['Revenue (Bn. VND)', 'Net Profit For the Year']:
                             value = results_df.loc[df_key, '2024'] / 1_000_000_000
                             projection_data[proj_key][1] = f"{value:,.2f}"
-                        # Format other values appropriately
                         elif df_key in ['EPS (VND)', 'BVPS (VND)']:
                             projection_data[proj_key][1] = f"{results_df.loc[df_key, '2024']:,.0f}"
                         else:  # Percentage values (ROA, NPM, ROE)
-                            # Multiply by 100 to convert from decimal to percentage
                             value = results_df.loc[df_key, '2024'] * 100 if isinstance(results_df.loc[df_key, '2024'], (int, float)) else results_df.loc[df_key, '2024']
                             projection_data[proj_key][1] = f"{value:,.1f}"
                     
-                    # Format 2025F data (column 2 in projection_data, index '2025F' in results_df)
+                    # Format 2025F data
                     if '2025F' in results_df.columns:
                         if df_key in ['Revenue (Bn. VND)', 'Net Profit For the Year']:
                             value = results_df.loc[df_key, '2025F'] / 1_000_000_000
@@ -320,11 +363,10 @@ def get_projection_data_from_analyze_function(symbol):
                         elif df_key in ['EPS (VND)', 'BVPS (VND)']:
                             projection_data[proj_key][2] = f"{results_df.loc[df_key, '2025F']:,.0f}"
                         else:  # Percentage values (ROA, NPM, ROE)
-                            # Multiply by 100 to convert from decimal to percentage
                             value = results_df.loc[df_key, '2025F'] * 100 if isinstance(results_df.loc[df_key, '2025F'], (int, float)) else results_df.loc[df_key, '2025F']
                             projection_data[proj_key][2] = f"{value:,.1f}"
                     
-                    # Format 2026F data (column 3 in projection_data, index '2026F' in results_df)
+                    # Format 2026F data
                     if '2026F' in results_df.columns:
                         if df_key in ['Revenue (Bn. VND)', 'Net Profit For the Year']:
                             value = results_df.loc[df_key, '2026F'] / 1_000_000_000
@@ -332,7 +374,6 @@ def get_projection_data_from_analyze_function(symbol):
                         elif df_key in ['EPS (VND)', 'BVPS (VND)']:
                             projection_data[proj_key][3] = f"{results_df.loc[df_key, '2026F']:,.0f}"
                         else:  # Percentage values (ROA, NPM, ROE)
-                            # Multiply by 100 to convert from decimal to percentage
                             value = results_df.loc[df_key, '2026F'] * 100 if isinstance(results_df.loc[df_key, '2026F'], (int, float)) else results_df.loc[df_key, '2026F']
                             projection_data[proj_key][3] = f"{value:,.1f}"
             
@@ -340,6 +381,11 @@ def get_projection_data_from_analyze_function(symbol):
             try:
                 operating_profits = results_df.loc['Operating Profit/Loss'] if 'Operating Profit/Loss' in results_df.index else None
                 if operating_profits is not None:
+                    # Get 2022 operating profit if available
+                    if '2022' in operating_profits:
+                        value = operating_profits['2022'] / 1_000_000_000
+                        data_2022['operating_profit'] = f"{value:,.2f}"
+                        
                     for i, year in enumerate(['2024', '2025F', '2026F']):
                         if year in operating_profits:
                             value = operating_profits[year] / 1_000_000_000
@@ -347,11 +393,37 @@ def get_projection_data_from_analyze_function(symbol):
             except Exception as e:
                 print(f"Lỗi khi lấy dữ liệu lợi nhuận từ hoạt động kinh doanh: {str(e)}")
         
+        # Add 2022 data as the first element in each array
+        for key in projection_data:
+            if key in data_2022:
+                # Insert 2022 data at the beginning of each array
+                projection_data[key].insert(0, data_2022[key])
+        
         return projection_data
     
     except Exception as e:
         print(f"Lỗi khi xử lý dữ liệu từ analyze_stock_data_2025_2026_p2: {str(e)}")
+        # Add 2022 data as the first element in each array (even in case of error)
+        for key in projection_data:
+            if key in data_2022:
+                projection_data[key].insert(0, data_2022[key])
         return projection_data
+
+def get_projection_data_for_page1(symbol):
+    """
+    Generate projection data for page 1 of the report.
+    
+    Args:
+        symbol: Stock symbol to analyze
+    
+    Returns:
+        Dictionary with projection data formatted for page1
+    """
+    # Get projection data with all years using the analyze function
+    projection_data = get_projection_data_from_analyze_function(symbol)
+    
+    # Return the complete projection data
+    return projection_data
 
 def generate_pdf_report(symbol: str):
     try:

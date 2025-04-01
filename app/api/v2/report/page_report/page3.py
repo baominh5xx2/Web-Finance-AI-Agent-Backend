@@ -267,12 +267,6 @@ class Page3:
         story.append(explanation)
         story.append(Spacer(1, 10*mm))  # Tăng khoảng trống
         
-        # Bảng tóm tắt định giá - chỉ sử dụng một cột cho bảng này
-        if valuation_data:
-            valuation_table = self.create_valuation_summary_table(valuation_data)
-            story.append(valuation_table)
-            story.append(Spacer(1, 15*mm))  # Khoảng cách trước bảng doanh nghiệp cùng ngành
-        
         # Thêm bảng so sánh doanh nghiệp cùng ngành
         if peer_data and len(peer_data) > 0:
             # Tiêu đề bảng so sánh doanh nghiệp
@@ -283,5 +277,13 @@ class Page3:
             # Tạo bảng so sánh
             peer_table = self.create_industry_peers_table(peer_data)
             story.append(peer_table)
+            
+        # Bảng tóm tắt định giá - chỉ sử dụng một cột cho bảng này
+        if valuation_data:
+            valuation_table = self.create_valuation_summary_table(valuation_data)
+            story.append(valuation_table)
+            story.append(Spacer(1, 15*mm))  # Khoảng cách trước bảng doanh nghiệp cùng ngành
+        
+        
             
         return story

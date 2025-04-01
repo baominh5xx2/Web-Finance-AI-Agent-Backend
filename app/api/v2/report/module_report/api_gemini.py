@@ -67,7 +67,7 @@ Chi tiết chỉ số lợi nhuận:
     
     return f""" 
 Bạn là một chuyên gia phân tích tài chính chuyên về phân tích cơ bản cổ phiếu ngành thép. Hãy đánh giá rủi ro và triển vọng đầu tư của Công ty Cổ phần Thép Nam Kim (mã cổ phiếu: NKG) dựa trên thông tin ngành thép và vị thế của công ty.
-Giữ văn phong chuyên nghiệp và báo cáo dưới 300 từ.
+Giữ văn phong chuyên nghiệp.
 
 Thông tin ngành thép: Ngành thép Việt Nam chịu ảnh hưởng bởi giá nguyên liệu đầu vào (quặng sắt, thép phế), chi phí năng lượng, biến động tỷ giá và cạnh tranh từ thép Trung Quốc. Nam Kim là một trong những nhà sản xuất tôn mạ hàng đầu Việt Nam, có thế mạnh về thép mạ màu và thép mạ kẽm, đồng thời có hoạt động xuất khẩu sang các thị trường như Bắc Mỹ, châu Âu và Đông Nam Á.
 
@@ -104,11 +104,14 @@ Phân tích ngắn gọn về:
 - Tập trung bình luận chỉ số
 - Phải đưa ra được số liệu cụ thể.
 - Bình luận các chỉ số dựa trên hiểu biết của bạn và các chỉ số đã cung cấp.
+- Không quá 200 từ
 
 **CÁC TIN TỨC VỀ CÔNG TY THÉP NAM KIM**
 - Đây là thông tin mới nhất về công ty thép nam kim: {news}.
+- Có thể tìm các tin tức mới nhất trên google để nói về công ty thép nam kim.
 - Hãy viết về một đoạn văn giới thiệu thông tin mới nhất về công ty thép nam kim với mã cổ phiếu là NKG. Tìm các chỉ số mới nhất như là giá hiện tại: {current_price}, giá mục tiêu là 23,972 VND,... để đánh giá tình hình hiện tại của công ty. không quá 300 từ
 Định dạng đầu ra cần tuân thủ:
+0. Không cần viết kết luận cuối.
 1. Bắt đầu phân tích với tiêu đề "**Định giá cập nhật với khuyến nghị MUA, giá mục tiêu dài hạn**"
 2. Nội dung phải súc tích, logic, tổng cộng không quá 600 từ
 3. Có kết luận rõ ràng về tiềm năng đầu tư cổ phiếu NKG

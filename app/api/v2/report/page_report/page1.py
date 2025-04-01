@@ -411,19 +411,19 @@ class Page1:
             'profit_after_tax': 'Lợi nhuận ròng (tỷ VND)',
             'eps': 'EPS (đồng)',
             'bps': 'BPS (đồng)',
-            'roa': 'ROA (%)',
             'npm': 'NPM (%)',
+            'roa': 'ROA (%)',
             'roe': 'ROE (%)',
         }
         
-        # Create header row
-        data = [['Năm', '2024', '2025F', '2026F']]
+        # Create header row with all years
+        data = [['Năm', '2022', '2023', '2024', '2025F', '2026F']]
         
-        # If projection_data is None, initialize with N/A values
+        # If projection_data is None, initialize with N/A values for all years
         if not projection_data:
             projection_data = {}
             for key in key_mapping.keys():
-                projection_data[key] = ['N/A', 'N/A', 'N/A', 'N/A']
+                projection_data[key] = ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']
         
         # Add rows for each metric
         for key, display_name in key_mapping.items():
@@ -431,8 +431,15 @@ class Page1:
             
             # Get values from projection_data or use N/A if key doesn't exist
             if key in projection_data:
-                # Only use columns 1-3 (2024, 2025F, 2026F) from each array, skipping column 0 (2023)
-                values = projection_data[key][1:4]
+                # After our changes to services.py, projection_data now has the structure:
+                # [2022, 2023, 2024, 2025F, 2026F]
+                
+                # Make sure we have enough values (should be 5)
+                if len(projection_data[key]) >= 5:
+                    values = projection_data[key][:5]  # Take exactly 5 values
+                else:
+                    # Handle case where projection_data doesn't have enough values
+                    values = projection_data[key] + ['N/A'] * (5 - len(projection_data[key]))
                 
                 # Special processing for percentage values (ROA, NPM, ROE)
                 if key in ['roa', 'npm', 'roe']:
@@ -453,12 +460,12 @@ class Page1:
                     row.extend(values)
             else:
                 # If key doesn't exist in projection_data, use N/A for all columns
-                row.extend(['N/A', 'N/A', 'N/A'])
+                row.extend(['N/A', 'N/A', 'N/A', 'N/A', 'N/A'])
                 
             data.append(row)
         
-        # Set column widths - only use 4 columns total (label + 3 data columns)
-        colWidths = [5*cm, 2.5*cm, 2.5*cm, 2.5*cm]
+        # Set column widths - adjust for 6 columns total (label + 5 data columns)
+        colWidths = [5*cm, 1.8*cm, 1.8*cm, 1.8*cm, 1.8*cm, 1.8*cm]
         
         # Create table
         table = Table(data, colWidths=colWidths, spaceBefore=0.3*cm, spaceAfter=0.5*cm)
