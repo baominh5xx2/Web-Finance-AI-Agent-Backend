@@ -159,7 +159,7 @@ class Page3:
                      Paragraph(f"{upside}", self.styles['TableCell'])])
         
         # Tạo bảng với chiều rộng khớp với bảng so sánh
-        table = Table(data, colWidths=[12*cm, 8*cm])  # Điều chỉnh tổng chiều rộng cho phù hợp
+        table = Table(data, colWidths=[10.5*cm, 8*cm])  # Điều chỉnh tổng chiều rộng cho phù hợp
         
         # Thiết lập style cho bảng
         table_style = TableStyle([
