@@ -362,130 +362,89 @@ def predict_price(symbol):
         print(f"Lỗi khi dự đoán giá mục tiêu cho {symbol}: {str(e)}")
         return 0, 0
 
-def doanhthu_thuan_p2(symbol):
-    stock = Vnstock().stock(symbol=symbol, source='VCI')
-    doanhthu_thuan = stock.finance.income_statement(period='year', lang='vi', dropna=True).head(1)
-    Yoy = doanhthu_thuan['Tăng trưởng doanh thu (%)'].values[0]
-    return doanhthu_thuan['Doanh thu (đồng)'].values[0], Yoy
+def get_market_data(stock_info=None, symbol=None):
+    """Lấy các dữ liệu thị trường bao gồm VNINDEX và thông tin cổ phiếu"""
+    # Trả về tất cả giá trị là N/A
+    market_data = {
+        "VNINDEX": "N/A",
+        "HNXINDEX": "N/A",
+        "Vốn hóa (tỷ VND)": "N/A",
+        "SL CP lưu hành (triệu CP)": "N/A",
+        "52-tuần cao/thấp": "N/A",
+        "KLGD bình quân 90 ngày": "N/A",
+        "GTGD bình quân 90 ngày": "N/A",
+        "co_dong_lon": None  # Thêm key để lưu danh sách cổ đông lớn
+    }
 
-def chiphi_p2(symbol):
-    stock = Vnstock().stock(symbol=symbol, source='VCI')
-    chiphis = stock.finance.income_statement(period='year', lang='vi', dropna=True).head(2)
-    chiphitaichinh = chiphis['Chi phí tài chính'].values[0]
-    chiphibanhang = chiphis['Chi phí bán hàng'].values[0]
-    chiphiql = chiphis['Chi phí quản lý DN'].values[0]
-    laigop = chiphis['Lãi gộp'].values[0]
-    yoy_laigop = (laigop - chiphis['Lãi gộp'].values[1]) / chiphis['Lãi gộp'].values[1]
-    yoy_chiphitaichinh = (chiphitaichinh - chiphis['Chi phí tài chính'].values[1]) / chiphis['Chi phí tài chính'].values[1]
-    yoy_chiphibanhang = (chiphibanhang - chiphis['Chi phí bán hàng'].values[1]) / chiphis['Chi phí bán hàng'].values[1]
-    yoy_chiphiql = (chiphiql - chiphis['Chi phí quản lý DN'].values[1]) / chiphis['Chi phí quản lý DN'].values[1]
-    return laigop, chiphitaichinh, yoy_chiphitaichinh, chiphibanhang,  yoy_laigop, yoy_chiphibanhang, chiphiql, yoy_chiphiql
-
-def loinhuan_gop_p2(symbol):
+    # Debug: In ra các khóa trong market_data để kiểm tra
+    print(f"Initial market_data keys: {list(market_data.keys())}")
+    
+    # Thử lấy dữ liệu các chỉ số từ API
     try:
-        stock = Vnstock().stock(symbol=symbol, source='VCI')
+        # Lấy dữ liệu VNINDEX
+        vnindex_result = get_index_data('VNINDEX')
+        if vnindex_result and 'value' in vnindex_result and vnindex_result['value'] is not None:
+            if isinstance(vnindex_result['value'], (int, float)):
+                # Format với 2 số thập phân thay vì làm tròn
+                market_data["VNINDEX"] = f"{vnindex_result['value']:,.2f}"
+                print(f"Đã lấy được VNINDEX: {market_data['VNINDEX']}")
         
-        # Get financial ratios and income statement
-        try:
-            result = stock.finance.ratio(period='year', lang='vi', dropna=True).head(2)
-        except Exception:
-            result = None
-            
-        try:
-            loinhuan = stock.finance.income_statement(period='year', lang='vi', dropna=True).head(2)
-        except Exception:
-            loinhuan = None
+        # Lấy dữ liệu HNXINDEX
+        hnxindex_result = get_index_data('HNXINDEX')
+        if hnxindex_result and 'value' in hnxindex_result and hnxindex_result['value'] is not None:
+            if isinstance(hnxindex_result['value'], (int, float)):
+                # Format với 2 số thập phân thay vì làm tròn
+                market_data["HNXINDEX"] = f"{hnxindex_result['value']:,.2f}"
+                print(f"Đã lấy được HNXINDEX: {market_data['HNXINDEX']}")
         
-        # Get gross profit margin
-        try:
-            if result is not None and ('Chỉ tiêu khả năng sinh lợi','Biên lợi nhuận gộp (%)') in result.columns:
-                bienloinhuangop = result['Chỉ tiêu khả năng sinh lợi','Biên lợi nhuận gộp (%)'].values[0]
-            else:
-                bienloinhuangop = "N/A"
-        except Exception:
-            bienloinhuangop = "N/A"
-        
-        # Get gross profit and calculate YoY growth
-        try:
-            if loinhuan is not None and 'Lãi gộp' in loinhuan.columns and len(loinhuan['Lãi gộp']) >= 2:
-                loinhuangop = loinhuan['Lãi gộp'].values[0]
-                loinhuangop_pre = loinhuan['Lãi gộp'].values[1]
-                
-                if loinhuangop_pre != 0:
-                    yoy = (loinhuangop - loinhuangop_pre) / loinhuangop_pre
+        # Lấy vốn hóa thị trường của cổ phiếu
+        if symbol:
+            # Lấy thông tin cổ đông lớn
+            try:
+                shareholders_df = codonglon(symbol)
+                if shareholders_df is not None and not shareholders_df.empty:
+                    print(f"Đã lấy được thông tin cổ đông lớn: {len(shareholders_df)} cổ đông")
+                    market_data["co_dong_lon"] = shareholders_df
                 else:
-                    yoy = "N/A"
-            else:
-                loinhuangop = "N/A"
-                yoy = "N/A"
-        except Exception:
-            loinhuangop = "N/A"
-            yoy = "N/A"
+                    print("Không lấy được thông tin cổ đông lớn")
+            except Exception as e:
+                print(f"Lỗi khi lấy thông tin cổ đông lớn: {str(e)}")
             
-        return bienloinhuangop, loinhuangop, yoy
-        
+            kl_gd_90_ngay = KLGD_90_ngay(symbol)
+            if kl_gd_90_ngay is not None:
+                market_data["KLGD bình quân 90 ngày"] = f"{kl_gd_90_ngay}"
+                print(f"Đã lấy được KLGD bình quân 90 ngày: {market_data['KLGD bình quân 90 ngày']}")
+            gtgd_90_ngay = GTGD_90_ngay(symbol)
+            if gtgd_90_ngay is not None:
+                market_data["GTGD bình quân 90 ngày"] = f"{gtgd_90_ngay}"
+                print(f"Đã lấy được GTGD bình quân 90 ngày: {market_data['GTGD bình quân 90 ngày']}")
+            five_two_week_high_low = get_52_week_high_low(symbol)
+            if five_two_week_high_low is not None:
+                market_data["52-tuần cao/thấp"] = f"{five_two_week_high_low}"
+                print(f"Đã lấy được 52-tuần cao/thấp: {market_data['52-tuần cao/thấp']}")
+            cp_luuhanh1 = cp_luuhanh(symbol)
+            if cp_luuhanh1 is not None:
+                market_data["SL CP lưu hành (triệu CP)"] = f"{cp_luuhanh1:,.2f}"
+                print(f"Đã lấy được số lượng cổ phiếu lưu hành: {market_data['SL CP lưu hành (triệu CP)']}")
+            market_cap = get_market_cap(symbol)
+            if market_cap is not None:
+                # Đảm bảo market_cap là giá trị số
+                if isinstance(market_cap, (int, float)):
+                    market_data["Vốn hóa (tỷ VND)"] = f"{market_cap:,.2f}"
+                    print(f"Đã lấy được vốn hóa thị trường: {market_data['Vốn hóa (tỷ VND)']}")
+                else:
+                    # Nếu là kiểu Series hoặc kiểu khác, cố gắng chuyển đổi
+                    try:
+                        market_cap_float = float(market_cap)
+                        market_data["Vốn hóa (tỷ VND)"] = f"{market_cap_float:,.2f}"
+                        print(f"Đã chuyển đổi và lấy được vốn hóa thị trường: {market_data['Vốn hóa (tỷ VND)']}")
+                    except:
+                        print(f"Không thể chuyển đổi vốn hóa thị trường sang số: {market_cap}")
     except Exception as e:
-        print(f"Error processing data for {symbol}: {str(e)}")
-        return "N/A", "N/A", "N/A"
-def get_new_symbol(symbol):
-    company = Vnstock().stock(symbol=symbol, source='TCBS').company
-    news = company.news().head(5)
-    return news['title']
-def analyze_stock(symbol):
-    # Fetch income statement data
-    stock = Vnstock().stock(symbol=symbol, source='VCI')
-    data = stock.finance.income_statement(symbol=symbol)
+        print(f"Lỗi khi lấy dữ liệu chỉ số thị trường: {str(e)}")
     
-    # Select and rename columns
-    table_data = data[[('yearReport'), ('lengthReport'), ('Revenue (Bn. VND)'), ('Operating Profit/Loss'), 
-                       ('Profit before tax'), ('Net Profit For the Year')]].dropna()
-    table_data.rename(columns={'yearReport': 'Year', 'lengthReport': 'Quarter'}, inplace=True)
-    
-    # Summarize data by year from 2020 to 2024
-    data_year = table_data.groupby('Year')[['Revenue (Bn. VND)', 'Operating Profit/Loss', 'Profit before tax', 'Net Profit For the Year']].sum()
-    data_year = data_year.loc[2020:2024]
-    
-    # Calculate CAGR for each metric from 2020 to 2024
-    def calculate_cagr(start_value, end_value, num_years):
-        return (end_value / start_value) ** (1 / num_years) - 1
-    
-    cagr_values = {}
-    for label in ['Revenue (Bn. VND)', 'Operating Profit/Loss', 'Profit before tax', 'Net Profit For the Year']:
-        start_value = data_year.loc[2020, label]
-        end_value = data_year.loc[2024, label]
-        cagr_values[label] = calculate_cagr(start_value, end_value, 4)
-    
-    # Project 2025 values using CAGR
-    projections_2025 = {}
-    for label in ['Revenue (Bn. VND)', 'Operating Profit/Loss', 'Profit before tax', 'Net Profit For the Year']:
-        projections_2025[label] = data_year.loc[2024, label] * (1 + cagr_values[label])
-    
-    # Calculate %YoY for 2024 and projected 2025
-    yoy_values = {}
-    for label in ['Revenue (Bn. VND)', 'Operating Profit/Loss', 'Profit before tax', 'Net Profit For the Year']:
-        yoy_2024 = ((data_year.loc[2024, label] - data_year.loc[2023, label]) / data_year.loc[2023, label]) * 100
-        yoy_2025 = ((projections_2025[label] - data_year.loc[2024, label]) / data_year.loc[2024, label]) * 100
-        yoy_values[label] = {'%YoY 2024': yoy_2024, '%YoY 2025F': yoy_2025}
-    
-    # Print results
-    for label in ['Revenue (Bn. VND)', 'Operating Profit/Loss', 'Profit before tax', 'Net Profit For the Year']:
-        print(f"{label}:")
-        print(f"  CAGR (2020-2024): {cagr_values[label]:.2%}")
-        print(f"  Dự phóng 2025: {projections_2025[label]:,.0f}")
-        print(f"  %YoY 2024: {yoy_values[label]['%YoY 2024']:.2f}%")
-        print(f"  %YoY 2025F: {yoy_values[label]['%YoY 2025F']:.2f}%\n")
-def loinhuankinhdoanh_p2(symbol):
-    stock = Vnstock().stock(symbol=symbol, source='VCI')
-    res = stock.finance.income_statement(period='year', lang='vi', dropna=True).head(2)
-    loinhuanhdkd = res['Lãi/Lỗ từ hoạt động kinh doanh'].values[0]  
-    loinhuansautrue = res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (đồng)'].values[0]
-    loinhuantruothue = res['LN trước thuế'].values[0]
-    yoy_loinhuanhdkd = (loinhuanhdkd - res['Lãi/Lỗ từ hoạt động kinh doanh'].values[1]) / res['Lãi/Lỗ từ hoạt động kinh doanh'].values[1]
-    yoy_loinhuansautrue = (loinhuansautrue - res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (đồng)'].values[1]) / res['Lợi nhuận sau thuế của Cổ đông công ty mẹ (đồng)'].values[1]
-    yoy_loinhuantruothue = (loinhuantruothue - res['LN trước thuế'].values[1]) / res['LN trước thuế'].values[1]
-    return loinhuanhdkd, loinhuantruothue, loinhuansautrue, yoy_loinhuanhdkd, yoy_loinhuantruothue, yoy_loinhuansautrue
-#def combined_data_page1(symbol):
-    
+    return market_data
+
 def analyze_stock_data_2025_2026_p1(symbol):
     # Fetch data
     stock = Vnstock().stock(symbol=symbol, source='VCI')
@@ -579,86 +538,3 @@ def analyze_stock_data_2025_2026_p1(symbol):
     pd.options.display.float_format = '{:,.2f}'.format
     
     return results_df
-
-def get_market_data(stock_info=None, symbol=None):
-    """Lấy các dữ liệu thị trường bao gồm VNINDEX và thông tin cổ phiếu"""
-    # Trả về tất cả giá trị là N/A
-    market_data = {
-        "VNINDEX": "N/A",
-        "HNXINDEX": "N/A",
-        "Vốn hóa (tỷ VND)": "N/A",
-        "SL CP lưu hành (triệu CP)": "N/A",
-        "52-tuần cao/thấp": "N/A",
-        "KLGD bình quân 90 ngày": "N/A",
-        "GTGD bình quân 90 ngày": "N/A",
-        "co_dong_lon": None  # Thêm key để lưu danh sách cổ đông lớn
-    }
-
-    # Debug: In ra các khóa trong market_data để kiểm tra
-    print(f"Initial market_data keys: {list(market_data.keys())}")
-    
-    # Thử lấy dữ liệu các chỉ số từ API
-    try:
-        # Lấy dữ liệu VNINDEX
-        vnindex_result = get_index_data('VNINDEX')
-        if vnindex_result and 'value' in vnindex_result and vnindex_result['value'] is not None:
-            if isinstance(vnindex_result['value'], (int, float)):
-                # Format với 2 số thập phân thay vì làm tròn
-                market_data["VNINDEX"] = f"{vnindex_result['value']:,.2f}"
-                print(f"Đã lấy được VNINDEX: {market_data['VNINDEX']}")
-        
-        # Lấy dữ liệu HNXINDEX
-        hnxindex_result = get_index_data('HNXINDEX')
-        if hnxindex_result and 'value' in hnxindex_result and hnxindex_result['value'] is not None:
-            if isinstance(hnxindex_result['value'], (int, float)):
-                # Format với 2 số thập phân thay vì làm tròn
-                market_data["HNXINDEX"] = f"{hnxindex_result['value']:,.2f}"
-                print(f"Đã lấy được HNXINDEX: {market_data['HNXINDEX']}")
-        
-        # Lấy vốn hóa thị trường của cổ phiếu
-        if symbol:
-            # Lấy thông tin cổ đông lớn
-            try:
-                shareholders_df = codonglon(symbol)
-                if shareholders_df is not None and not shareholders_df.empty:
-                    print(f"Đã lấy được thông tin cổ đông lớn: {len(shareholders_df)} cổ đông")
-                    market_data["co_dong_lon"] = shareholders_df
-                else:
-                    print("Không lấy được thông tin cổ đông lớn")
-            except Exception as e:
-                print(f"Lỗi khi lấy thông tin cổ đông lớn: {str(e)}")
-            
-            kl_gd_90_ngay = KLGD_90_ngay(symbol)
-            if kl_gd_90_ngay is not None:
-                market_data["KLGD bình quân 90 ngày"] = f"{kl_gd_90_ngay}"
-                print(f"Đã lấy được KLGD bình quân 90 ngày: {market_data['KLGD bình quân 90 ngày']}")
-            gtgd_90_ngay = GTGD_90_ngay(symbol)
-            if gtgd_90_ngay is not None:
-                market_data["GTGD bình quân 90 ngày"] = f"{gtgd_90_ngay}"
-                print(f"Đã lấy được GTGD bình quân 90 ngày: {market_data['GTGD bình quân 90 ngày']}")
-            five_two_week_high_low = get_52_week_high_low(symbol)
-            if five_two_week_high_low is not None:
-                market_data["52-tuần cao/thấp"] = f"{five_two_week_high_low}"
-                print(f"Đã lấy được 52-tuần cao/thấp: {market_data['52-tuần cao/thấp']}")
-            cp_luuhanh1 = cp_luuhanh(symbol)
-            if cp_luuhanh1 is not None:
-                market_data["SL CP lưu hành (triệu CP)"] = f"{cp_luuhanh1:,.2f}"
-                print(f"Đã lấy được số lượng cổ phiếu lưu hành: {market_data['SL CP lưu hành (triệu CP)']}")
-            market_cap = get_market_cap(symbol)
-            if market_cap is not None:
-                # Đảm bảo market_cap là giá trị số
-                if isinstance(market_cap, (int, float)):
-                    market_data["Vốn hóa (tỷ VND)"] = f"{market_cap:,.2f}"
-                    print(f"Đã lấy được vốn hóa thị trường: {market_data['Vốn hóa (tỷ VND)']}")
-                else:
-                    # Nếu là kiểu Series hoặc kiểu khác, cố gắng chuyển đổi
-                    try:
-                        market_cap_float = float(market_cap)
-                        market_data["Vốn hóa (tỷ VND)"] = f"{market_cap_float:,.2f}"
-                        print(f"Đã chuyển đổi và lấy được vốn hóa thị trường: {market_data['Vốn hóa (tỷ VND)']}")
-                    except:
-                        print(f"Không thể chuyển đổi vốn hóa thị trường sang số: {market_cap}")
-    except Exception as e:
-        print(f"Lỗi khi lấy dữ liệu chỉ số thị trường: {str(e)}")
-    
-    return market_data

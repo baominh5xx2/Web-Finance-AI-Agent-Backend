@@ -127,9 +127,6 @@ class Page2:
 
     def create_projection_table(self, projection_data):
         """Create the business projection table"""
-        if not projection_data:
-            return [Paragraph("Không có dữ liệu dự phóng", self.styles['ProjectionTitle'])]
-            
         elements = []
         
         # Add title
@@ -170,15 +167,15 @@ class Page2:
 
         # Get data from projection_data and format each row
         data = [
-            format_row(['Doanh thu thuần'] + projection_data.get('revenue', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']), is_bold=True),
-            format_row(['Lợi nhuận gộp'] + projection_data.get('gross_profit', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']), is_bold=True),
-            format_row(['Biên lợi nhuận gộp'] + projection_data.get('gross_margin', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']), True),
-            format_row(['Chi phí tài chính'] + projection_data.get('financial_expense', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']), True),
-            format_row(['Chi phí bán hàng'] + projection_data.get('selling_expense', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']), True),
-            format_row(['Chi phí quản lý'] + projection_data.get('admin_expense', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']), True),
-            format_row(['Lợi nhuận từ HĐKD'] + projection_data.get('operating_profit', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']), is_bold=True),
-            format_row(['    LNTT'] + projection_data.get('profit_before_tax', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']), True),
-            format_row(['    LNST'] + projection_data.get('profit_after_tax', ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']), True)
+            format_row(['Doanh thu thuần', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A'], is_bold=True),
+            format_row(['Lợi nhuận gộp', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A'], is_bold=True),
+            format_row(['Biên lợi nhuận gộp', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A'], True),
+            format_row(['Chi phí tài chính', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A'], True),
+            format_row(['Chi phí bán hàng', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A'], True),
+            format_row(['Chi phí quản lý', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A'], True),
+            format_row(['Lợi nhuận từ HĐKD', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A'], is_bold=True),
+            format_row(['    LNTT', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A'], True),
+            format_row(['    LNST', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A'], True)
         ]
         
         # Combine headers and data

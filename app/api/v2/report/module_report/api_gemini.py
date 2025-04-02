@@ -1,7 +1,8 @@
 import os
 import google.generativeai as genai
 from dotenv import load_dotenv
-from .finance_calc import current_price,get_new_symbol
+from .finance_calc import current_price
+
 def configure_api():
     """Configure and authenticate the API"""
     load_dotenv()
@@ -51,18 +52,15 @@ Có kết luận rõ ràng về tiềm năng đầu tư của mã cổ phiếu.
 - KHÔNG ĐƯỢC XUỐNG DÒNG 2 LẦN TRONG MỌI TÌNH HUỐNG.
 """
 
-def create_nkg_analysis_prompt(balance_sheet, income_statement, profitability_analysis, current_price, profit_data=None,news=None):
+def create_nkg_analysis_prompt(balance_sheet, income_statement, profitability_analysis, current_price, profit_data=None, news=None):
     """Create the prompt specifically for NKG stock analysis"""
     
-    # Extract profit indicators if provided
-    profit_indicators = ""
-    if profit_data and len(profit_data) >= 6:
-        loinhuanhdkd, loinhuantruothue, loinhuansautrue, yoy_loinhuanhdkd, yoy_loinhuantruothue, yoy_loinhuansautrue = profit_data
-        profit_indicators = f"""
+    # Set default profit indicators - all N/A since profit_data function was removed
+    profit_indicators = """
 Chi tiết chỉ số lợi nhuận:
-- Lợi nhuận từ hoạt động kinh doanh: {loinhuanhdkd:,.0f} đồng (YoY: {yoy_loinhuanhdkd:.2%})
-- Lợi nhuận trước thuế: {loinhuantruothue:,.0f} đồng (YoY: {yoy_loinhuantruothue:.2%})
-- Lợi nhuận sau thuế của cổ đông công ty mẹ: {loinhuansautrue:,.0f} đồng (YoY: {yoy_loinhuansautrue:.2%})
+- Lợi nhuận từ hoạt động kinh doanh: N/A
+- Lợi nhuận trước thuế: N/A
+- Lợi nhuận sau thuế của cổ đông công ty mẹ: N/A
 """
     
     return f""" 
@@ -158,29 +156,26 @@ def generate_financial_analysis(balance_sheet=None, income_statement=None, profi
         if custom_prompt:
             prompt = custom_prompt
         elif symbol == "NKG" and balance_sheet and income_statement and profitability_analysis:
-            # Import loinhuankinhdoanh_p2 here to avoid circular imports
-            from .finance_calc import loinhuankinhdoanh_p2, current_price
-            
-            # Get profit data for NKG
+            # For NKG, we'll use a default approach without the removed functions
             try:
-                profit_data = loinhuankinhdoanh_p2("NKG")
                 prompt = create_nkg_analysis_prompt(
                     balance_sheet, 
                     income_statement, 
                     profitability_analysis,
                     current_price("NKG"),
-                    profit_data,
-                    get_new_symbol("NKG")
+                    None,  # No profit data
+                    "N/A"  # No news data
                 )
             except Exception as e:
-                print(f"Error getting profit data for NKG: {str(e)}")
+                print(f"Error creating NKG analysis prompt: {str(e)}")
                 # Fallback to the original function without profit data
                 prompt = create_nkg_analysis_prompt(
                     balance_sheet, 
                     income_statement, 
                     profitability_analysis,
-                    current_price("NKG"),   
-                    get_new_symbol("NKG")
+                    current_price("NKG"),
+                    None,
+                    "N/A"
                 )
         elif balance_sheet and income_statement and profitability_analysis:
             prompt = create_analysis_prompt(balance_sheet, income_statement, profitability_analysis)
