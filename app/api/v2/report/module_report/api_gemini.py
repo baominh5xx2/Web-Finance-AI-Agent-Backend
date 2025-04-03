@@ -11,7 +11,7 @@ def configure_api():
         raise ValueError("API Key is not set. Please check the .env file.")
     genai.configure(api_key=api_key)
 
-def create_analysis_prompt(balance_sheet, income_statement, profitability_analysis):
+def create_analysis_prompt_page1(balance_sheet, income_statement, profitability_analysis):
     """Create the prompt for financial analysis"""
     return f""" 
 Bạn là một chuyên gia phân tích tài chính chuyên về phân tích cơ bản cổ phiếu. Hãy đánh giá rủi ro và triển vọng đầu tư của mã cổ phiếu dựa trên các chỉ số tài chính và thông tin sausau.
@@ -52,7 +52,7 @@ Có kết luận rõ ràng về tiềm năng đầu tư của mã cổ phiếu.
 - KHÔNG ĐƯỢC XUỐNG DÒNG 2 LẦN TRONG MỌI TÌNH HUỐNG.
 """
 
-def create_nkg_analysis_prompt(balance_sheet, income_statement, profitability_analysis, current_price, profit_data=None, news=None):
+def create_nkg_analysis_prompt_page1(balance_sheet, income_statement, profitability_analysis, current_price, profit_data=None, news=None):
     """Create the prompt specifically for NKG stock analysis"""
     
     # Set default profit indicators - all N/A since profit_data function was removed
@@ -158,7 +158,7 @@ def generate_financial_analysis(balance_sheet=None, income_statement=None, profi
         elif symbol == "NKG" and balance_sheet and income_statement and profitability_analysis:
             # For NKG, we'll use a default approach without the removed functions
             try:
-                prompt = create_nkg_analysis_prompt(
+                prompt = create_nkg_analysis_prompt_page1(
                     balance_sheet, 
                     income_statement, 
                     profitability_analysis,
@@ -169,7 +169,7 @@ def generate_financial_analysis(balance_sheet=None, income_statement=None, profi
             except Exception as e:
                 print(f"Error creating NKG analysis prompt: {str(e)}")
                 # Fallback to the original function without profit data
-                prompt = create_nkg_analysis_prompt(
+                prompt = create_nkg_analysis_prompt_page1(
                     balance_sheet, 
                     income_statement, 
                     profitability_analysis,
@@ -178,7 +178,7 @@ def generate_financial_analysis(balance_sheet=None, income_statement=None, profi
                     "N/A"
                 )
         elif balance_sheet and income_statement and profitability_analysis:
-            prompt = create_analysis_prompt(balance_sheet, income_statement, profitability_analysis)
+            prompt = create_analysis_prompt_page1(balance_sheet, income_statement, profitability_analysis)
         else:
             prompt = "Provide a general financial market analysis and investment recommendations."
             
