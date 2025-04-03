@@ -538,3 +538,248 @@ def analyze_stock_data_2025_2026_p1(symbol):
     pd.options.display.float_format = '{:,.2f}'.format
     
     return results_df
+
+def analyze_stock_financials_p2(symbol):
+    """
+    Phân tích tài chính doanh nghiệp với xử lý thống nhất cho tất cả các chỉ số
+    """
+    print(f"Bắt đầu phân tích tài chính cho {symbol}")
+    try:
+        # Get data
+        print(f"Tạo đối tượng Vnstock() cho {symbol}")
+        stock = Vnstock().stock(symbol=symbol, source='VCI')
+        
+        print(f"Lấy dữ liệu báo cáo thu nhập cho {symbol}")
+        data2 = stock.finance.income_statement()
+        print(f"Dạng dữ liệu data2: {type(data2)}")
+        print(f"Số dòng trong data2: {len(data2)}")
+        
+        print(f"Lấy dữ liệu tỷ lệ tài chính cho {symbol}")
+        data1 = stock.finance.ratio(period='year')
+        print(f"Dạng dữ liệu data1: {type(data1)}")
+        print(f"Số dòng trong data1: {len(data1)}")
+
+        # Define metrics mapping with Vietnamese labels
+        metrics_mapping = {
+            'Revenue (Bn. VND)': 'Doanh thu thuần',
+            'Gross Profit': 'Lợi nhuận gộp',    
+            'Financial Expenses': 'Chi phí tài chính',
+            'Selling Expenses': 'Chi phí bán hàng',
+            'General & Admin Expenses': 'Chi phí quản lý',
+            'Operating Profit/Loss': 'Lợi nhuận từ HĐKD',
+            'Profit before tax': 'LNTT',
+            'Attribute to parent company (Bn. VND)': 'LNST'
+        }
+        
+        # Process income statement data
+        print(f"Trích xuất cột dữ liệu cho {symbol}")
+        cols_to_select = [('yearReport'), ('lengthReport'), ('Revenue (Bn. VND)'), 
+                        ('Revenue YoY (%)'),
+                        ('Financial Expenses'),('Selling Expenses'),('General & Admin Expenses'),
+                        ('Gross Profit'),('Operating Profit/Loss'),('Profit before tax'),
+                        ('Attribute to parent company (Bn. VND)')]
+        
+        print(f"Kiểm tra các cột dữ liệu có trong data2: {data2.columns}")
+        table_data2 = data2[cols_to_select].copy()
+        table_data2.rename(columns={'yearReport': 'Year', 'lengthReport': 'Quarter'}, inplace=True)
+        
+        # Convert numeric columns to float safely
+        numeric_columns = [col for col in table_data2.columns if col not in ['Year', 'Quarter']]
+        for col in numeric_columns:
+            print(f"Chuyển đổi cột {col} sang kiểu số")
+            table_data2[col] = pd.to_numeric(table_data2[col], errors='coerce')
+        
+        metrics = list(metrics_mapping.keys())
+        
+        # Calculate yearly values using mean for all metrics
+        print(f"Tính toán giá trị trung bình của các chỉ tiêu theo năm")
+        totals_by_year = table_data2.groupby('Year')[metrics].mean()
+        print(f"Số năm có dữ liệu: {len(totals_by_year)}")
+        # Filter years explicitly to avoid SettingWithCopyWarning
+        years_to_keep = [year for year in range(2020, 2025) if year in totals_by_year.index]
+        print(f"Các năm được giữ lại: {years_to_keep}")
+        totals_by_year = totals_by_year.loc[years_to_keep]
+        
+        if len(totals_by_year) < 2:
+            # Not enough data for calculations
+            print(f"Không đủ dữ liệu để tính dự phóng cho {symbol}")
+            return create_empty_result()
+        
+        num_years = totals_by_year.index[-1] - totals_by_year.index[0]
+        if num_years < 1:
+            num_years = 1  # Avoid division by zero
+        
+        def calculate_cagr(start_value, end_value, num_years):
+            if abs(start_value) < 1e-6 or abs(end_value) < 1e-6:
+                return 0
+            try:
+                return (end_value / start_value) ** (1 / num_years) - 1
+            except:
+                return 0
+        
+        # Calculate CAGR for all metrics
+        print(f"Tính toán tốc độ tăng trưởng kép (CAGR) cho các chỉ tiêu")
+        cagr_values = {}
+        for metric in metrics:
+            if metric in totals_by_year.columns:
+                start_value = totals_by_year[metric].iloc[0]
+                end_value = totals_by_year[metric].iloc[-1]
+                cagr_values[metric] = calculate_cagr(start_value, end_value, num_years)
+            else:
+                print(f"Không tìm thấy chỉ tiêu {metric} trong dữ liệu")
+                cagr_values[metric] = 0
+        
+        # Project future values
+        print(f"Dự phóng các giá trị tương lai")
+        projections_cagr = {}
+        for metric in metrics:
+            if metric in totals_by_year.columns:
+                try:
+                    base = totals_by_year[metric].iloc[-1]
+                    second_last_year = totals_by_year.index[-2]
+                    
+                    projections_cagr[metric] = {
+                        '2023': totals_by_year.loc[second_last_year, metric] if second_last_year in totals_by_year.index else 0,
+                        '2024': base,
+                        '2025F': base * (1 + cagr_values[metric]),
+                        '2026F': base * (1 + cagr_values[metric]) ** 2
+                    }
+                except Exception as e:
+                    print(f"Lỗi khi dự báo cho {metric}: {str(e)}")
+                    projections_cagr[metric] = {'2023': 0, '2024': 0, '2025F': 0, '2026F': 0}
+            else:
+                projections_cagr[metric] = {'2023': 0, '2024': 0, '2025F': 0, '2026F': 0}
+        
+        # Convert to DataFrame and round values
+        print(f"Chuyển đổi kết quả dự phóng sang DataFrame")
+        df_projections = pd.DataFrame(projections_cagr).round(2)
+        df_projections = df_projections.transpose()
+        
+        # Create a new index using mapping
+        new_index = [metrics_mapping.get(idx, idx) for idx in df_projections.index]
+        df_projections.index = new_index
+        df_projections.index.name = 'Chỉ tiêu'
+        
+        # Store unformatted values for calculations
+        df_calc = df_projections.copy()
+        
+        # Calculate growth rates
+        print(f"Tính toán tỷ lệ tăng trưởng")
+        growth_rates = {}
+        for metric_key, metric_name in metrics_mapping.items():
+            try:
+                if metric_name in df_calc.index and '2024' in df_calc.columns:
+                    base_value = df_calc.loc[metric_name, '2024']
+                    
+                    if '2025F' in df_calc.columns:
+                        val_2025 = df_calc.loc[metric_name, '2025F']
+                        growth_2025 = '{:+.1f}%'.format(((val_2025 / base_value - 1) * 100)) if base_value != 0 else 'N/A'
+                    else:
+                        growth_2025 = 'N/A'
+                    
+                    growth_rates[metric_name] = {'2025F': growth_2025}
+                    
+                    # Calculate 2024 growth rate if 2023 data is available
+                    if '2023' in df_calc.columns:
+                        val_2023 = df_calc.loc[metric_name, '2023']
+                        growth_2024 = '{:+.1f}%'.format(((base_value / val_2023 - 1) * 100)) if val_2023 != 0 else 'N/A'
+                        growth_rates[metric_name]['2024'] = growth_2024
+                    else:
+                        growth_rates[metric_name]['2024'] = 'N/A'
+                else:
+                    growth_rates[metric_name] = {'2024': 'N/A', '2025F': 'N/A'}
+            except Exception as e:
+                print(f"Lỗi tính tỷ lệ tăng trưởng cho {metric_name}: {str(e)}")
+                growth_rates[metric_name] = {'2024': 'N/A', '2025F': 'N/A'}
+        
+        df_growth = pd.DataFrame(growth_rates).transpose()
+        print(f"Đã tính xong tỷ lệ tăng trưởng")
+        
+        # Create a DataFrame that matches the image format exactly
+        # Set up multi-level columns as shown in the image
+        column_tuples = [
+            ('2024', 'Tỷ đồng'), ('2024', '%YoY'),
+            ('2025F', 'Tỷ đồng'), ('2025F', '%YoY')
+        ]
+        columns = pd.MultiIndex.from_tuples(column_tuples)
+        
+        # Create a DataFrame with the right structure to hold our results
+        print(f"Tạo DataFrame kết quả cuối cùng")
+        result_data = []
+        for metric_key, metric_name in metrics_mapping.items():
+            try:
+                # Get values
+                if metric_name in df_calc.index:
+                    val_2024 = df_calc.loc[metric_name, '2024']
+                    val_2025 = df_calc.loc[metric_name, '2025F'] if '2025F' in df_calc.columns else 0
+                else:
+                    val_2024 = 0
+                    val_2025 = 0
+                
+                # Convert to billions (tỷ đồng) for all metrics
+                print(f"Chuyển đổi {metric_name} sang tỷ đồng: {val_2024} -> {val_2024 / 1_000_000_000}")
+                val_2024 = val_2024 / 1_000_000_000
+                val_2025 = val_2025 / 1_000_000_000
+                
+                growth_2024 = df_growth.loc[metric_name, '2024'] if metric_name in df_growth.index and '2024' in df_growth.columns else 'N/A'
+                growth_2025 = df_growth.loc[metric_name, '2025F'] if metric_name in df_growth.index and '2025F' in df_growth.columns else 'N/A'
+                
+                print(f"Kết quả cho {metric_name}: {val_2024}, {growth_2024}, {val_2025}, {growth_2025}")
+                
+                row = [
+                    '{:.2f}'.format(val_2024),
+                    growth_2024,
+                    '{:.2f}'.format(val_2025),
+                    growth_2025
+                ]
+            except Exception as e:
+                print(f"Lỗi khi xử lý dữ liệu cho {metric_name}: {str(e)}")
+                row = ['N/A', 'N/A', 'N/A', 'N/A']
+                
+            result_data.append(row)
+        
+        filled_df = pd.DataFrame(
+            result_data,
+            index=pd.Index(metrics_mapping.values(), name='Khoản mục'),
+            columns=columns
+        )
+        
+        print(f"Hoàn thành phân tích dữ liệu cho {symbol}")
+        return {
+            'bang_du_lieu': filled_df
+        }
+    except Exception as e:
+        print(f"Lỗi tổng thể khi phân tích tài chính doanh nghiệp {symbol}: {str(e)}")
+        return create_empty_result()
+
+def create_empty_result():
+    """Helper function to create empty result when data is insufficient"""
+    # Define metrics mapping with Vietnamese labels
+    metrics_mapping = {
+        'Revenue (Bn. VND)': 'Doanh thu thuần',
+        'Gross Profit': 'Lợi nhuận gộp',    
+        'Financial Expenses': 'Chi phí tài chính',
+        'Selling Expenses': 'Chi phí bán hàng',
+        'General & Admin Expenses': 'Chi phí quản lý',
+        'Operating Profit/Loss': 'Lợi nhuận từ HĐKD',
+        'Profit before tax': 'LNTT',
+        'Attribute to parent company (Bn. VND)': 'LNST'
+    }
+    
+    # Set up multi-level columns
+    column_tuples = [
+        ('2024', 'Tỷ đồng'), ('2024', '%YoY'),
+        ('2025F', 'Tỷ đồng'), ('2025F', '%YoY')
+    ]
+    columns = pd.MultiIndex.from_tuples(column_tuples)
+    
+    # Create a DataFrame with N/A values
+    empty_df = pd.DataFrame(
+        [['N/A', 'N/A', 'N/A', 'N/A'] for _ in range(len(metrics_mapping))],
+        index=pd.Index(metrics_mapping.values(), name='Khoản mục'),
+        columns=columns
+    )
+    
+    return {
+        'bang_du_lieu': empty_df
+    }

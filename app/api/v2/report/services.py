@@ -6,7 +6,8 @@ from .module_report.data_processing import read_data, clean_column_names, standa
 from .module_report.finance_calc import (calculate_total_current_assets, calculate_ppe, calculate_total_assets, 
                                         calculate_ebitda, calculate_financial_ratios, calculate_total_operating_expense,
                                         calculate_net_income_before_taxes, calculate_net_income_before_extraordinary_items,
-                                        get_market_data, current_price, predict_price, analyze_stock_data_2025_2026_p1)
+                                        get_market_data, current_price, predict_price, analyze_stock_data_2025_2026_p1,
+                                        analyze_stock_financials_p2)
 from .module_report.generate_pdf import PDFReport, generate_page4_pdf, generate_page5_pdf, generate_page6_pdf
 from .module_report.api_gemini import generate_financial_analysis, create_analysis_prompt
 from .module_report.chart_generator import generate_financial_charts
@@ -883,13 +884,120 @@ def get_fallback_peer_data(symbol=None):
     return steel_industry_peers
 
 def create_projection_data(symbol):
-    """Create projection data for page 2 with all values set to N/A"""
+    """Create projection data for page 2 using analyze_stock_financials_p2"""
+    try:
+        # Get data from analyze_stock_financials_p2 function
+        result = analyze_stock_financials_p2(symbol)
+        
+        if result and 'bang_du_lieu' in result:
+            df = result['bang_du_lieu']
+            
+            # Debug info
+            print(f"Page2: DataFrame có các cột: {df.columns}")
+            print(f"Page2: DataFrame có các hàng: {df.index}")
+            
+            # Create dictionary with original keys expected by page2.py
+            projection_data = {}
+            
+            # Map column data to dictionary keys required by page2.py - THÊM DỮ LIỆU 2025F
+            try:
+                if 'Doanh thu thuần' in df.index:
+                    projection_data['doanh_thu_thuan'] = df.loc['Doanh thu thuần', ('2024', 'Tỷ đồng')]
+                    projection_data['yoy_doanh_thu'] = df.loc['Doanh thu thuần', ('2024', '%YoY')]
+                    # Thêm dữ liệu 2025F
+                    projection_data['doanh_thu_thuan_2025F'] = df.loc['Doanh thu thuần', ('2025F', 'Tỷ đồng')]
+                    projection_data['yoy_doanh_thu_2025F'] = df.loc['Doanh thu thuần', ('2025F', '%YoY')]
+            except Exception as e:
+                print(f"Lỗi khi lấy dữ liệu Doanh thu thuần: {str(e)}")
+                
+            try:
+                if 'Lợi nhuận gộp' in df.index:
+                    projection_data['loi_nhuan_gop'] = df.loc['Lợi nhuận gộp', ('2024', 'Tỷ đồng')]
+                    projection_data['yoy_loi_nhuan_gop'] = df.loc['Lợi nhuận gộp', ('2024', '%YoY')]
+                    # Thêm dữ liệu 2025F
+                    projection_data['loi_nhuan_gop_2025F'] = df.loc['Lợi nhuận gộp', ('2025F', 'Tỷ đồng')]
+                    projection_data['yoy_loi_nhuan_gop_2025F'] = df.loc['Lợi nhuận gộp', ('2025F', '%YoY')]
+            except Exception as e:
+                print(f"Lỗi khi lấy dữ liệu Lợi nhuận gộp: {str(e)}")
+                
+            try:
+                if 'Chi phí tài chính' in df.index:
+                    projection_data['chi_phi_tai_chinh'] = df.loc['Chi phí tài chính', ('2024', 'Tỷ đồng')]
+                    projection_data['yoy_chi_phi_tai_chinh'] = df.loc['Chi phí tài chính', ('2024', '%YoY')]
+                    # Thêm dữ liệu 2025F
+                    projection_data['chi_phi_tai_chinh_2025F'] = df.loc['Chi phí tài chính', ('2025F', 'Tỷ đồng')]
+                    projection_data['yoy_chi_phi_tai_chinh_2025F'] = df.loc['Chi phí tài chính', ('2025F', '%YoY')]
+            except Exception as e:
+                print(f"Lỗi khi lấy dữ liệu Chi phí tài chính: {str(e)}")
+                
+            try:
+                if 'Chi phí bán hàng' in df.index:
+                    projection_data['chi_phi_ban_hang'] = df.loc['Chi phí bán hàng', ('2024', 'Tỷ đồng')]
+                    projection_data['yoy_chi_phi_ban_hang'] = df.loc['Chi phí bán hàng', ('2024', '%YoY')]
+                    # Thêm dữ liệu 2025F
+                    projection_data['chi_phi_ban_hang_2025F'] = df.loc['Chi phí bán hàng', ('2025F', 'Tỷ đồng')]
+                    projection_data['yoy_chi_phi_ban_hang_2025F'] = df.loc['Chi phí bán hàng', ('2025F', '%YoY')]
+            except Exception as e:
+                print(f"Lỗi khi lấy dữ liệu Chi phí bán hàng: {str(e)}")
+                
+            try:
+                if 'Chi phí quản lý' in df.index:
+                    projection_data['chi_phi_quan_ly'] = df.loc['Chi phí quản lý', ('2024', 'Tỷ đồng')]
+                    projection_data['yoy_chi_phi_quan_ly'] = df.loc['Chi phí quản lý', ('2024', '%YoY')]
+                    # Thêm dữ liệu 2025F
+                    projection_data['chi_phi_quan_ly_2025F'] = df.loc['Chi phí quản lý', ('2025F', 'Tỷ đồng')]
+                    projection_data['yoy_chi_phi_quan_ly_2025F'] = df.loc['Chi phí quản lý', ('2025F', '%YoY')]
+            except Exception as e:
+                print(f"Lỗi khi lấy dữ liệu Chi phí quản lý: {str(e)}")
+                
+            try:
+                if 'Lợi nhuận từ HĐKD' in df.index:
+                    projection_data['loi_nhuan_hdkd'] = df.loc['Lợi nhuận từ HĐKD', ('2024', 'Tỷ đồng')]
+                    projection_data['yoy_loi_nhuan_hdkd'] = df.loc['Lợi nhuận từ HĐKD', ('2024', '%YoY')]
+                    # Thêm dữ liệu 2025F
+                    projection_data['loi_nhuan_hdkd_2025F'] = df.loc['Lợi nhuận từ HĐKD', ('2025F', 'Tỷ đồng')]
+                    projection_data['yoy_loi_nhuan_hdkd_2025F'] = df.loc['Lợi nhuận từ HĐKD', ('2025F', '%YoY')]
+            except Exception as e:
+                print(f"Lỗi khi lấy dữ liệu Lợi nhuận từ HĐKD: {str(e)}")
+                
+            try:
+                if 'LNTT' in df.index:
+                    projection_data['loi_nhuan_truoc_thue'] = df.loc['LNTT', ('2024', 'Tỷ đồng')]
+                    projection_data['yoy_loi_nhuan_truoc_thue'] = df.loc['LNTT', ('2024', '%YoY')]
+                    # Thêm dữ liệu 2025F
+                    projection_data['loi_nhuan_truoc_thue_2025F'] = df.loc['LNTT', ('2025F', 'Tỷ đồng')]
+                    projection_data['yoy_loi_nhuan_truoc_thue_2025F'] = df.loc['LNTT', ('2025F', '%YoY')]
+            except Exception as e:
+                print(f"Lỗi khi lấy dữ liệu LNTT: {str(e)}")
+                
+            try:
+                if 'LNST' in df.index:
+                    projection_data['loi_nhuan_sau_thue'] = df.loc['LNST', ('2024', 'Tỷ đồng')]
+                    projection_data['yoy_loi_nhuan_sau_thue'] = df.loc['LNST', ('2024', '%YoY')]
+                    # Thêm dữ liệu 2025F
+                    projection_data['loi_nhuan_sau_thue_2025F'] = df.loc['LNST', ('2025F', 'Tỷ đồng')]
+                    projection_data['yoy_loi_nhuan_sau_thue_2025F'] = df.loc['LNST', ('2025F', '%YoY')]
+            except Exception as e:
+                print(f"Lỗi khi lấy dữ liệu LNST: {str(e)}")
+                
+            # Print the result for debugging
+            print(f"Page2: Tạo dữ liệu dự phóng thành công cho {symbol}")
+            for k, v in projection_data.items():
+                print(f"  {k}: {v}")
+                
+            return projection_data
+        else:
+            print(f"Page2: Không lấy được DataFrame từ analyze_stock_financials_p2 cho {symbol}")
+            
+    except Exception as e:
+        print(f"Lỗi khi tạo dữ liệu dự phóng cho page 2: {str(e)}")
+    
+    # Fallback to N/A values if anything fails
     return {
         'doanh_thu_thuan': 'N/A',
         'yoy_doanh_thu': 'N/A',
         'loi_nhuan_gop': 'N/A',
         'yoy_loi_nhuan_gop': 'N/A',
-        'bien_loi_nhuan_gop': 'N/A',
         'chi_phi_tai_chinh': 'N/A',
         'yoy_chi_phi_tai_chinh': 'N/A',
         'chi_phi_ban_hang': 'N/A',
@@ -901,7 +1009,24 @@ def create_projection_data(symbol):
         'loi_nhuan_truoc_thue': 'N/A',
         'yoy_loi_nhuan_truoc_thue': 'N/A',
         'loi_nhuan_sau_thue': 'N/A',
-        'yoy_loi_nhuan_sau_thue': 'N/A'
+        'yoy_loi_nhuan_sau_thue': 'N/A',
+        # Thêm các key fallback cho 2025F
+        'doanh_thu_thuan_2025F': 'N/A',
+        'yoy_doanh_thu_2025F': 'N/A',
+        'loi_nhuan_gop_2025F': 'N/A',
+        'yoy_loi_nhuan_gop_2025F': 'N/A',
+        'chi_phi_tai_chinh_2025F': 'N/A',
+        'yoy_chi_phi_tai_chinh_2025F': 'N/A',
+        'chi_phi_ban_hang_2025F': 'N/A',
+        'yoy_chi_phi_ban_hang_2025F': 'N/A',
+        'chi_phi_quan_ly_2025F': 'N/A',
+        'yoy_chi_phi_quan_ly_2025F': 'N/A',
+        'loi_nhuan_hdkd_2025F': 'N/A',
+        'yoy_loi_nhuan_hdkd_2025F': 'N/A',
+        'loi_nhuan_truoc_thue_2025F': 'N/A',
+        'yoy_loi_nhuan_truoc_thue_2025F': 'N/A',
+        'loi_nhuan_sau_thue_2025F': 'N/A',
+        'yoy_loi_nhuan_sau_thue_2025F': 'N/A'
     }
 
 if __name__ == "__main__":
