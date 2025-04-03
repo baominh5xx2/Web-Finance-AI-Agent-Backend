@@ -480,8 +480,8 @@ def analyze_stock_data_2025_2026_p1(symbol):
     totals_by_year = table_data.groupby('Year')[['Revenue (Bn. VND)', 'Net Profit For the Year', 'EPS (VND)', 'BVPS (VND)']].sum()
     totals_by_year = totals_by_year.loc[2020:2024]
 
-    # Calculate averages by year for ratio metrics
-    ratios_by_year = table_data.groupby('Year')[['ROA (%)', 'Net Profit Margin (%)', 'ROE (%)']].mean()
+    # Calculate averages by year for ratio metrics and multiply by 100 for percentage
+    ratios_by_year = table_data.groupby('Year')[['ROA (%)', 'Net Profit Margin (%)', 'ROE (%)']].mean() * 100
     ratios_by_year = ratios_by_year.loc[2020:2024]
 
     # CAGR calculation function
@@ -494,7 +494,19 @@ def analyze_stock_data_2025_2026_p1(symbol):
     # Calculate CAGR for each metric
     num_years = totals_by_year.index[-1] - totals_by_year.index[0]
     cagr_values = {}
-    for column in ['Revenue (Bn. VND)', 'Net Profit For the Year', 'EPS (VND)', 'BVPS (VND)']:
+    
+    # Calculate CAGR for revenue
+    start_value = totals_by_year['Revenue (Bn. VND)'].iloc[0]
+    end_value = totals_by_year['Revenue (Bn. VND)'].iloc[-1]
+    cagr_values['Revenue (Bn. VND)'] = calculate_cagr(start_value, end_value, num_years)
+    
+    # Calculate CAGR for Net Profit For the Year (which will be used as Operating Profit)
+    start_value = totals_by_year['Net Profit For the Year'].iloc[0]
+    end_value = totals_by_year['Net Profit For the Year'].iloc[-1]
+    cagr_values['Operating Profit/Loss'] = calculate_cagr(start_value, end_value, num_years)
+    
+    # Calculate CAGR for other metrics
+    for column in ['EPS (VND)', 'BVPS (VND)']:
         start_value = totals_by_year[column].iloc[0]
         end_value = totals_by_year[column].iloc[-1]
         cagr_values[column] = calculate_cagr(start_value, end_value, num_years)
@@ -507,8 +519,30 @@ def analyze_stock_data_2025_2026_p1(symbol):
 
     # Project future values and include 2022, 2023 historical data
     results = {}
-    for column in ['Revenue (Bn. VND)', 'Net Profit For the Year', 'EPS (VND)', 'BVPS (VND)']:
-        current_value = totals_by_year[column].iloc[-1]  # 2024 value
+    
+    # Process Revenue
+    current_value = totals_by_year['Revenue (Bn. VND)'].iloc[-1]
+    results['Revenue (Bn. VND)'] = {
+        '2022': totals_by_year['Revenue (Bn. VND)'].loc[2022],
+        '2023': totals_by_year['Revenue (Bn. VND)'].loc[2023],
+        '2024': current_value,
+        '2025F': current_value * (1 + cagr_values['Revenue (Bn. VND)']),
+        '2026F': current_value * (1 + cagr_values['Revenue (Bn. VND)']) ** 2
+    }
+    
+    # Process Operating Profit (using Net Profit For the Year)
+    current_value = totals_by_year['Net Profit For the Year'].iloc[-1]
+    results['Operating Profit/Loss'] = {
+        '2022': totals_by_year['Net Profit For the Year'].loc[2022],
+        '2023': totals_by_year['Net Profit For the Year'].loc[2023],
+        '2024': current_value,
+        '2025F': current_value * (1 + cagr_values['Operating Profit/Loss']),
+        '2026F': current_value * (1 + cagr_values['Operating Profit/Loss']) ** 2
+    }
+    
+    # Process other metrics
+    for column in ['EPS (VND)', 'BVPS (VND)']:
+        current_value = totals_by_year[column].iloc[-1]
         results[column] = {
             '2022': totals_by_year[column].loc[2022],
             '2023': totals_by_year[column].loc[2023],
@@ -517,9 +551,9 @@ def analyze_stock_data_2025_2026_p1(symbol):
             '2026F': current_value * (1 + cagr_values[column]) ** 2
         }
     
-    # Project ROA, NPM, and ROE including historical data
+    # Process ratio metrics (already multiplied by 100 in ratios_by_year)
     for column in ['ROA (%)', 'Net Profit Margin (%)', 'ROE (%)']:
-        current_value = ratios_by_year[column].iloc[-1]  # 2024 value
+        current_value = ratios_by_year[column].iloc[-1]  # Already in percentage
         results[column] = {
             '2022': ratios_by_year[column].loc[2022],
             '2023': ratios_by_year[column].loc[2023],
@@ -536,6 +570,9 @@ def analyze_stock_data_2025_2026_p1(symbol):
     
     # Format number display
     pd.options.display.float_format = '{:,.2f}'.format
+    
+    print("Debug - Results DataFrame:")
+    print(results_df)
     
     return results_df
 

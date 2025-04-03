@@ -405,25 +405,24 @@ class Page1:
 
     def create_financial_projection_table(self, projection_data=None):
         """Create a table for financial projections"""
-        # Map keys to display names for table
+        # Define key mapping from internal keys to display names
         key_mapping = {
-            'revenue': 'Doanh thu (tỷ VND)',
-            'profit_after_tax': 'Lợi nhuận ròng (tỷ VND)',
-            'eps': 'EPS (đồng)',
-            'bps': 'BPS (đồng)',
+            'revenue': 'Doanh thu thuần (tỷ VND)',
+            'operating_profit': 'Lợi nhuận từ HĐKD (tỷ VND)',
+            'eps': 'EPS (VND)',
+            'bps': 'BPS (VND)',
             'npm': 'NPM (%)',
             'roa': 'ROA (%)',
-            'roe': 'ROE (%)',
+            'roe': 'ROE (%)'
         }
         
-        # Create header row with all years
-        data = [['Năm', '2022', '2023', '2024', '2025F', '2026F']]
+        # Create headers with 5 columns (label + 5 data columns: 2022, 2023, 2024, 2025F, 2026F)
+        headers = [
+            ['Chỉ số', '2022', '2023', '2024', '2025F', '2026F']
+        ]
         
-        # If projection_data is None, initialize with N/A values for all years
-        if not projection_data:
-            projection_data = {}
-            for key in key_mapping.keys():
-                projection_data[key] = ['N/A', 'N/A', 'N/A', 'N/A', 'N/A']
+        # Initialize data list with header
+        data = headers[:]
         
         # Add rows for each metric
         for key, display_name in key_mapping.items():
@@ -441,6 +440,9 @@ class Page1:
                     # Handle case where projection_data doesn't have enough values
                     values = projection_data[key] + ['N/A'] * (5 - len(projection_data[key]))
                 
+                # Thêm log để kiểm tra dữ liệu
+                print(f"Dữ liệu cho {key}: {values}")
+                
                 # Special processing for percentage values (ROA, NPM, ROE)
                 if key in ['roa', 'npm', 'roe']:
                     formatted_values = []
@@ -449,9 +451,9 @@ class Page1:
                             formatted_values.append('N/A')
                         else:
                             try:
-                                # Try to convert to float and format as percentage
-                                numeric_val = float(val.replace(',', '.').replace('%', ''))
-                                formatted_values.append(f"{numeric_val:.1f}%")
+                                # Hiển thị trực tiếp giá trị phần trăm không cần chuyển đổi
+                                # vì đã được định dạng từ services.py
+                                formatted_values.append(val)
                             except (ValueError, AttributeError):
                                 # If conversion fails, use the original value
                                 formatted_values.append(val)

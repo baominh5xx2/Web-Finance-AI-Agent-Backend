@@ -1,0 +1,21 @@
+{
+  "bang_du_lieu": {
+    "columns": [
+      "2024_Tỷ đồng",
+      "2024_%YoY",
+      "2025F_Tỷ đồng",
+      "2025F_%YoY"
+    ],
+    "index": [
+      "Doanh thu thuần",
+      "Lợi nhuận gộp",
+      "Chi phí tài chính",
+      "Chi phí bán hàng",
+      "Chi phí quản lý",
+      "Lợi nhuận từ HĐKD",
+      "LNTT",
+      "LNST"
+    ],
+    "data": [
+      {
+        
