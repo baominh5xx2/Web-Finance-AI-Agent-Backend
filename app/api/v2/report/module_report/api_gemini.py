@@ -148,7 +148,7 @@ def generate_financial_analysis(balance_sheet=None, income_statement=None, profi
         model_name="gemini-2.0-flash-exp",
         safety_settings=safety_settings,
         generation_config=generation_config,
-        system_instruction="Chatbot này sẽ hoạt động như một broker chứng khoán chuyên nghiệp..."
+        system_instruction="Chatbot này sẽ hoạt động như một broker chứng khoán chuyên nghiệp nhé..."
     )
 
     try:
