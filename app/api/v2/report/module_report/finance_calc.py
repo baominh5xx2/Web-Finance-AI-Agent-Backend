@@ -587,7 +587,7 @@ def analyze_stock_financials_p2(symbol):
         stock = Vnstock().stock(symbol=symbol, source='VCI')
         
         print(f"Lấy dữ liệu báo cáo thu nhập cho {symbol}")
-        data2 = stock.finance.income_statement()
+        data2 = stock.finance.income_statement(period='year')
         print(f"Dạng dữ liệu data2: {type(data2)}")
         print(f"Số dòng trong data2: {len(data2)}")
         
@@ -610,7 +610,7 @@ def analyze_stock_financials_p2(symbol):
         
         # Process income statement data
         print(f"Trích xuất cột dữ liệu cho {symbol}")
-        cols_to_select = [('yearReport'), ('lengthReport'), ('Revenue (Bn. VND)'), 
+        cols_to_select = [('yearReport'),('Revenue (Bn. VND)'), 
                         ('Revenue YoY (%)'),
                         ('Financial Expenses'),('Selling Expenses'),('General & Admin Expenses'),
                         ('Gross Profit'),('Operating Profit/Loss'),('Profit before tax'),
