@@ -9,6 +9,8 @@ from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
 from reportlab.pdfgen.canvas import Canvas
 import datetime
 import os
+import json
+from ..module_report.api_gemini import generate_financial_commentary
 
 class Page2:
     def __init__(self, font_added=False):
@@ -184,17 +186,213 @@ class Page2:
         
         # Test comment data - remove this when connecting to database
         chú_thích = {
-            'Doanh thu thuần': 'Doanh thu thuần tăng trưởng ổn định nhờ mở rộng thị trường và cải thiện sản phẩm.',
-            'Giá vốn': 'Giá vốn hàng bán giảm nhờ tối ưu hóa quy trình sản xuất.',
-            'Lợi nhuận gộp': 'Biên lợi nhuận gộp cải thiện nhờ tối ưu hóa chi phí sản xuất và tăng giá bán. Chi phí tài chính giảm do tái cấu trúc nợ. Chi phí bán hàng kiểm soát tốt. Chi phí quản lý doanh nghiệp tiết kiệm nhờ tối ưu nhân sự.',
+            'Doanh thu thuần': '',
+            'Lợi nhuận gộp': '',
             'Chi phí tài chính': '',
             'Chi phí bán hàng': '',
             'Chi phí quản lý': '',
-            'Lợi nhuận từ HĐKD': 'Lợi nhuận từ hoạt động kinh doanh cải thiện nhờ tăng doanh thu và kiểm soát chi phí. Lợi nhuận trước thuế tăng nhờ cải thiện biên lợi nhuận. Lợi nhuận sau thuế tăng trưởng tích cực nhờ tối ưu hóa thuế và hiệu quả kinh doanh.',
-            'LNTT': '',
-            'LNST': ''
+            'Lợi nhuận từ HĐKD': '',
+            'Lợi nhuận trước thuế': '',
+            'Lợi nhuận sau thuế': ''
         }
         
+        # Check if we should generate AI commentary
+        try:
+            # Load NKG_data.json for additional context
+            company_data_path = os.path.join("backend", "app", "api", "v2", "report", "data", "NKG_data.json")
+            company_data = None
+            if os.path.exists(company_data_path):
+                with open(company_data_path, 'r', encoding='utf-8') as f:
+                    company_data = json.load(f)
+                    
+            # Check for cached commentary file
+            cached_comments_path = os.path.join("backend", "app", "api", "v2", "report", "data", "NKG_page2_comments_cache.json")
+            cached_comments = None
+            try:
+                if os.path.exists(cached_comments_path):
+                    with open(cached_comments_path, 'r', encoding='utf-8') as f:
+                        cached_comments = json.load(f)
+                    print(f"Loaded cached comments as fallback: {list(cached_comments.keys())}")
+            except Exception as e:
+                print(f"Error loading cached comments: {str(e)}")
+                cached_comments = None
+            
+            # Always generate fresh AI commentary
+            print("Generating fresh AI commentary through Gemini API...")
+            
+            print("Original chú_thích keys before AI generation:", list(chú_thích.keys()))
+            ai_commentaries = self.generate_financial_commentaryy(projection_data)
+            
+            if ai_commentaries:
+                print("AI commentaries returned these keys:", list(ai_commentaries.keys()))
+                # Update chú_thích with AI-generated commentaries
+                updated_keys = []
+                for key, value in ai_commentaries.items():
+                    if value:  # Only update if we got a valid commentary
+                        chú_thích[key] = value
+                        updated_keys.append(key)
+                        print(f"Updated chú_thích[{key}] = {value[:50]}...")
+                
+                # Ensure all three main sections have content
+                required_keys = ['Doanh thu thuần', 'Lợi nhuận gộp', 'Lợi nhuận từ HĐKD']
+                for key in required_keys:
+                    if key not in updated_keys:
+                        print(f"WARNING: Missing commentary for {key}, attempting to regenerate")
+                        # Try one more time with fallback data
+                        try:
+                            fallback_path = os.path.join("backend", "app", "api", "v2", "report", "data", "NKG_page2_data.json")
+                            if os.path.exists(fallback_path):
+                                with open(fallback_path, 'r', encoding='utf-8') as f:
+                                    fallback_data = json.load(f)
+                                print(f"Using fallback data from {fallback_path}")
+                                
+                                # Try to get the specific commentary from fallback data
+                                comment_key = "comment_" + key.lower().replace(' ', '_').replace('ậ', 'a').replace('ừ', 'u').replace('đ', 'd')
+                                if comment_key in fallback_data:
+                                    chú_thích[key] = fallback_data[comment_key]
+                                    print(f"Used fallback comment for {key}")
+                        except Exception as e:
+                            print(f"Error using fallback data: {str(e)}")
+                
+                print("Successfully generated AI commentaries for all sections")
+                
+                # Save generated commentaries to cache file
+                try:
+                    with open(cached_comments_path, 'w', encoding='utf-8') as f:
+                        json.dump(chú_thích, f, ensure_ascii=False, indent=2)
+                    print(f"Saved commentaries to cache file: {cached_comments_path}")
+                except Exception as e:
+                    print(f"Error saving commentaries to cache: {str(e)}")
+            else:
+                print("WARNING: AI commentaries returned None or empty dictionary!")
+                if cached_comments:
+                    # Use cached comments as fallback
+                    print("Using cached comments as fallback")
+                    for key, value in cached_comments.items():
+                        if value:  # Only update if we got a valid commentary
+                            chú_thích[key] = value
+                else:
+                    # Use fallback commentaries from NKG_page2_data.json
+                    try:
+                        fallback_path = os.path.join("backend", "app", "api", "v2", "report", "data", "NKG_page2_data.json")
+                        if os.path.exists(fallback_path):
+                            with open(fallback_path, 'r', encoding='utf-8') as f:
+                                fallback_data = json.load(f)
+                                print(f"Using comments from NKG_page2_data.json")
+                                
+                                comment_mapping = {
+                                    'Doanh thu thuần': 'comment_doanh_thu',
+                                    'Lợi nhuận gộp': 'comment_loi_nhuan_gop', 
+                                    'Lợi nhuận từ HĐKD': 'comment_loi_nhuan_hdkd'
+                                }
+                                
+                                for display_key, json_key in comment_mapping.items():
+                                    if json_key in fallback_data:
+                                        chú_thích[display_key] = fallback_data[json_key]
+                                        print(f"Used comment from NKG_page2_data.json for {display_key}")
+                        else:
+                            # Last resort: use hardcoded fallback commentaries
+                            print("Using hardcoded fallback commentaries")
+                            fallback_commentaries = {
+                                'Doanh thu thuần': '',
+                                'Lợi nhuận gộp': '',
+                                'Lợi nhuận từ HĐKD': ''
+                            }
+                            
+                            for key, value in fallback_commentaries.items():
+                                chú_thích[key] = value
+                    except Exception as e:
+                        print(f"Error using NKG_page2_data.json: {str(e)}")
+                        # Use hardcoded fallback commentaries
+                        print("Using hardcoded fallback commentaries due to error")
+                        fallback_commentaries = {
+                            'Doanh thu thuần': '',
+                            'Lợi nhuận gộp': '',
+                            'Lợi nhuận từ HĐKD': ''
+                        }
+                        
+                        for key, value in fallback_commentaries.items():
+                            chú_thích[key] = value
+            
+            print("Final chú_thích keys after AI generation:", list(chú_thích.keys()))
+            
+            # Additional logic for enhancing commentary with specific metrics
+            if projection_data:
+                # Helper function to determine if a growth value is positive
+                def is_growth_positive(growth_str):
+                    try:
+                        if not growth_str or growth_str == 'N/A':
+                            return False
+                        # Remove percentage sign and check if value is positive
+                        value = float(growth_str.replace('%', '').strip())
+                        return value >= 0
+                    except (ValueError, AttributeError):
+                        return False
+                    
+                # Helper function to safely convert financial values
+                def safe_float_convert(value_str):
+                    try:
+                        if not value_str or value_str == 'N/A':
+                            return 0
+                        # Remove negative sign, commas and convert to float
+                        return float(value_str.replace('-', '').replace(',', '').replace('%', ''))
+                    except (ValueError, AttributeError):
+                        return 0
+
+                # Enhancement of gross profit commentary with expense details
+                gross_profit_commentary = chú_thích.get('Lợi nhuận gộp', '')
+                financial_expenses = []
+                
+                # Add financial expenses details if they are significant
+                if projection_data.get('chi_phi_tai_chinh') and safe_float_convert(projection_data.get('chi_phi_tai_chinh', '0')) > 0:
+                    direction = "tăng" if is_growth_positive(projection_data.get('yoy_chi_phi_tai_chinh', '')) else "giảm"
+                    financial_expenses.append(f"Chi phí tài chính {direction} ({projection_data.get('yoy_chi_phi_tai_chinh', 'N/A')}) {direction == 'giảm' and 'nhờ tái cấu trúc nợ' or 'do biến động tỷ giá và lãi suất'}.")
+                
+                # Add selling expenses details if they are significant
+                if projection_data.get('chi_phi_ban_hang') and safe_float_convert(projection_data.get('chi_phi_ban_hang', '0')) > 0:
+                    direction = "tăng" if is_growth_positive(projection_data.get('yoy_chi_phi_ban_hang', '')) else "giảm"
+                    financial_expenses.append(f"Chi phí bán hàng {direction} ({projection_data.get('yoy_chi_phi_ban_hang', 'N/A')}) {direction == 'giảm' and 'nhờ tối ưu hóa kênh phân phối' or 'do đẩy mạnh marketing'}.")
+                
+                # Add management expenses details if they are significant
+                if projection_data.get('chi_phi_quan_ly') and safe_float_convert(projection_data.get('chi_phi_quan_ly', '0')) > 0:
+                    direction = "tăng" if is_growth_positive(projection_data.get('yoy_chi_phi_quan_ly', '')) else "giảm"
+                    financial_expenses.append(f"Chi phí quản lý {direction} ({projection_data.get('yoy_chi_phi_quan_ly', 'N/A')}) {direction == 'giảm' and 'nhờ tối ưu hóa bộ máy quản lý' or 'do mở rộng hoạt động'}.")
+                
+                # Combine all commentary parts
+                if financial_expenses:
+                    combined_commentary = gross_profit_commentary
+                    if combined_commentary and not combined_commentary.endswith('.'):
+                        combined_commentary += '.'
+                    combined_commentary += ' ' + ' '.join(financial_expenses)
+                    chú_thích['Lợi nhuận gộp'] = combined_commentary
+                
+                # Combine profit-related commentaries
+                operating_profit_commentary = chú_thích.get('Lợi nhuận từ HĐKD', '')
+                profit_details = []
+                
+                # Add profit before tax details
+                if projection_data.get('loi_nhuan_truoc_thue') and safe_float_convert(projection_data.get('loi_nhuan_truoc_thue', '0')) > 0:
+                    direction = "tăng" if is_growth_positive(projection_data.get('yoy_loi_nhuan_truoc_thue', '')) else "giảm"
+                    profit_details.append(f"Lợi nhuận trước thuế {direction} ({projection_data.get('yoy_loi_nhuan_truoc_thue', 'N/A')}) nhờ {direction == 'tăng' and 'cải thiện biên lợi nhuận' or 'các yếu tố đặc biệt'}.")
+                
+                # Add profit after tax details
+                if projection_data.get('loi_nhuan_sau_thue') and safe_float_convert(projection_data.get('loi_nhuan_sau_thue', '0')) > 0:
+                    direction = "tăng" if is_growth_positive(projection_data.get('yoy_loi_nhuan_sau_thue', '')) else "giảm"
+                    profit_details.append(f"Lợi nhuận sau thuế {direction} {direction == 'tăng' and 'trưởng tích cực' or ''} ({projection_data.get('yoy_loi_nhuan_sau_thue', 'N/A')}) nhờ {direction == 'tăng' and 'tối ưu hóa thuế và hiệu quả kinh doanh' or 'các điều chỉnh thuế'}.")
+                
+                # Combine all profit commentary parts
+                if profit_details:
+                    combined_commentary = operating_profit_commentary
+                    if combined_commentary and not combined_commentary.endswith('.'):
+                        combined_commentary += '.'
+                    combined_commentary += ' ' + ' '.join(profit_details)
+                    chú_thích['Lợi nhuận từ HĐKD'] = combined_commentary
+                
+                print("Updated commentaries with AI-generated content and enhanced merged cell commentaries")
+        except Exception as e:
+            print(f"Error generating AI commentaries: {str(e)}")
+            # Continue with default commentaries
+            
         # Check if we have valid projection data
         if projection_data:
             # Prepare data for table using values from projection_data
@@ -232,15 +430,15 @@ class Page2:
                 value_2025 = projection_data.get(value_key_2025, 'N/A')
                 growth_2025 = projection_data.get(growth_key_2025, 'N/A')
                 
-                # Get comment from projection_data or use hardcoded chú_thích
-                comment_key = f"comment_{value_key.split('_')[0]}"
-                for potential_key in [f"comment_{value_key}", comment_key]:
-                    if potential_key in projection_data:
-                        comment = projection_data[potential_key]
-                        print(f"Found comment for {item_name} using key: {potential_key}")
-                        break
-                else:
+                # Get comment based on whether item is a main section
+                if item_name in chú_thích:
+                    # For main sections (Doanh thu thuần, Lợi nhuận gộp, Lợi nhuận từ HĐKD),
+                    # always use comment from chú_thích (API Gemini)
                     comment = chú_thích.get(item_name, '')
+                    print(f"Using API comment for main section: {item_name}")
+                else:
+                    # For other items, keep them empty
+                    comment = ''
                     
                 # Debug output
                 print(f"Item: {item_name}, Keys: {value_key}, {growth_key}")
@@ -252,12 +450,12 @@ class Page2:
                 # Format the row
                 data.append(self.format_row(row, is_sub_item, is_bold))
         else:
-            # Fallback to default rows with N/A values but with sample comments
+            # Fallback to default rows with N/A values but with EMPTY comments
             data = [
                 self.format_row(['Doanh thu thuần', 'N/A', 'N/A', 'N/A', 'N/A', 
-                                'Tăng trưởng theo kế hoạch'], is_bold=True),
+                                ''], is_bold=True),
                 self.format_row(['Lợi nhuận gộp', 'N/A', 'N/A', 'N/A', 'N/A', 
-                                 'Biên lợi nhuận gộp dự kiến cải thiện nhờ tối ưu hóa chi phí sản xuất và cải tiến quy trình. Chi phí tài chính giảm nhờ tái cấu trúc nợ, trong khi chi phí bán hàng tăng do đẩy mạnh marketing. Chi phí quản lý được tối ưu hóa qua hiện đại hóa bộ máy.'], is_bold=True),
+                                 ''], is_bold=True),
                 self.format_row(['Chi phí tài chính', 'N/A', 'N/A', 'N/A', 'N/A', 
                                  ''], True),
                 self.format_row(['Chi phí bán hàng', 'N/A', 'N/A', 'N/A', 'N/A', 
@@ -265,7 +463,7 @@ class Page2:
                 self.format_row(['Chi phí quản lý', 'N/A', 'N/A', 'N/A', 'N/A', 
                                  ''], True),
                 self.format_row(['Lợi nhuận từ HĐKD', 'N/A', 'N/A', 'N/A', 'N/A', 
-                                'Lợi nhuận từ hoạt động kinh doanh cải thiện nhờ tăng doanh thu và kiểm soát chi phí. Lợi nhuận trước thuế tăng nhờ cải thiện biên lợi nhuận. Lợi nhuận sau thuế tăng trưởng tích cực nhờ tối ưu hóa thuế và hiệu quả kinh doanh.'], is_bold=True),
+                                ''], is_bold=True),
                 self.format_row(['    LNTT', 'N/A', 'N/A', 'N/A', 'N/A', 
                                 ''], True),
                 self.format_row(['    LNST', 'N/A', 'N/A', 'N/A', 'N/A', 
@@ -362,59 +560,180 @@ class Page2:
         else:
             print("Using provided data for page2 projection")
         
+        # Note: Financial commentaries will always be generated through the Gemini API
+        # Any existing comment fields in projection_data will be ignored
+        
         # Add projection table
         elements.extend(self.create_projection_table(projection_data))
         
         return elements
 
     def generate_sample_data(self):
-        """Generate sample data with comments for testing"""
+        """Generate sample data without comments for testing with Gemini API"""
         return {
             'doanh_thu_thuan': '5,240.58',
             'yoy_doanh_thu': '15.20%',
             'doanh_thu_thuan_2025F': '6,026.66',
             'yoy_doanh_thu_2025F': '15.00%',
-            'comment_doanh_thu': 'Dự kiến tăng trưởng doanh thu dựa trên kế hoạch mở rộng thị trường và phát triển sản phẩm mới',
+            'sector_growth': '8.5%',
+            'market_share': '12.4%',
             
             'loi_nhuan_gop': '1,624.58',
             'yoy_loi_nhuan_gop': '18.30%',
             'loi_nhuan_gop_2025F': '1,929.33',
             'yoy_loi_nhuan_gop_2025F': '18.75%',
-            'comment_loi_nhuan_gop': 'Biên lợi nhuận gộp dự kiến cải thiện nhờ tối ưu hóa chi phí sản xuất và cải tiến quy trình',
+            'bien_loi_nhuan_gop': '31.00%',
+            'bien_loi_nhuan_gop_2024': '30.25%',
             
             'chi_phi_tai_chinh': '356.20',
             'yoy_chi_phi_tai_chinh': '-5.80%',
             'chi_phi_tai_chinh_2025F': '338.39',
             'yoy_chi_phi_tai_chinh_2025F': '-5.00%',
-            'comment_chi_phi_tai_chinh': 'Chi phí lãi vay dự kiến giảm do trả nợ vay và tái cấu trúc nợ',
             
             'chi_phi_ban_hang': '524.06',
             'yoy_chi_phi_ban_hang': '12.30%',
             'chi_phi_ban_hang_2025F': '602.67',
             'yoy_chi_phi_ban_hang_2025F': '15.00%',
-            'comment_chi_phi_ban_hang': 'Tăng chi phí marketing và phát triển kênh phân phối mới',
             
             'chi_phi_quan_ly': '262.03',
             'yoy_chi_phi_quan_ly': '7.50%',
             'chi_phi_quan_ly_2025F': '271.20',
             'yoy_chi_phi_quan_ly_2025F': '3.50%',
-            'comment_chi_phi_quan_ly': 'Tối ưu hóa bộ máy quản lý và ứng dụng công nghệ số',
+            'expense_to_revenue_ratio': '21.80%',
             
             'loi_nhuan_hdkd': '482.29',
             'yoy_loi_nhuan_hdkd': '35.40%',
             'loi_nhuan_hdkd_2025F': '717.07',
             'yoy_loi_nhuan_hdkd_2025F': '48.68%',
-            'comment_loi_nhuan_hdkd': 'Cải thiện hiệu quả hoạt động nhờ tăng doanh thu và kiểm soát chi phí tốt',
+            'bien_loi_nhuan_hdkd': '9.20%',
+            'thue_suat_thuc_te': '20.00%',
             
             'loi_nhuan_truoc_thue': '465.41',
             'yoy_loi_nhuan_truoc_thue': '32.80%',
             'loi_nhuan_truoc_thue_2025F': '702.40',
             'yoy_loi_nhuan_truoc_thue_2025F': '50.92%',
-            'comment_loi_nhuan_truoc_thue': 'Dự kiến tăng trưởng ổn định nhờ cải thiện biên lợi nhuận và kiểm soát chi phí',
             
             'loi_nhuan_sau_thue': '372.32',
             'yoy_loi_nhuan_sau_thue': '32.80%',
             'loi_nhuan_sau_thue_2025F': '561.92',
             'yoy_loi_nhuan_sau_thue_2025F': '50.92%',
-            'comment_loi_nhuan_sau_thue': 'Lợi nhuận sau thuế tăng trưởng tích cực nhờ tối ưu hóa thuế và cải thiện hiệu quả kinh doanh'
         }
+
+    def generate_financial_commentaryy(self, projection_data):
+        """Generate AI-based financial commentary for the key metrics using three distinct prompts"""
+        from app.api.v2.report.module_report.api_gemini import generate_financial_commentary
+        import os
+        import json
+        
+        print(f"Calling generate_financial_commentary with data keys: {list(projection_data.keys())}")
+        company_code = projection_data.get('company_code', 'NKG')
+        
+        # Load NKG_page2_data.json as a fallback dataset
+        fallback_data = None
+        try:
+            fallback_path = os.path.join("backend", "app", "api", "v2", "report", "data", "NKG_page2_data.json")
+            if os.path.exists(fallback_path):
+                with open(fallback_path, 'r', encoding='utf-8') as f:
+                    fallback_data = json.load(f)
+                print(f"Loaded fallback data from {fallback_path}")
+        except Exception as e:
+            print(f"Error loading fallback data: {str(e)}")
+        
+        # Ensure we have needed fields by enriching with fallback data if necessary
+        enhanced_data = projection_data.copy()
+        if fallback_data:
+            for key, value in fallback_data.items():
+                if key not in enhanced_data and not key.startswith('comment_'):
+                    enhanced_data[key] = value
+                    print(f"Added missing field {key} from fallback data")
+        
+        # Call the API to get fresh commentary for all three sections
+        print("Calling Gemini API for fresh commentary generation")
+        try:
+            result = generate_financial_commentary(company_code, enhanced_data)
+            print(f"API returned commentary with keys: {list(result.keys() if result else [])}")
+            
+            # Check if we have all necessary commentaries
+            required_keys = ['Doanh thu thuần', 'Lợi nhuận gộp', 'Lợi nhuận từ HĐKD']
+            missing_keys = [key for key in required_keys if key not in result or not result[key]]
+            
+            if missing_keys:
+                print(f"WARNING: Missing commentaries for: {missing_keys}")
+                # Try one more call with even more emphasis on the missing sections
+                print("Making second attempt to generate missing commentaries")
+                retry_result = generate_financial_commentary(company_code, enhanced_data)
+                
+                if retry_result:
+                    # Update only the missing keys if they're now available
+                    for key in missing_keys:
+                        if key in retry_result and retry_result[key]:
+                            result[key] = retry_result[key]
+                            print(f"Successfully generated commentary for {key} on second attempt")
+            
+            # Final check for any still-missing commentaries
+            final_missing = [key for key in required_keys if key not in result or not result[key]]
+            if final_missing:
+                print(f"WARNING: Still missing commentaries after retries: {final_missing}")
+                
+                # Use fallback data for any missing sections
+                if fallback_data:
+                    for key in final_missing:
+                        comment_key = key.lower().replace(' ', '_').replace('ậ', 'a').replace('ừ', 'u').replace('đ', 'd')
+                        comment_key = f"comment_{comment_key}"
+                        
+                        if comment_key in fallback_data:
+                            result[key] = fallback_data[comment_key]
+                            print(f"Used fallback comment for {key} from fallback data")
+                        else:
+                            # Hardcoded fallbacks as last resort
+                            if key == 'Doanh thu thuần':
+                                result[key] = ""
+                            elif key == 'Lợi nhuận gộp':
+                                result[key] = ""
+                            elif key == 'Lợi nhuận từ HĐKD':
+                                result[key] = ""
+                            print(f"Used empty value for {key} due to missing data")
+            
+            # Ensure all expense commentaries are from the same source as gross profit
+            if 'Lợi nhuận gộp' in result:
+                result['Chi phí tài chính'] = result['Lợi nhuận gộp']
+                result['Chi phí bán hàng'] = result['Lợi nhuận gộp']
+                result['Chi phí quản lý'] = result['Lợi nhuận gộp']
+            
+            # Ensure all profit commentaries are from the same source as operating profit
+            if 'Lợi nhuận từ HĐKD' in result:
+                result['Lợi nhuận trước thuế'] = result['Lợi nhuận từ HĐKD']
+                result['Lợi nhuận sau thuế'] = result['Lợi nhuận từ HĐKD']
+            
+            print(f"Final commentary includes all required sections: {all(key in result for key in required_keys)}")
+            return result
+        
+        except Exception as e:
+            print(f"Error calling Gemini API: {str(e)}")
+            
+            # Use fallback data if available
+            if fallback_data:
+                fallback_comments = {}
+                
+                # Map for comment keys
+                comment_mapping = {
+                    'Doanh thu thuần': 'comment_doanh_thu',
+                    'Lợi nhuận gộp': 'comment_loi_nhuan_gop', 
+                    'Lợi nhuận từ HĐKD': 'comment_loi_nhuan_hdkd'
+                }
+                
+                for display_key, json_key in comment_mapping.items():
+                    if json_key in fallback_data:
+                        fallback_comments[display_key] = fallback_data[json_key]
+                
+                if fallback_comments:
+                    print(f"Using fallback comments from data file")
+                    return fallback_comments
+            
+            # Last resort - empty commentaries
+            print("Using empty commentaries due to API error")
+            return {
+                'Doanh thu thuần': '',
+                'Lợi nhuận gộp': '',
+                'Lợi nhuận từ HĐKD': ''
+            }
