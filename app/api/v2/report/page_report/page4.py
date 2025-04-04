@@ -108,13 +108,13 @@ class Page4:
         return elements
         
     def _create_charts(self):
-        """Create the revenue and profit chart only (removed pie chart)"""
-        # Create revenue and profit chart
-        plt.figure(figsize=(8, 5))  # Increased size for better visibility
+        """Create a combined chart with revenue, profit and growth rates"""
+        # Create a single figure
+        fig, ax1 = plt.subplots(figsize=(10, 6))  # Larger figure for better visibility
         
         years = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
         revenue = [5756, 8941, 12637, 14860, 12224, 11613, 28206, 23128, 18621, 20707]
-        profit = [126,517,707,57,47,295,222,-124, 117, 453]
+        profit = [126, 517, 707, 57, 47, 295, 222, -124, 117, 453]
         
         revenue_growth = [0]
         profit_growth = [0]
@@ -123,47 +123,82 @@ class Page4:
             profit_growth.append(((profit[i] - profit[i-1]) / profit[i-1]) * 100)
         
         x = np.arange(len(years))
-        width = 0.4
+        width = 0.35  # Chiều rộng mỗi cột
         
-        fig, ax1 = plt.subplots(figsize=(10, 6))  # Larger figure for better visibility
+        # Vẽ cột doanh thu và lợi nhuận trên trục y trái
+        bars1 = ax1.bar(x - width/2, revenue, width, label='Doanh thu (tỷ đồng)', color='#0052cc')
+        bars2 = ax1.bar(x + width/2, profit, width, label='Lợi nhuận (tỷ đồng)', color='#ff9900')
         
-        # Bar chart for revenue
-        bars = ax1.bar(x, revenue, width, label='Doanh thu (tỷ đồng)', color='#0052cc')
+        # Thêm giá trị doanh thu và lợi nhuận
+        for i, (r, p) in enumerate(zip(revenue, profit)):
+            # Doanh thu - chỉ hiển thị ở một số điểm
+            if i % 2 == 0:
+                ax1.annotate(f'{r}', xy=(i - width/2, r), xytext=(0, 5), 
+                            textcoords='offset points', ha='center', va='bottom',
+                            color='#0052cc', fontweight='bold')
+            
+            # Lợi nhuận
+            va = 'bottom' if p >= 0 else 'top'
+            offset = 5 if p >= 0 else -15
+            ax1.annotate(f'{p}', xy=(i + width/2, p), xytext=(0, offset), 
+                        textcoords='offset points', ha='center', va=va,
+                        color='#ff9900', fontweight='bold')
         
-        # Set up the second y-axis for growth rates
-        ax2 = ax1.twinx()
-        
-        # Line chart for revenue growth
-        ax2.plot(x, revenue_growth, 'c-', label='Tăng trưởng DT (%)')
-        
-        # Line chart for profit growth
-        ax2.plot(x, profit_growth, 'brown', label='Tăng trưởng LN (%)')
-        
-        # Labels and title
+        # Thiết lập trục y trái
         ax1.set_xlabel('Năm', fontname='DejaVu Sans')
-        ax1.set_ylabel('Doanh thu (tỷ đồng)', color='#0052cc', fontname='DejaVu Sans')
-        ax2.set_ylabel('Tăng trưởng (%)', fontname='DejaVu Sans')
-        
+        ax1.set_ylabel('Giá trị (tỷ đồng)', fontname='DejaVu Sans')
         ax1.set_xticks(x)
         ax1.set_xticklabels(years)
+        ax1.grid(True, axis='y', linestyle='--', alpha=0.3)
         
-        plt.title('Doanh thu và lợi nhuận Nam Kim 2014 - 2024', fontname='DejaVu Sans')
+        # Điều chỉnh giới hạn trục y trái
+        min_val = min(min(profit), 0)
+        max_val = max(revenue) * 1.05
+        ax1.set_ylim(min_val * 1.1 if min_val < 0 else 0, max_val)
         
-        # Add legend
-        handles1, labels1 = ax1.get_legend_handles_labels()
-        handles2, labels2 = ax2.get_legend_handles_labels()
-        ax1.legend(handles1 + handles2, labels1 + labels2, loc='upper left')
+        # Tạo trục y thứ hai cho tỷ lệ tăng trưởng
+        ax2 = ax1.twinx()
+        
+        # Vẽ đường tăng trưởng trên trục y phải
+        line1 = ax2.plot(x, revenue_growth, 'c-', label='Tăng trưởng DT (%)', 
+                        linewidth=2, marker='o', markersize=6, color='#00cccc')
+        line2 = ax2.plot(x, profit_growth, 'r-', label='Tăng trưởng LN (%)', 
+                        linewidth=2, marker='s', markersize=6, color='#cc0000')
+        
+        # Ẩn trục y bên phải nhưng vẫn giữ các đường tăng trưởng
+        ax2.set_yticklabels([])
+        ax2.tick_params(right=False)
+        ax2.spines['right'].set_visible(False)
+        
+        # Điều chỉnh giới hạn trục y phải
+        growth_min = min(min(revenue_growth), min(profit_growth))
+        growth_max = max(max(revenue_growth), max(profit_growth))
+        padding = (growth_max - growth_min) * 0.1
+        ax2.set_ylim(growth_min - padding, growth_max + padding)
+        
+        # Thêm lưới cho trục y phải
+        ax2.grid(True, axis='y', linestyle=':', alpha=0.3, color='#555555')
+        
+        # Tiêu đề và chú thích
+        plt.title('Doanh thu, Lợi nhuận và Tỷ lệ tăng trưởng Nam Kim 2015 - 2024', 
+                fontname='DejaVu Sans', fontsize=14)
+        
+        # Kết hợp các chú thích từ cả hai trục
+        lines1, labels1 = ax1.get_legend_handles_labels()
+        lines2, labels2 = ax2.get_legend_handles_labels()
+        ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left', framealpha=0.9)
         
         plt.tight_layout()
         
+        # Lưu biểu đồ
         chart_buffer = io.BytesIO()
-        plt.savefig(chart_buffer, format='png', bbox_inches='tight')
+        fig.savefig(chart_buffer, format='png', bbox_inches='tight')
         chart_buffer.seek(0)
-        plt.close()
+        plt.close('all')
         
-        # Create table with just the revenue chart
+        # Tạo bảng chứa biểu đồ
         chart_table = Table([
-            [Image(chart_buffer, width=7*inch, height=4*inch)]  # Increased size
+            [Image(chart_buffer, width=7*inch, height=4.5*inch)]
         ])
         
         chart_table.setStyle(TableStyle([
