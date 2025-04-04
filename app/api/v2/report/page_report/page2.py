@@ -188,9 +188,7 @@ class Page2:
         chú_thích = {
             'Doanh thu thuần': '',
             'Lợi nhuận gộp': '',
-            'Chi phí tài chính': '',
-            'Chi phí bán hàng': '',
-            'Chi phí quản lý': '',
+            'Chi phí': '',
             'Lợi nhuận từ HĐKD': '',
             'Lợi nhuận trước thuế': '',
             'Lợi nhuận sau thuế': ''
@@ -430,15 +428,19 @@ class Page2:
                 value_2025 = projection_data.get(value_key_2025, 'N/A')
                 growth_2025 = projection_data.get(growth_key_2025, 'N/A')
                 
-                # Get comment based on whether item is a main section
+                # Get comment based on whether item is in the chú_thích dictionary
                 if item_name in chú_thích:
-                    # For main sections (Doanh thu thuần, Lợi nhuận gộp, Lợi nhuận từ HĐKD),
-                    # always use comment from chú_thích (API Gemini)
+                    # Use comment from Gemini API
                     comment = chú_thích.get(item_name, '')
-                    print(f"Using API comment for main section: {item_name}")
+                    print(f"Using API comment for {item_name}: {comment[:40]}...")
+                elif item_name in ['Chi phí tài chính', 'Chi phí bán hàng', 'Chi phí quản lý']:
+                    # Use the shared "Chi phí" comment for all expense items
+                    comment = chú_thích.get('Chi phí', '')
+                    print(f"Using shared 'Chi phí' comment for {item_name}: {comment[:40]}...")
                 else:
-                    # For other items, keep them empty
+                    # For items not in chú_thích, keep empty
                     comment = ''
+                    print(f"No API comment for {item_name}, using empty string")
                     
                 # Debug output
                 print(f"Item: {item_name}, Keys: {value_key}, {growth_key}")
@@ -493,8 +495,8 @@ class Page2:
             ('SPAN', (3, 0), (4, 0)),  # Merge "2025F" cells
             ('SPAN', (5, 0), (5, 1)),  # Merge "Chú thích" cells
             
-            # Merge chú thích của Lợi nhuận gộp và 3 chỉ số chi phí (chỉ gộp cột chú thích)
-            ('SPAN', (5, 3), (5, 6)),  # Gộp cột chú thích (index 5) của 4 dòng từ Lợi nhuận gộp đến Chi phí quản lý
+            # Chỉ gộp ô chú thích của 3 loại chi phí - chú ý chỉ số hàng
+            ('SPAN', (5, 4), (5, 6)),  # Gộp cột chú thích (index 5) của 3 dòng chi phí
             
             # Merge chú thích của Lợi nhuận từ HĐKD và 2 chỉ số lợi nhuận (chỉ gộp cột chú thích)
             ('SPAN', (5, 7), (5, 9)),  # Gộp cột chú thích (index 5) của 3 dòng từ Lợi nhuận từ HĐKD đến LNST
@@ -512,7 +514,7 @@ class Page2:
             ('ALIGN', (1, 2), (4, -1), 'RIGHT'),  # Only align numbers to right
             ('ALIGN', (5, 2), (5, -1), 'LEFT'),   # Ensure comments are left-aligned
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('VALIGN', (5, 3), (5, 6), 'TOP'),    # Vertical alignment for first merged comment
+            ('VALIGN', (5, 4), (5, 6), 'TOP'),    # Vertical alignment for first merged comment
             ('VALIGN', (5, 7), (5, 9), 'TOP'),    # Vertical alignment for second merged comment
             
             # Background colors
@@ -620,7 +622,7 @@ class Page2:
         }
 
     def generate_financial_commentaryy(self, projection_data):
-        """Generate AI-based financial commentary for the key metrics using three distinct prompts"""
+        """Generate AI-based financial commentary for the key metrics using Gemini API"""
         from app.api.v2.report.module_report.api_gemini import generate_financial_commentary
         import os
         import json
@@ -647,14 +649,14 @@ class Page2:
                     enhanced_data[key] = value
                     print(f"Added missing field {key} from fallback data")
         
-        # Call the API to get fresh commentary for all three sections
+        # Call the API to get fresh commentary for all sections
         print("Calling Gemini API for fresh commentary generation")
         try:
             result = generate_financial_commentary(company_code, enhanced_data)
             print(f"API returned commentary with keys: {list(result.keys() if result else [])}")
             
             # Check if we have all necessary commentaries
-            required_keys = ['Doanh thu thuần', 'Lợi nhuận gộp', 'Lợi nhuận từ HĐKD']
+            required_keys = ['Doanh thu thuần', 'Lợi nhuận gộp', 'Chi phí', 'Lợi nhuận từ HĐKD']
             missing_keys = [key for key in required_keys if key not in result or not result[key]]
             
             if missing_keys:
@@ -678,27 +680,25 @@ class Page2:
                 # Use fallback data for any missing sections
                 if fallback_data:
                     for key in final_missing:
-                        comment_key = key.lower().replace(' ', '_').replace('ậ', 'a').replace('ừ', 'u').replace('đ', 'd')
-                        comment_key = f"comment_{comment_key}"
-                        
-                        if comment_key in fallback_data:
-                            result[key] = fallback_data[comment_key]
-                            print(f"Used fallback comment for {key} from fallback data")
+                        # Adjust mapping for Chi phí
+                        if key == 'Chi phí':
+                            for expense_type in ['chi_phi_tai_chinh', 'chi_phi_ban_hang', 'chi_phi_quan_ly']:
+                                comment_key = f"comment_{expense_type}"
+                                if comment_key in fallback_data:
+                                    result[key] = fallback_data[comment_key]
+                                    print(f"Used fallback comment for {key} from {comment_key}")
+                                    break
                         else:
-                            # Hardcoded fallbacks as last resort
-                            if key == 'Doanh thu thuần':
+                            comment_key = key.lower().replace(' ', '_').replace('ậ', 'a').replace('ừ', 'u').replace('đ', 'd')
+                            comment_key = f"comment_{comment_key}"
+                            
+                            if comment_key in fallback_data:
+                                result[key] = fallback_data[comment_key]
+                                print(f"Used fallback comment for {key} from fallback data")
+                            else:
+                                # Use empty values as last resort
                                 result[key] = ""
-                            elif key == 'Lợi nhuận gộp':
-                                result[key] = ""
-                            elif key == 'Lợi nhuận từ HĐKD':
-                                result[key] = ""
-                            print(f"Used empty value for {key} due to missing data")
-            
-            # Ensure all expense commentaries are from the same source as gross profit
-            if 'Lợi nhuận gộp' in result:
-                result['Chi phí tài chính'] = result['Lợi nhuận gộp']
-                result['Chi phí bán hàng'] = result['Lợi nhuận gộp']
-                result['Chi phí quản lý'] = result['Lợi nhuận gộp']
+                                print(f"Used empty value for {key} due to missing data")
             
             # Ensure all profit commentaries are from the same source as operating profit
             if 'Lợi nhuận từ HĐKD' in result:
@@ -718,7 +718,8 @@ class Page2:
                 # Map for comment keys
                 comment_mapping = {
                     'Doanh thu thuần': 'comment_doanh_thu',
-                    'Lợi nhuận gộp': 'comment_loi_nhuan_gop', 
+                    'Lợi nhuận gộp': 'comment_loi_nhuan_gop',
+                    'Chi phí': 'comment_chi_phi_tai_chinh',  # Sử dụng bất kỳ comment chi phí nào làm đại diện
                     'Lợi nhuận từ HĐKD': 'comment_loi_nhuan_hdkd'
                 }
                 
@@ -735,5 +736,6 @@ class Page2:
             return {
                 'Doanh thu thuần': '',
                 'Lợi nhuận gộp': '',
+                'Chi phí': '',
                 'Lợi nhuận từ HĐKD': ''
             }

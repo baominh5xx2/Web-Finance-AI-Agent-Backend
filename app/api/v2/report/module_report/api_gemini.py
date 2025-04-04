@@ -226,9 +226,10 @@ Yêu cầu:
 
 def generate_financial_commentary(company_code, page2_data):
     """
-    Tạo chú thích tài chính cho 3 mục chính trong bảng dự phóng:
+    Tạo chú thích tài chính cho 4 mục chính:
     - Doanh thu thuần
     - Lợi nhuận gộp
+    - Chi phí (chung cho chi phí tài chính, chi phí bán hàng, chi phí quản lý)
     - Lợi nhuận từ HĐKD
     
     Args:
@@ -236,14 +237,15 @@ def generate_financial_commentary(company_code, page2_data):
         page2_data: Dictionary chứa các chỉ số tài chính
         
     Returns:
-        Dictionary các chú thích cho 3 mục chính
+        Dictionary các chú thích cho các mục chính
     """
     # Kiểm tra xem API key có được cấu hình đúng không
     try:
-        # Chuẩn bị các chú thích trống cho 3 mục chính
+        # Chuẩn bị các chú thích trống
         default_comments = {
             'Doanh thu thuần': '',
             'Lợi nhuận gộp': '',
+            'Chi phí': '',
             'Lợi nhuận từ HĐKD': ''
         }
         
@@ -286,62 +288,95 @@ def generate_financial_commentary(company_code, page2_data):
         
         results = {}
         
-        # Tạo chú thích cho 3 mục chính
-        sections = [
-            {
-                "name": "Doanh thu thuần",
-                "keywords": ["doanh_thu"],
-                "exclude": ["gop", "hdkd", "comment"],
-                "description": "tăng trưởng doanh thu, so sánh với mức tăng trưởng ngành và dự báo tương lai"
+        # Định nghĩa mapping chính xác cho từng mục
+        section_mappings = {
+            "Doanh thu thuần": {
+                "required_fields": [
+                    "doanh_thu_thuan", "doanh_thu_thuan_2025F", 
+                    "yoy_doanh_thu", "yoy_doanh_thu_2025F"
+                ]
             },
-            {
-                "name": "Lợi nhuận gộp",
-                "keywords": ["loi_nhuan_gop", "bien_loi_nhuan_gop"],
-                "exclude": ["hdkd", "comment"],
-                "description": "biên lợi nhuận gộp, nguyên nhân thay đổi, và triển vọng"
+            "Lợi nhuận gộp": {
+                "required_fields": [
+                    "loi_nhuan_gop", "loi_nhuan_gop_2025F",
+                    "yoy_loi_nhuan_gop", "yoy_loi_nhuan_gop_2025F",
+                    "bien_loi_nhuan_gop", "bien_loi_nhuan_gop_2025F"
+                ]
             },
-            {
-                "name": "Lợi nhuận từ HĐKD",
-                "keywords": ["hdkd", "loi_nhuan_hdkd"],
-                "exclude": ["comment"],
-                "description": "hiệu quả kinh doanh, kiểm soát chi phí và triển vọng"
+            "Chi phí": {
+                "required_fields": [
+                    "chi_phi_tai_chinh", "chi_phi_tai_chinh_2025F",
+                    "yoy_chi_phi_tai_chinh", "yoy_chi_phi_tai_chinh_2025F",
+                    "chi_phi_ban_hang", "chi_phi_ban_hang_2025F",
+                    "yoy_chi_phi_ban_hang", "yoy_chi_phi_ban_hang_2025F",
+                    "chi_phi_quan_ly", "chi_phi_quan_ly_2025F",
+                    "yoy_chi_phi_quan_ly", "yoy_chi_phi_quan_ly_2025F"
+                ]
+            },
+            "Lợi nhuận từ HĐKD": {
+                "required_fields": [
+                    "loi_nhuan_hdkd", "loi_nhuan_hdkd_2025F",
+                    "yoy_loi_nhuan_hdkd", "yoy_loi_nhuan_hdkd_2025F",
+                    "bien_loi_nhuan_hdkd", "bien_loi_nhuan_hdkd_2025F"
+                ]
             }
-        ]
+        }
         
-        for section in sections:
-            print(f"📝 Tạo chú thích cho {section['name']}...")
+        # Tạo chú thích cho 4 mục 
+        for section_name, mapping in section_mappings.items():
+            print(f"📝 Tạo chú thích cho {section_name}...")
             
-            # Lọc dữ liệu liên quan đến mục hiện tại
+            # Lọc dữ liệu chính xác theo danh sách required_fields
             relevant_data = {}
-            for k, v in page2_data.items():
-                # Nếu chứa từ khóa và không chứa từ khóa loại trừ
-                if any(kw in k.lower() for kw in section['keywords']) and not any(ex in k.lower() for ex in section['exclude']):
-                    relevant_data[k] = v
+            for field in mapping["required_fields"]:
+                # Chỉ lấy chính xác các trường cần thiết
+                if field in page2_data:
+                    relevant_data[field] = page2_data[field]
+                # Thử các biến thể viết hoa nếu không tìm thấy
+                elif field.upper() in page2_data:
+                    relevant_data[field] = page2_data[field.upper()]
             
+            # Chỉ tiếp tục nếu có ít nhất một số liệu liên quan
+            if not relevant_data:
+                print(f"⚠️ Không tìm thấy dữ liệu liên quan cho {section_name}")
+                continue
+            
+            # Format dữ liệu cho prompt
             data_fields = ", ".join([f"{k}: {v}" for k, v in relevant_data.items()])
+            
+            # Tạo mô tả phân tích phù hợp với từng mục
+            descriptions = {
+                "Doanh thu thuần": "tăng trưởng doanh thu, so sánh với mức tăng trưởng năm trước và dự báo năm tới",
+                "Lợi nhuận gộp": "biên lợi nhuận gộp, nguyên nhân thay đổi, và triển vọng. CHỈ NÓI VỀ LỢI NHUẬN GỘP, KHÔNG NHẮC ĐẾN CHI PHÍ",
+                "Chi phí": "biến động của chi phí tài chính (lãi vay và tỷ giá), chi phí bán hàng (marketing), và chi phí quản lý (bộ máy quản trị)",
+                "Lợi nhuận từ HĐKD": "hiệu quả hoạt động kinh doanh, kiểm soát chi phí và triển vọng"
+            }
             
             # Tạo prompt cho mục hiện tại
             prompt = f"""
-            Tạo chú thích ngắn gọn cho {section['name']} của công ty {company_code} dựa trên dữ liệu sau:
+            Tạo chú thích chi tiết về {section_name} của công ty {company_code} dựa trên dữ liệu sau:
             {data_fields}
             
-            Chú thích nên đánh giá về {section['description']}.
-            Độ dài khoảng 4 câu ngắn gọn, súc tích.
-            Trả về chính xác định dạng: [chú thích của bạn, không có dấu nháy]\
-            Viết dưới dạng một đoạn văn, không được sử dụng các kí tự như: *, **, [,]
+            Chú thích cần đánh giá về {descriptions[section_name]}.
+            {"Phân tích riêng biến động của từng loại chi phí (tài chính, bán hàng, quản lý) qua các yếu tố như Nêu những lí do làm chi phí tăng, thị trường biến động ra sao giá nguyên vật liệu năm 2024, các chi phí về vận hành như thế nào." if section_name == "Chi phí" else ""}
+            {"CHÚ Ý: Chỉ phân tích về lợi nhuận gộp và biên lợi nhuận gộp. Tuyệt đối không được nhắc đến chi phí tài chính, bán hàng, quản lý." if section_name == "Lợi nhuận gộp" else ""}
+            
+            Hãy trả lời bằng tiếng Việt, viết 3-4 câu ngắn gọn, súc tích. 
+            Đừng bao gồm tiêu đề hay phần mở đầu, chỉ cần ghi nội dung chú thích.
+            Tuyệt đối không dùng các ký tự: *, **, [, ]
             """
             
             try:
                 response = model.generate_content(prompt).text.strip()
                 if response:
-                    results[section['name']] = response
-                    print(f"✅ Đã tạo chú thích {section['name']}: {response[:50]}...")
+                    results[section_name] = response
+                    print(f"✅ Đã tạo chú thích {section_name}: {response[:50]}...")
                 else:
-                    results[section['name']] = ""
-                    print(f"⚠️ API trả về chú thích trống cho {section['name']}")
+                    results[section_name] = ""
+                    print(f"⚠️ API trả về chú thích trống cho {section_name}")
             except Exception as e:
-                print(f"❌ Lỗi khi tạo chú thích {section['name']}: {str(e)}")
-                results[section['name']] = ""
+                print(f"❌ Lỗi khi tạo chú thích {section_name}: {str(e)}")
+                results[section_name] = ""
         
         print(f"✅ Đã tạo xong chú thích với keys: {list(results.keys())}")
         return results
@@ -352,6 +387,7 @@ def generate_financial_commentary(company_code, page2_data):
         return {
             'Doanh thu thuần': '',
             'Lợi nhuận gộp': '',
+            'Chi phí': '',
             'Lợi nhuận từ HĐKD': ''
         }
 
