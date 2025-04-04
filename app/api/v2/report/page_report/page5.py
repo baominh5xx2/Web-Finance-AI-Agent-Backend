@@ -121,52 +121,142 @@ class Page5:
         
         return chart_table
     
-    def _create_pe_chart(self):
-        """Create P/E 1 năm qua chart"""
-        # Generate dates for the past year
-        end_date = dt.datetime.now()
-        start_date = end_date - dt.timedelta(days=365)
-        dates = [start_date + dt.timedelta(days=i) for i in range((end_date - start_date).days)]
+    def _create_pe_chart(self): 
+        """
+        Create P/E 2020 - 2024 chart
+        """
+        # Tạo dữ liệu mẫu cho P/E chart
+        # Danh sách chuỗi ngày tháng, định dạng "tháng/năm"
+        date_strings = ['1/2020','2/2020','3/2020','4/2020','1/2021','2/2021','3/2021','4/2021','1/2022','2/2022','3/2022','4/2022','1/2023','2/2023','3/2023','4/2023','1/2024','2/2024','3/2024','4/2024']
         
-        # Generate sample P/E data (normally would come from actual data)
-        np.random.seed(42)  # For reproducibility
-        pe_values = np.random.normal(11, 2, len(dates))
-        pe_values = np.clip(pe_values, 7, 21)  # Clip to range seen in image
+        # Dữ liệu P/E mẫu (đã loại bỏ giá trị âm)
+        pe_values = [5.59, 22.27, 19.50, 16.58, 9.33, 7.31, 3.64, 4.14, 2.09, 2.57, 4.98, 12.54, 7.86, 7.65, 10.56, 57.97, 21.04, 13.71, 9.43, 10.27]
         
-        # Create smooth transitions
-        window_size = 10
-        pe_values_smooth = np.convolve(pe_values, np.ones(window_size)/window_size, mode='same')
+        # Chuyển đổi chuỗi ngày thành đối tượng datetime
+        valid_dates = []
+        valid_values = []
         
-        # Create figure and plot
+        for i, date_str in enumerate(date_strings):
+            if date_str.strip() == '':
+                continue  # Bỏ qua chuỗi rỗng
+                
+            try:
+                month, year = map(int, date_str.split('/'))
+                valid_dates.append(dt.datetime(year, month, 1))
+                if i < len(pe_values):
+                    valid_values.append(pe_values[i])
+            except (ValueError, IndexError):
+                continue  # Bỏ qua nếu có lỗi khi xử lý
+        
+        # Nếu không có dữ liệu hợp lệ, tạo dữ liệu mẫu mặc định
+        if not valid_dates:
+            current_year = dt.datetime.now().year
+            valid_dates = [dt.datetime(current_year-1, i+1, 1) for i in range(4)]
+            valid_values = [10.5, 11.2, 12.4, 13.5]
+                
+        # Create figure and plot với màu nền sáng
+        plt.style.use('seaborn-v0_8-whitegrid')
         fig, ax = plt.subplots(figsize=(5, 3.5))
+        fig.patch.set_facecolor('#f8f9fa')
+        ax.set_facecolor('#f8f9fa')
         
-        # Plot the P/E line
-        ax.plot(dates, pe_values_smooth, '-', color='#0066cc', linewidth=2)
+        # Tính toán giá trị trung bình
+        avg_pe = sum(valid_values) / len(valid_values)
         
-        # Add reference lines
-        avg_pe = 11
-        plus_one_sd = 13.5
-        minus_one_sd = 8
+        # Tính độ lệch chuẩn
+        sum_squared_diff = sum((x - avg_pe) ** 2 for x in valid_values)
+        std_dev = (sum_squared_diff / len(valid_values)) ** 0.5
         
-        ax.axhline(y=avg_pe, color='navy', linestyle='-', alpha=0.7, linewidth=1)
-        ax.axhline(y=plus_one_sd, color='brown', linestyle='--', alpha=0.7, linewidth=1)
-        ax.axhline(y=minus_one_sd, color='#0099cc', linestyle='--', alpha=0.7, linewidth=1)
+        plus_one_sd = avg_pe + std_dev
+        minus_one_sd = avg_pe - std_dev
         
-        # Format the x-axis to show months
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d'))
-        ax.xaxis.set_major_locator(mdates.MonthLocator(interval=2))
+        # Plot the P/E line với marker và màu đẹp hơn
+        ax.plot(valid_dates, valid_values, '-o', color='#0066cc', linewidth=2, 
+                markersize=4, markerfacecolor='white', markeredgecolor='#0066cc')
+        
+        # Add reference lines với màu đẹp hơn
+        ax.axhline(y=avg_pe, color='#ff7f0e', linestyle='-', alpha=0.7, linewidth=1.5)
+        ax.axhline(y=plus_one_sd, color='#d62728', linestyle='--', alpha=0.5, linewidth=1.5)
+        ax.axhline(y=minus_one_sd, color='#2ca02c', linestyle='--', alpha=0.5, linewidth=1.5)
+        
+        # Format the x-axis to show quarters
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%Y'))
+        ax.xaxis.set_major_locator(mdates.MonthLocator(interval=3))
         plt.xticks(rotation=45, fontsize=8)
         
+        # Highlight years with different background colors
+        years = set(date.year for date in valid_dates)
+        colors = ['#f2f2f2', '#e6e6e6']
+        
+        for i, year in enumerate(sorted(years)):
+            year_dates = [d for d in valid_dates if d.year == year]
+            if year_dates:
+                start = min(year_dates)
+                end = dt.datetime(year+1, 1, 1) if year < max(years) else max(valid_dates)
+                ax.axvspan(start, end, alpha=0.1, color=colors[i % 2])
+        
         # Set y-axis limits and ticks
-        ax.set_ylim(5, 21)
-        ax.set_yticks([5, 7, 9, 11, 13, 15, 17, 19, 21])
+        max_value = max(valid_values)
+        min_value = min(valid_values)
+        buffer = (max_value - min_value) * 0.1  # 10% buffer
+        
+        # Make sure min_value is positive
+        min_value = max(0, min_value - buffer)
+        max_value = max_value + buffer
+        
+        # Tạo khoảng cách đều cho trục y
+        y_range = max_value - min_value
+        tick_step = y_range / 6  # Khoảng 6-7 mức giá trị
+        
+        # Làm tròn tick_step để dễ nhìn hơn
+        if tick_step >= 10:
+            tick_step = round(tick_step / 10) * 10
+        elif tick_step >= 1:
+            tick_step = round(tick_step)
+        elif tick_step >= 0.1:
+            tick_step = round(tick_step * 10) / 10
+        else:
+            tick_step = round(tick_step * 100) / 100
+            
+        y_ticks = []
+        current = min_value
+        while current <= max_value:
+            y_ticks.append(current)
+            current += tick_step
+        
+        ax.set_ylim(min_value, max_value)
+        ax.set_yticks(y_ticks)
+        
+        # Add grid lines for better readability
+        ax.grid(True, linestyle='--', alpha=0.7)
         
         # Add title and labels
-        ax.set_title('P/E 1 năm qua', fontname='DejaVu Sans', fontsize=10, pad=10, color='#336699')
+        ax.set_title('P/E 2020 - 2024', fontname='DejaVu Sans', fontsize=12, pad=10, color='#336699', fontweight='bold')
+        ax.set_ylabel('P/E', fontsize=10, color='#336699')
         
-        # Add legend
-        ax.legend(['P/E', '1-year average', '+1 SD', '-1 SD'], 
-                 fontsize=8, loc='upper right', frameon=False)
+        # Add legend with formatted values
+        ax.legend([
+            'P/E', 
+            f'TB ({avg_pe:.2f})', 
+            f'+1SD ({plus_one_sd:.2f})', 
+            f'-1SD ({minus_one_sd:.2f})'
+        ], fontsize=8, loc='upper right', frameon=True, facecolor='white', edgecolor='lightgray')
+        
+        # Thêm annotations cho giá trị cao nhất và thấp nhất
+        max_idx = valid_values.index(max(valid_values))
+        min_idx = valid_values.index(min(valid_values))
+        
+        ax.annotate(f'{valid_values[max_idx]:.2f}', 
+                   xy=(valid_dates[max_idx], valid_values[max_idx]),
+                   xytext=(10, 15), textcoords='offset points',
+                   arrowprops=dict(arrowstyle='->', color='red'),
+                   fontsize=8, color='red')
+                   
+        ax.annotate(f'{valid_values[min_idx]:.2f}', 
+                   xy=(valid_dates[min_idx], valid_values[min_idx]),
+                   xytext=(10, -15), textcoords='offset points',
+                   arrowprops=dict(arrowstyle='->', color='green'),
+                   fontsize=8, color='green')
         
         plt.tight_layout()
         

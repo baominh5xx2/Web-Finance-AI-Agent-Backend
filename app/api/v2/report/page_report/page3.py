@@ -133,16 +133,16 @@ class Page3:
         """Tạo bảng tóm tắt định giá"""
         data = []
         
-        # Hardcoded values for P/E và EPS mục tiêu
-        pe_target = "15.59"
-        eps_target = "1537.53"
+        # Định dạng lại các giá trị P/E để thêm 'x' vào cuối nếu cần      
+        pe_target = valuation_data.get('pe_target', 'N/A')
         
         # Định dạng giá trị upside với dấu % nếu cần
         upside = valuation_data.get('upside', 'N/A')
         if upside != 'N/A' and not upside.endswith('%'):
             upside = f"{upside}%"
         
-        # Các dòng dữ liệu định giá còn lại       
+        # Các dòng dữ liệu định giá        
+        eps_target = valuation_data.get('eps_target', 'N/A')
         price_target = valuation_data.get('price_target', 'N/A')
         current_price = valuation_data.get('current_price', 'N/A')
         
@@ -261,10 +261,8 @@ class Page3:
         story.append(title)
         story.append(Spacer(1, 10*mm))  # Tăng khoảng trống giữa tiêu đề và văn bản giải thích
         
-        # Giải thích phương pháp định giá - Hardcoded với nội dung mới
-        explanation_text = """Dựa trên phương pháp P/E, chúng tôi thu thập dữ liệu từ các công thép trong và ngoài nước.
-Chúng tôi ước tính P/E mục tiêu của NKG ở 15.59. Kết hợp cùng EPS 2025 dự phóng ở mức 1,537.53
-đồng, giá mục tiêu của HPG được định giá ở mức 23972 đồng."""
+        # Giải thích phương pháp định giá
+        explanation_text = """Chúng tôi sử dụng phương pháp dự báo dòng tiền với các chỉ số cơ bản doanh nghiệp để định giá cổ phiếu. Giá mục tiêu được xác định dựa trên kết quả kinh doanh quá khứ và triển vọng tăng trưởng của công ty."""
         explanation = Paragraph(explanation_text, self.styles['ValuationText'])
         story.append(explanation)
         story.append(Spacer(1, 10*mm))  # Tăng khoảng trống
