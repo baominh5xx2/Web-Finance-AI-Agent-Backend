@@ -181,108 +181,62 @@ class Page5:
             date_key = f"{month:02d}/{year-2000:02d}"
             time_map[date_key] = time_ticks[i]
         
-        # Thêm các mũi tên và annotation cho các sự kiện quan trọng
+        # Thêm các chú thích và vị trí
         annotations = [
             {
-                'date_str': '02/2021',
                 'text': 'Giá thép tăng mạnh do xung đột Trung - Úc, \n làm ảnh hưởng đến sản xuất thép của Trung Quốc',
-                'arrow_x': '12/2020',
-                'arrow_y': 6000,
-                'position': 'left',
-                'target_x': '02/2021',  # Thêm điểm đích cho mũi tên
-                'target_y_pct': 0.65    # Phần trăm trên trục y (0-1) để xác định vị trí
+                'x_position': 0.22,  # Vị trí theo tỉ lệ trên trục x (0-1)
+                'y_position': 8000,  # Vị trí trên trục y
+                'ha': 'center',
+                'va': 'center',
+                'bbox_color': '#3366CC'
             },
             {
-                'date_str': '02/2022',
                 'text': 'Giá thép giảm do bất động sản Trung Quốc đi xuống',
-                'arrow_x': '04/2022',
-                'arrow_y': 34000,
-                'position': 'bottom',
-                'target_x': '04/2022',
-                'target_y_pct': 0.85
+                'x_position': 0.43,
+                'y_position': 25000,
+                'ha': 'center',
+                'va': 'center', 
+                'bbox_color': '#3366CC'
             },
             {
-                'date_str': '08/2022',
                 'text': 'Chiến tranh Ukraine - Nga và tình hình kinh tế thế giới suy giảm',
-                'arrow_x': '06/2022',
-                'arrow_y': 26000,
-                'position': 'bottom',
-                'target_x': '08/2022',
-                'target_y_pct': 0.65
+                'x_position': 0.55,
+                'y_position': 15000,
+                'ha': 'center',
+                'va': 'center',
+                'bbox_color': '#3366CC'
             },
             {
-                'date_str': '06/2023',
                 'text': 'Trung Quốc mở cửa giúp giá thép hồi phục',
-                'arrow_x': '08/2023',
-                'arrow_y': 19500,
-                'position': 'bottom',
-                'target_x': '06/2023',
-                'target_y_pct': 0.45
+                'x_position': 0.7,
+                'y_position': 7000,
+                'ha': 'center',
+                'va': 'center',
+                'bbox_color': '#3366CC'
             },
             {
-                'date_str': '04/2024',
                 'text': 'Nhu cầu Thép tại Trung Quốc yếu hơn kỳ vọng',
-                'arrow_x': '02/2024',
-                'arrow_y': 17000,
-                'position': 'right',
-                'target_x': '04/2024',
-                'target_y_pct': 0.5
+                'x_position': 0.83,
+                'y_position': 20000,
+                'ha': 'center',
+                'va': 'center',
+                'bbox_color': '#3366CC'
             }
         ]
         
-        # Vẽ các chú thích và mũi tên
+        # Vẽ các chú thích
         for anno in annotations:
-            # Lấy vị trí x cho date_str (vị trí của nhãn)
-            date_key = f"{int(anno['date_str'].split('/')[0]):02d}/{int(anno['date_str'].split('/')[1])-2000:02d}"
-            x_pos = time_map.get(date_key, 0.5)
+            box_props = dict(boxstyle='round,pad=0.5', facecolor='white', edgecolor=anno['bbox_color'], alpha=0.9)
             
-            # Lấy vị trí x cho arrow_x (vị trí chữ của chú thích)
-            arrow_key = f"{int(anno['arrow_x'].split('/')[0]):02d}/{int(anno['arrow_x'].split('/')[1])-2000:02d}"
-            arrow_x_pos = time_map.get(arrow_key, 0.5)
-            
-            # Lấy vị trí x cho target_x (điểm đích của mũi tên)
-            target_key = f"{int(anno['target_x'].split('/')[0]):02d}/{int(anno['target_x'].split('/')[1])-2000:02d}"
-            target_x_pos = time_map.get(target_key, 0.5)
-            
-            # Tính vị trí y thực tế dựa trên phần trăm của thang đo y
-            target_y = anno['target_y_pct'] * 40000
-            
-            # Tạo các thông số cho mũi tên với độ cong khác nhau tùy theo vị trí
-            if anno['position'] == 'left':
-                connection_style = 'arc3,rad=-0.3'
-            elif anno['position'] == 'right':
-                connection_style = 'arc3,rad=0.3'
-            else:
-                connection_style = 'arc3,rad=0.2'
-                
-            arrow_style = dict(arrowstyle='->', color='#3366CC', connectionstyle=connection_style, lw=1.5)
-            
-            # Tạo khung chữ nhật cho chú thích
-            box_props = dict(boxstyle='round,pad=0.5', facecolor='white', edgecolor='#3366CC', alpha=0.9)
-            
-            # Điều chỉnh vị trí của chú thích tùy theo vị trí
-            offset = 0.07  # Tăng offset để mở rộng khoảng cách
-            
-            if anno['position'] == 'left':
-                xytext = (arrow_x_pos - offset, anno['arrow_y'])
-                ha = 'right'
-            elif anno['position'] == 'right':
-                xytext = (arrow_x_pos + offset, anno['arrow_y'])
-                ha = 'left'
-            else:  # 'bottom'
-                xytext = (arrow_x_pos, anno['arrow_y'])
-                ha = 'center'
-            
-            # Vẽ chú thích với vị trí đã điều chỉnh - trỏ đến điểm đích mới
+            # Vẽ chú thích
             ax.annotate(
-                anno['text'], 
-                xy=(target_x_pos, target_y),  # Điểm đích mới
-                xytext=xytext,
-                textcoords='data',
-                ha=ha, va='center',
+                anno['text'],
+                xy=(anno['x_position'], anno['y_position']),
+                ha=anno['ha'],
+                va=anno['va'],
                 bbox=box_props,
-                arrowprops=arrow_style,
-                fontsize=8,
+                fontsize=6,
                 wrap=True
             )
         
