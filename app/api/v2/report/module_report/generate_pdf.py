@@ -106,7 +106,7 @@ class PDFReport:
         template3 = PageTemplate(
             id='page3',
             frames=[
-                Frame(0, 0, width, height)
+                Frame(1*cm, 1*cm, width-2*cm, height-2*cm)
             ],
             onPage=lambda canvas, doc: self.page3._draw_page_template(canvas, doc, _company_data)
         )
@@ -115,7 +115,7 @@ class PDFReport:
         template4 = PageTemplate(
             id='page4',
             frames=[
-                Frame(0, 0, width, height)
+                Frame(1*cm, 1*cm, width-2*cm, height-2*cm)
             ],
             onPage=lambda canvas, doc: self.page4._draw_page_template(canvas, doc, _company_data)
         )

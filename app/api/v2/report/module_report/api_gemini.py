@@ -98,7 +98,7 @@ Phân tích ngắn gọn và cố gắng cập nhật và so sánh năm 2024 và
 - Không quá 200 từ
 
 **THÔNG TIN GIAO DỊCH CÔNG TY THÉP NAM KIM**
-- Đây là thông tin mới nhất về công ty thép nam kim: {news}. 
+- Đây là thông tin mới nhất về công ty thép nam kim: {news}.
 - Có thể tìm các tin tức mới nhất trên google để nói về công ty thép nam kim.
 - Hãy viết về một đoạn văn giới thiệu thông tin mới nhất về công ty thép nam kim với mã cổ phiếu là NKG. Tìm các chỉ số mới nhất để đánh giá tình hình hiện tại của công ty. không quá 300 từ
 
@@ -746,3 +746,115 @@ def generate_operating_profit_commentary(operating_profit_data):
     except Exception as e:
         print(f"Error generating operating profit commentary: {str(e)}")
         return " "
+
+def generate_valuation_commentary(company_code, valuation_data, peer_data=None):
+    """Generate commentary for valuation section based on provided data"""
+    try:
+        # Configure API if not already done
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            configure_api()
+            
+        generation_config = {
+            "temperature": 0.2,
+            "top_p": 0.8,
+            "top_k": 40,
+            "max_output_tokens": 1024,
+            "response_mime_type": "text/plain",
+        }
+
+        safety_settings = [
+            {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+            {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+        ]
+
+        model = genai.GenerativeModel(
+            model_name="gemini-2.0-flash",
+            generation_config=generation_config,
+            safety_settings=safety_settings,
+        )
+        data1 = {
+            "Công ty": [
+                "Công ty Cổ phần Thép Nam Kim (Hiện tại)",
+                "Tổng Công ty Thép Việt Nam - Công ty Cổ phần",
+                "Công ty Cổ phần Tôn Đông Á",
+                "Công ty Cổ phần Quốc tế Sơn Hà",
+                "Công ty Cổ phần Ống thép Việt - Đức VG PIPE"
+            ],
+            "P/E": [10.77, 20.00, 8.26, 30.38, 14.92],
+            "Vốn hóa (tỷ)": [0.20, 0.24, 0.12, 0.10, 0.07],
+            "Tăng trưởng Doanh thu (%)": [11.20, 19.78, 9.69, 16.76, -2.85],
+            "Tăng trưởng EPS (%)": [221.53, -211.16, 20.55, 375.86, 80.18],
+            "ROA (%)": [3.52, 1.18, 2.79, 0.92, 4.60],
+            "ROE (%)": [8.02, 3.49, 9.20, 4.41, 10.64]
+        }
+        data2 = {
+            "P/E mục tiêu": [15.59],
+            "EPS mục tiêu": [1537.53],
+            "Giá mục tiêu (VND)": [23972],
+            "Giá hiện tại (VND)": [15200],
+            "Tiềm năng tăng giảm giá(%)": [59.28],
+        }
+
+        # Format peer data if available
+        peers_info = ""
+        if peer_data and len(peer_data) > 0:
+            peers_info = "Thông tin doanh nghiệp cùng ngành:\n"
+            for peer in peer_data:
+                peers_info += f"- {peer.get('company_name', 'N/A')}: P/E {peer.get('pe', 'N/A')}, Vốn hóa {peer.get('market_cap', 'N/A')} tỷ\n"
+        
+        # Format data1 and data2 as tables for better presentation
+        data1_str = "Dữ liệu các công ty ngành thép:\n"
+        # Add header row
+        headers = list(data1.keys())
+        for h in headers:
+            data1_str += f"{h:<25}"
+        data1_str += "\n"
+        # Add data rows
+        for i in range(len(data1["Công ty"])):
+            for h in headers:
+                data1_str += f"{data1[h][i]:<25}"
+            data1_str += "\n"
+        
+        data2_str = "Dữ liệu mục tiêu và định giá:\n"
+        # Add data in key-value format
+        for k, v in data2.items():
+            data2_str += f"{k}: {v[0]}\n"
+        
+        # Create prompt template
+        valuation_prompt = """Bạn là một chuyên gia phân tích tài chính.
+        Có các dữ liệu như sau:
+        1. Dữ liệu các công ty ngành thép:
+        {data1}
+        2. Dữ liệu mục tiêu và định giá:
+        {data2}
+        3. Thông tin doanh nghiệp cùng ngành:
+        {peers_info}
+        Hãy viết một đoạn văn khoảng 200 từ :
+        - Tóm tắt các chỉ số tài chính của các công ty ngành thép
+        - So sánh các chỉ số tài chính của công ty NKG với các công ty khác trong ngành
+        - Đưa ra nhận định về tiềm năng tăng trưởng của cổ phiếu NKG trong tương lai
+        - Viết với giọng điệu tự tin, chuyên nghiệp của một chuyên gia phân tích tài chính
+        """
+        
+        # Format the prompt with actual data
+        formatted_prompt = valuation_prompt.format(
+            data1=data1_str,
+            data2=data2_str,
+            peers_info=peers_info
+        )
+        
+        # Generate commentary using the formatted prompt
+        response = model.generate_content(formatted_prompt)
+        return response.text.strip()
+    except Exception as e:
+        print(f"Error generating valuation commentary: {str(e)}")
+        return "Không thể tạo bình luận về định giá."
+
+def create_valuation_commentary_prompt(company_code, valuation_data, peer_data=None):
+    """Create prompt template for valuation commentary"""
+    # This function returns an empty prompt template as requested
+    # The user can fill this in later
+    return """"""

@@ -147,7 +147,7 @@ class Page3:
         current_price = valuation_data.get('current_price', 'N/A')
         
         # Thêm các dòng vào bảng - đã xóa các dòng P/E trung bình, trung vị và trung bình 10 năm
-        data.append([Paragraph('P/E mục tiêu:', self.styles['SummaryRow']), 
+        data.append([Paragraph('P/E ngành:', self.styles['SummaryRow']), 
                      Paragraph(f"{pe_target}", self.styles['TableCell'])])
         data.append([Paragraph('EPS mục tiêu (VND):', self.styles['SummaryRow']), 
                      Paragraph(f"{eps_target}", self.styles['TableCell'])])
@@ -159,7 +159,7 @@ class Page3:
                      Paragraph(f"{upside}", self.styles['TableCell'])])
         
         # Tạo bảng với chiều rộng khớp với bảng so sánh
-        table = Table(data, colWidths=[10.5*cm, 8*cm])  # Điều chỉnh tổng chiều rộng cho phù hợp
+        table = Table(data, colWidths=[9.5*cm, 7*cm])  # Giảm từ 10.5*cm và 8*cm
         
         # Thiết lập style cho bảng
         table_style = TableStyle([
@@ -214,7 +214,7 @@ class Page3:
             data.append(row)
             
         # Set column widths
-        colWidths = [7*cm, 1.5*cm, 2*cm, 2.5*cm, 2.5*cm, 1.5*cm, 1.5*cm]
+        colWidths = [6*cm, 1.5*cm, 2*cm, 2*cm, 2*cm, 1.5*cm, 1.5*cm]  # Giảm cột đầu từ 7*cm xuống 6*cm và các cột Tăng trưởng từ 2.5*cm xuống 2*cm
         
         # Create table
         table = Table(data, colWidths=colWidths, repeatRows=1)
@@ -284,6 +284,27 @@ class Page3:
             story.append(valuation_table)
             story.append(Spacer(1, 15*mm))  # Khoảng cách trước bảng doanh nghiệp cùng ngành
         
-        
+        # Thêm bình luận về định giá từ Gemini API
+        try:
+            from ..module_report.api_gemini import generate_valuation_commentary
+            
+            # Lấy mã cổ phiếu từ company_data
+            symbol = company_data.get('symbol', 'N/A')
+            
+            # Gọi hàm từ api_gemini.py để tạo bình luận
+            commentary = generate_valuation_commentary(symbol, valuation_data, peer_data)
+            
+            # Nếu có bình luận, thêm vào story
+            if commentary and commentary != "Không thể tạo bình luận về định giá.":
+                commentary_title = Paragraph("Nhận xét về định giá", self.styles['SectionTitle'])
+                story.append(commentary_title)
+                story.append(Spacer(1, 5*mm))
+                
+                commentary_text = Paragraph(commentary, self.styles['ValuationText'])
+                story.append(commentary_text)
+                story.append(Spacer(1, 10*mm))
+        except Exception as e:
+            print(f"Lỗi khi tạo bình luận định giá: {str(e)}")
+            # Không làm gì nếu có lỗi, chỉ bỏ qua phần bình luận
             
         return story

@@ -302,8 +302,8 @@ class Page4:
         
         # Tạo bảng chứa cả hai biểu đồ xếp chồng lên nhau
         chart_table = Table([
-            [Image(revenue_chart_buffer, width=6.8*inch, height=3.2*inch)],
-            [Image(pe_chart_buffer, width=6.8*inch, height=3.2*inch)]
+            [Image(revenue_chart_buffer, width=6.3*inch, height=3.2*inch)],
+            [Image(pe_chart_buffer, width=6.3*inch, height=3.2*inch)]
         ])
         
         chart_table.setStyle(TableStyle([
