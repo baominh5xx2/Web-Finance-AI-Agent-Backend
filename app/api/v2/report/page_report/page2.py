@@ -10,7 +10,7 @@ from reportlab.pdfgen.canvas import Canvas
 import datetime
 import os
 import json
-from ..module_report.api_gemini import generate_financial_commentary
+from ..module_report.api_gemini import generate_financial_commentary, generate_gross_profit_commentary
 
 class Page2:
     def __init__(self, font_added=False):
@@ -337,33 +337,6 @@ class Page2:
                     except (ValueError, AttributeError):
                         return 0
 
-                # Enhancement of gross profit commentary with expense details
-                gross_profit_commentary = chú_thích.get('Lợi nhuận gộp', '')
-                financial_expenses = []
-                
-                # Add financial expenses details if they are significant
-                if projection_data.get('chi_phi_tai_chinh') and safe_float_convert(projection_data.get('chi_phi_tai_chinh', '0')) > 0:
-                    direction = "tăng" if is_growth_positive(projection_data.get('yoy_chi_phi_tai_chinh', '')) else "giảm"
-                    financial_expenses.append(f"Chi phí tài chính {direction} ({projection_data.get('yoy_chi_phi_tai_chinh', 'N/A')}) {direction == 'giảm' and 'nhờ tái cấu trúc nợ' or 'do biến động tỷ giá và lãi suất'}.")
-                
-                # Add selling expenses details if they are significant
-                if projection_data.get('chi_phi_ban_hang') and safe_float_convert(projection_data.get('chi_phi_ban_hang', '0')) > 0:
-                    direction = "tăng" if is_growth_positive(projection_data.get('yoy_chi_phi_ban_hang', '')) else "giảm"
-                    financial_expenses.append(f"Chi phí bán hàng {direction} ({projection_data.get('yoy_chi_phi_ban_hang', 'N/A')}) {direction == 'giảm' and 'nhờ tối ưu hóa kênh phân phối' or 'do đẩy mạnh marketing'}.")
-                
-                # Add management expenses details if they are significant
-                if projection_data.get('chi_phi_quan_ly') and safe_float_convert(projection_data.get('chi_phi_quan_ly', '0')) > 0:
-                    direction = "tăng" if is_growth_positive(projection_data.get('yoy_chi_phi_quan_ly', '')) else "giảm"
-                    financial_expenses.append(f"Chi phí quản lý {direction} ({projection_data.get('yoy_chi_phi_quan_ly', 'N/A')}) {direction == 'giảm' and 'nhờ tối ưu hóa bộ máy quản lý' or 'do mở rộng hoạt động'}.")
-                
-                # Combine all commentary parts
-                if financial_expenses:
-                    combined_commentary = gross_profit_commentary
-                    if combined_commentary and not combined_commentary.endswith('.'):
-                        combined_commentary += '.'
-                    combined_commentary += ' ' + ' '.join(financial_expenses)
-                    chú_thích['Lợi nhuận gộp'] = combined_commentary
-                
                 # Combine profit-related commentaries
                 operating_profit_commentary = chú_thích.get('Lợi nhuận từ HĐKD', '')
                 profit_details = []
@@ -623,9 +596,10 @@ class Page2:
 
     def generate_financial_commentaryy(self, projection_data):
         """Generate AI-based financial commentary for the key metrics using Gemini API"""
-        from app.api.v2.report.module_report.api_gemini import generate_financial_commentary
+        from app.api.v2.report.module_report.api_gemini import generate_financial_commentary, generate_gross_profit_commentary
         import os
         import json
+        import logging
         
         print(f"Calling generate_financial_commentary with data keys: {list(projection_data.keys())}")
         company_code = projection_data.get('company_code', 'NKG')
@@ -652,8 +626,33 @@ class Page2:
         # Call the API to get fresh commentary for all sections
         print("Calling Gemini API for fresh commentary generation")
         try:
+            # Lấy tất cả các bình luận từ hàm generate_financial_commentary
             result = generate_financial_commentary(company_code, enhanced_data)
             print(f"API returned commentary with keys: {list(result.keys() if result else [])}")
+            
+            # Thêm mới: tạo riêng bình luận lợi nhuận gộp bằng hàm chuyên biệt
+            try:
+                # Lưu lại bình luận cũ để sử dụng fallback
+                original_gross_profit_comment = result.get('Lợi nhuận gộp', '')
+                
+                # Gọi hàm chuyên biệt để tạo bình luận lợi nhuận gộp
+                print("Generating specialized gross profit commentary...")
+                gross_profit_comment = generate_gross_profit_commentary(enhanced_data)
+                
+                if gross_profit_comment and len(gross_profit_comment.strip()) > 10:
+                    # Nếu tạo thành công, thay thế bình luận lợi nhuận gộp
+                    result['Lợi nhuận gộp'] = gross_profit_comment
+                    print(f"Successfully generated specialized gross profit commentary: {gross_profit_comment[:50]}...")
+                else:
+                    # Nếu hàm trả về kết quả trống, giữ lại bình luận ban đầu
+                    print("Specialized gross profit commentary returned empty result, keeping original")
+                    if original_gross_profit_comment:
+                        result['Lợi nhuận gộp'] = original_gross_profit_comment
+            except Exception as e:
+                print(f"Error generating specialized gross profit commentary: {str(e)}")
+                # Nếu có lỗi, giữ lại bình luận gốc nếu có
+                if 'Lợi nhuận gộp' in result and result['Lợi nhuận gộp']:
+                    print("Keeping original gross profit commentary due to error in specialized function")
             
             # Check if we have all necessary commentaries
             required_keys = ['Doanh thu thuần', 'Lợi nhuận gộp', 'Chi phí', 'Lợi nhuận từ HĐKD']
@@ -669,8 +668,10 @@ class Page2:
                     # Update only the missing keys if they're now available
                     for key in missing_keys:
                         if key in retry_result and retry_result[key]:
-                            result[key] = retry_result[key]
-                            print(f"Successfully generated commentary for {key} on second attempt")
+                            # Nếu đó không phải là Lợi nhuận gộp (vì chúng ta đã xử lý riêng)
+                            if key != 'Lợi nhuận gộp' or 'Lợi nhuận gộp' not in result or not result['Lợi nhuận gộp']:
+                                result[key] = retry_result[key]
+                                print(f"Successfully generated commentary for {key} on second attempt")
             
             # Final check for any still-missing commentaries
             final_missing = [key for key in required_keys if key not in result or not result[key]]

@@ -39,8 +39,8 @@ class Page1:
         self.styles.add(ParagraphStyle(
             name='NormalVN',
             fontName=normal_font,
-            fontSize=10,
-            leading=12,
+            fontSize=8,
+            leading=10,
             alignment=TA_LEFT
         ))
         self.styles.add(ParagraphStyle(
@@ -72,7 +72,7 @@ class Page1:
         self.styles.add(ParagraphStyle(
             name='SectionTitle',
             fontName=title_font,
-            fontSize=14,
+            fontSize=12,
             textColor=colors.HexColor('#003366'),
             alignment=TA_LEFT,
             leading=16,
@@ -590,18 +590,18 @@ class Page1:
             content_type, processed_text = self._process_markdown_content(paragraph)
             
             if content_type == "heading":
-                story.append(Spacer(1, 0.4*cm))
+                story.append(Spacer(1, 0.3*cm))
                 title_text = processed_text.split(':')[0].strip() if ':' in processed_text else processed_text
                 story.append(Paragraph(title_text, self.styles['SectionTitle']))
                 
                 if ':' in processed_text:
                     content_text = processed_text.split(':', 1)[1].strip()
                     if content_text:
-                        story.append(Spacer(1, 0.1*cm))
+                        story.append(Spacer(1, 0.05*cm))
                         story.append(Paragraph(content_text, self.styles['NormalVN']))
             else:
                 story.append(Paragraph(processed_text, self.styles['NormalVN']))
-                story.append(Spacer(1, 0.2*cm))
+                story.append(Spacer(1, 0.1*cm))
         
         # Add projection table title
         story.append(Spacer(1, 0.4*cm))

@@ -14,7 +14,6 @@ from ..page_report.page2 import Page2
 from ..page_report.page3 import Page3
 from ..page_report.page4 import Page4
 from ..page_report.page5 import Page5
-from ..page_report.page6 import Page6
 import io
 
 class PDFReport:
@@ -26,7 +25,6 @@ class PDFReport:
         self.page3 = Page3(font_added=self.font_added)
         self.page4 = Page4(font_added=self.font_added)
         self.page5 = Page5(font_added=self.font_added)
-        self.page6 = Page6(font_added=self.font_added)
         
     def _setup_fonts(self):
         """Đăng ký font DejaVuSans có sẵn trong dự án"""
@@ -131,17 +129,8 @@ class PDFReport:
             onPage=lambda canvas, doc: self.page5._draw_page_template(canvas, doc, _company_data)
         )
         
-        # Tạo template cho trang 6
-        template6 = PageTemplate(
-            id='page6',
-            frames=[
-                Frame(0, 0, width, height)
-            ],
-            onPage=lambda canvas, doc: self.page6._draw_page_template(canvas, doc, _company_data)
-        )
-        
         # Thêm các templates vào document
-        doc.addPageTemplates([template1, template2, template3, template4, template5, template6])
+        doc.addPageTemplates([template1, template2, template3, template4, template5])
         
         # Tạo nội dung cho trang 1 - sử dụng projection_data cho page1
         story = self.page1.create_page1(doc, company_data, recommendation_data, market_data, analysis_data, projection_data)
@@ -180,15 +169,6 @@ class PDFReport:
         # Thêm nội dung trang 5
         page5_content = self.page5.create_page5(company_data=company_data)
         story.extend(page5_content)
-        
-        # Chuyển sang trang 6
-        story.append(NextPageTemplate('page6'))
-        story.append(PageBreak())
-        
-        # Thêm nội dung trang 6
-        page6_content = self.page6.create_page6(company_data=company_data)
-        story.extend(page6_content)
-        
         # Xuất PDF
         doc.build(story)
         return output_path
@@ -243,29 +223,5 @@ def generate_page5_pdf(output_path="financial_ratios.pdf"):
     print(f"PDF saved to {output_path}")
     return output_path
 
-def generate_page6_pdf(output_path="additional_info.pdf"):
-    """
-    Generate a PDF file with additional information using page6.
-    
-    Args:
-        output_path (str): Path where the PDF file will be saved
-        
-    Returns:
-        str: Path to the generated PDF file
-    """
-    # Create a buffer for the PDF
-    buffer = io.BytesIO()
-    
-    # Create Page6 instance and generate content
-    page6 = Page6()
-    page6.create_page6(buffer)
-    
-    # Save the buffer to a file
-    buffer.seek(0)
-    with open(output_path, "wb") as f:
-        f.write(buffer.getvalue())
-    
-    print(f"PDF saved to {output_path}")
-    return output_path
 
 

@@ -133,16 +133,16 @@ class Page3:
         """Tạo bảng tóm tắt định giá"""
         data = []
         
-        # Định dạng lại các giá trị P/E để thêm 'x' vào cuối nếu cần      
-        pe_target = valuation_data.get('pe_target', 'N/A')
+        # Hardcode các giá trị P/E và EPS mục tiêu
+        pe_target = "15.59"
+        eps_target = "1537.53"
         
         # Định dạng giá trị upside với dấu % nếu cần
         upside = valuation_data.get('upside', 'N/A')
         if upside != 'N/A' and not upside.endswith('%'):
             upside = f"{upside}%"
         
-        # Các dòng dữ liệu định giá        
-        eps_target = valuation_data.get('eps_target', 'N/A')
+        # Lấy các giá trị khác từ valuation_data
         price_target = valuation_data.get('price_target', 'N/A')
         current_price = valuation_data.get('current_price', 'N/A')
         

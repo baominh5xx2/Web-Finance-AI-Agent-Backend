@@ -68,7 +68,10 @@ Chi tiết chỉ số lợi nhuận:
 Bạn là một chuyên gia phân tích tài chính chuyên về phân tích cơ bản cổ phiếu ngành thép. Hãy đánh giá rủi ro và triển vọng đầu tư của Công ty Cổ phần Thép Nam Kim (mã cổ phiếu: NKG) dựa trên thông tin ngành thép và vị thế của công ty.
 Giữ văn phong chuyên nghiệp.
 
-Thông tin ngành thép: Ngành thép Việt Nam chịu ảnh hưởng bởi giá nguyên liệu đầu vào (quặng sắt, thép phế), chi phí năng lượng, biến động tỷ giá và cạnh tranh từ thép Trung Quốc. Nam Kim là một trong những nhà sản xuất tôn mạ hàng đầu Việt Nam, có thế mạnh về thép mạ màu và thép mạ kẽm, đồng thời có hoạt động xuất khẩu sang các thị trường như Bắc Mỹ, châu Âu và Đông Nam Á.
+Thông tin ngành thép: Ngành thép Việt Nam chịu ảnh hưởng bởi giá nguyên liệu đầu vào (quặng sắt, thép phế), chi phí năng lượng, biến động tỷ giá và cạnh tranh từ thép Trung Quốc. 
+Nam Kim là một trong những nhà sản xuất tôn mạ hàng đầu Việt Nam, có thế mạnh về thép mạ màu và thép mạ kẽm, đồng thời có hoạt động xuất khẩu sang các thị trường như Bắc Mỹ, châu Âu và Đông Nam Á. 
+Việc Bộ Công Thương gia hạn thuế tôn mạ nhập khẩu từ Hàn Quốc và Trung Quốc đến T10/2029 sẽ giảm bớt áp lực cạnh tranh, giúp doanh nghiệpmởrộng thịphần nội địa trong bối cảnh: (1) Thịtrường Bất động 
+sản ấm lên, (2) Chính phủ đẩy mạnh giải ngân đầu tư công, (3) Chính phủ tạo điều kiện cho vay với lãi suất thấp để thúc đẩy nền kinh tế.
 
 Cho các dữ liệu báo cáo tài chính của NKG (Nam Kim Steel):  
 Bảng cân đối kế toán (Balance Sheet):
@@ -79,142 +82,308 @@ Phân tích khả năng sinh lời (Profitability Analysis):
 {profitability_analysis} 
 {profit_indicators}
 
-Hãy đánh giá rủi ro và triển vọng đầu tư của mã cổ phiếu NKG, tập trung vào các yếu tố sau:
-1. Vị thế doanh nghiệp trong ngành thép mạ Việt Nam
-2. Hiệu quả vận hành nhà máy và chi phí sản xuất
-3. Tỷ suất lợi nhuận so với các đối thủ cùng ngành
-4. Khả năng chống chịu biến động giá nguyên liệu đầu vào
-5. Tiềm năng tăng trưởng từ xuất khẩu thép
 
-Yêu cầu phân tích 3 PHẦN LỚN SAU:
-
-**Định giá cập nhật với khuyến nghị MUA, giá mục tiêu dài hạn**
-- Hãy viết về một đoạn văn giới thiệu thông tin mới nhất về công ty thép nam kim với mã cổ phiếu là NKG. Tìm các chỉ số mới nhất như là giá hiện tại: {current_price}, giá mục tiêu là 23,972 VND,... để đánh giá tình hình hiện tại của công ty. không quá 300 từ
+Yêu cầu phân tích 4 PHẦN LỚN SAU:
 
 **TÌNH HÌNH TÀI CHÍNH HIỆN NAY**
-Phân tích ngắn gọn về:
+Phân tích ngắn gọn và cố gắng cập nhật và so sánh năm 2024 và 2023 về:
 - Bắt buộc phải tham khảo chỉ số YoY của công ty thép nam kim từ các dữ liệu báo cáo tài chính và chỉ số lợi nhuận được cung cấp.
 - Tập trung phân tích biến động lợi nhuận từ hoạt động kinh doanh, lợi nhuận trước thuế và lợi nhuận sau thuế theo số liệu YoY đã cung cấp.
 - Doanh thu và lợi nhuận: Biến động và triển vọng phục hồi
 - Biên lợi nhuận: Yếu tố ảnh hưởng từ giá nguyên liệu và giá bán thép
-- Tỷ lệ nợ và khả năng trả nợ: Đánh giá rủi ro tài chính
-- Tỷ lệ ROE/ROA của Nam Kim Steel so với các công ty cùng ngành
-- Hiệu quả hoạt động và quản trị chi phí
-- Tập trung bình luận chỉ số
+- Tình hình thanh khoản: Đánh giá khả năng thanh toán ngắn hạn
+- Hiệu quả hoạt động và quản trị chi phí: Đánh giá khả năng kiểm soát chi phí
 - Phải đưa ra được số liệu cụ thể.
 - Bình luận các chỉ số dựa trên hiểu biết của bạn và các chỉ số đã cung cấp.
 - Không quá 200 từ
 
-**CÁC TIN TỨC VỀ CÔNG TY THÉP NAM KIM**
-- Đây là thông tin mới nhất về công ty thép nam kim: {news}.
+**THÔNG TIN GIAO DỊCH CÔNG TY THÉP NAM KIM**
+- Đây là thông tin mới nhất về công ty thép nam kim: {news}. 
 - Có thể tìm các tin tức mới nhất trên google để nói về công ty thép nam kim.
-- Hãy viết về một đoạn văn giới thiệu thông tin mới nhất về công ty thép nam kim với mã cổ phiếu là NKG. Tìm các chỉ số mới nhất như là giá hiện tại: {current_price}, giá mục tiêu là 23,972 VND,... để đánh giá tình hình hiện tại của công ty. không quá 300 từ
+- Hãy viết về một đoạn văn giới thiệu thông tin mới nhất về công ty thép nam kim với mã cổ phiếu là NKG. Tìm các chỉ số mới nhất để đánh giá tình hình hiện tại của công ty. không quá 300 từ
+
+**RỦI RO VÀ TRIỂN VỌNG ĐẦU TƯ**
+Hãy đánh giá rủi ro và triển vọng đầu tư của mã cổ phiếu NKG, tập trung vào các yếu tố sau:
+- Vị thế doanh nghiệp trong ngành thép mạ Việt Nam
+- Hiệu quả vận hành nhà máy và chi phí sản xuất
+- Tỷ suất lợi nhuận so với các đối thủ cùng ngành
+- Khả năng chống chịu biến động giá nguyên liệu đầu vào
+- Tiềm năng tăng trưởng từ xuất khẩu thép. Có thể tham khảo thêm thông tin như sau để đánh giá : (1) Chính sách bảo hộ ngành tôn mạ được gia hạn trong bối cảnh nhu cầu nội địa hồi phục; (2) Giá thép hồi phục giúp BLN cải thiện; (3)Nam Kim Phú Mỹ là động lực dài hạn
+
+**ĐÁNH GIÁ TÁC ĐỘNG CỦA THUẾ LÊN NKG**
+Tôi cung cấp cho bạn các thông tin sau:
+- Thuế CBPG HRC của Việt Nam áp lên thép nhập khẩu từ Trung Quốc
+  Ngày 21/2/2025, Bộ Công Thương đã áp dụng thuế CBPG tạm thời đối với sản phẩm HRC nhập 
+khẩu từ Trung Quốc, với mức thuế dao động từ 19.38% đến 27.83%, có hiệu lực sau 15 ngày kể
+từ ngày ban hành và kéo dài trong 120 ngày. 
+  Hiện nay, NKG phụ thuộc phần lớn nguồn cung HRC từ Trung Quốc, phần còn lại là mua từ HPG 
+hoặc Formosa. Việc thuế này được áp dụng có thể khiến chi phí nguyên vật liệu đầu vào của 
+NKG tăng lên. Song, chúng tôi kỳ vọng doanh nghiệp sẽ tối ưu hóa chi phí, đa dạng hóa nguồn 
+cung HRC và điều chỉnh giá đầu ra linh hoạt để bảo vệ được biên lợi nhuận trong thời gian tới.
+- Thuế nhập khẩu của Mỹ đối với thép và nhôm 
+  Vào ngày 10/2/2025, Tổng thống Mỹ Donald Trump đã ký sắc lệnh áp thuế 25% đối với tất
+cả các mặt hàng thép và nhôm nhập khẩu vào Mỹ, không có ngoại lệ hay miễn trừ. Mức thuế
+này sẽ có hiệu lực từ ngày 4/3/2025. 
+  Đối với Việt Nam, mặt hàng thép nhập khẩu vào Mỹ đã bị đánh thuế 25% theo Mục 232 kể từ
+tháng 3/2018. Trong khi đó, các đồng minh của Mỹ được miễn trừ thuế này bao gồm Argentina, 
+Brazil, Canada, EU, Hàn Quốc, Nhật Bản và Vương quốc Anh. Hiện tại, tất cả đối tác xuất khẩu 
+thép vào Mỹ đều phải đối mặt với cùng một mức thuế. Trong năm 2024, tỷ trọng thép Việt Nam 
+xuất khẩu đi Mỹ chỉ chiếm tỷ trọng 14% tổng sản lượng. Với riêng NKG, tỷ trọng thép xuất khẩu 
+sang Mỹ chiếm đến 15% tổng sản lượng tiêu thụ. Chúng tôi cho rằng chính sách thuế mới này sẽ
+tạo cơ hội gia tăng sản lượng xuất khẩu sang Mỹ cho NKG khi cạnh tranh trở nên công bằng hơn 
+giữa các nước. 
+- Thuế chống trợ cấp của Mỹ đối với sản phẩm tôn mạ chống ăn mòn 
+Vào ngày 25/09/2024, Bộ Thương mại Mỹ (DOC) đã chính thức tiến hành các cuộc điều tra để
+áp thuế chống trợ cấp đối với sản phẩm tôn mạ chống ăn mòn (CORE) nhập khẩu từ Việt Nam
+(cũng như từ Brazil, Canada và Mexico). Kết quả cuối cùng sẽ được công bố vào ngày 17/06/2025, 
+quyết định sẽ được đưa ra vào ngày 01/08/2025 và lệnh có hiệu lực từ ngày 08/08/20225. Trong 
+trường hợp bị đánh thêm thuế chống trợ cấp, các doanh nghiệp xuất khẩu vào Mỹ lớn như NKG 
+sẽ bị tác động.
+Hãy viết đoạn văn khoảng 200 từ, tóm gọn lại các thông tin trên và đánh giá tác động của thuế lên NKG.
+
 Định dạng đầu ra cần tuân thủ:
 0. Không cần viết kết luận cuối.
 1. Bắt đầu phân tích với tiêu đề "**Định giá cập nhật với khuyến nghị MUA, giá mục tiêu dài hạn**"
-2. Nội dung phải súc tích, logic, tổng cộng không quá 600 từ
+2. Nội dung phải súc tích, logic, tổng cộng không quá 600 từ và viết thành các đoạn văn liền mạch nhau.
 3. Có kết luận rõ ràng về tiềm năng đầu tư cổ phiếu NKG
 4. TUYỆT ĐỐI PHẢI TIẾT KIỆM SỐ TRANG SỬ DỤNG. Viết các nội dung gần với nhau nhất có thể.
 5. KHÔNG ĐƯỢC XUỐNG DÒNG 2 LẦN TRONG MỌI TÌNH HUỐNG.
-6. Tuyệt đối không bắt đầu các mục với ký hiệu "**" và "*".
+6. Tuyệt đối không bắt đầu các mục với ký hiệu "**" và "*". Không bắt đầu đoạn văn với cụm từ "Dựa trên dữ liệu đưa ra", đi thẳng vào nội dung phân tích luôn.
 7. Viết phải thật sự chuyên nghiệp giống như một người phân tích tài chính chuyên nghiệp.
+8. Phải có số liệu cụ thể trong các phân tích.  
 """
 
 def create_revenue_commentary_prompt(revenue_data):
+    data = {
+  "doanh_thu_thuan": "20707.52",
+  "yoy_doanh_thu": "+11.2%",
+  "doanh_thu_thuan_2025F": "23928.46",
+  "yoy_doanh_thu_2025F": "+15.6%",
+  "loi_nhuan_gop": "1831.77",
+  "yoy_loi_nhuan_gop": "+64.7%",
+  "loi_nhuan_gop_2025F": "2207.03",
+  "yoy_loi_nhuan_gop_2025F": "+20.5%",
+  "chi_phi_tai_chinh": "-477.10",
+  "yoy_chi_phi_tai_chinh": "+12.0%",
+  "chi_phi_tai_chinh_2025F": "-544.48",
+  "yoy_chi_phi_tai_chinh_2025F": "+14.1%",
+  "chi_phi_ban_hang": "-1017.60",
+  "yoy_chi_phi_ban_hang": "+67.1%",
+  "chi_phi_ban_hang_2025F": "-1420.55",
+  "yoy_chi_phi_ban_hang_2025F": "+39.6%",
+  "chi_phi_quan_ly": "-120.24",
+  "yoy_chi_phi_quan_ly": "-7.7%",
+  "chi_phi_quan_ly_2025F": "-128.60",
+  "yoy_chi_phi_quan_ly_2025F": "+6.9%",
+  "loi_nhuan_hdkd": "557.45",
+  "yoy_loi_nhuan_hdkd": "+214.8%",
+  "loi_nhuan_hdkd_2025F": "641.85",
+  "yoy_loi_nhuan_hdkd_2025F": "+15.1%",
+  "loi_nhuan_truoc_thue": "558.17",
+  "yoy_loi_nhuan_truoc_thue": "+214.8%",
+  "loi_nhuan_truoc_thue_2025F": "641.06",
+  "yoy_loi_nhuan_truoc_thue_2025F": "+14.8%",
+  "loi_nhuan_sau_thue": "453.01",
+  "yoy_loi_nhuan_sau_thue": "+285.8%",
+  "loi_nhuan_sau_thue_2025F": "504.17",
+  "yoy_loi_nhuan_sau_thue_2025F": "+11.3%",
+}
     """Create a prompt for revenue commentary"""
     return f"""
-Bạn là một chuyên gia phân tích tài chính. Hãy viết bình luận chi tiết về DOANH THU của công ty dựa trên dữ liệu sau:
+Bạn là một chuyên gia phân tích tài chính. 
+Cho dữ liệu tài chính đã tính toán sẵn
+{data}
+Hãy viết bình luận chi tiết về DOANH THU của công ty dựa trên dữ liệu sau:
+- Doanh thu thuần: {data.get("doanh_thu_thuan", 'N/A')} tỷ VND
+- Tăng trưởng doanh thu so với năm trước: {data.get("yoy_doanh_thu", 'N/A')}
+- Doanh thu dự kiến năm tới: {data.get("doanh_thu_thuan_2025F", 'N/A')} tỷ VND
+- Tăng trưởng dự kiến năm tới: {data.get("yoy_doanh_thu_2025F", 'N/A')}
 
-- Doanh thu thuần: {revenue_data.get('revenue', 'N/A')} tỷ VND
-- Tăng trưởng doanh thu so với năm trước: {revenue_data.get('yoy_growth', 'N/A')}
-- Doanh thu dự kiến năm tới: {revenue_data.get('projected_revenue', 'N/A')} tỷ VND
-- Tăng trưởng dự kiến năm tới: {revenue_data.get('projected_growth', 'N/A')}
-- Tăng trưởng trung bình ngành: {revenue_data.get('sector_growth', 'N/A')}
-- Thị phần: {revenue_data.get('market_share', 'N/A')}
-
-Hãy viết một đoạn văn ngắn gọn (3-4 câu) đánh giá sâu về tình hình doanh thu của công ty, tập trung vào:
-1. Mức tăng trưởng doanh thu hiện tại và đánh giá chất lượng tăng trưởng (so với ngành)
-2. Các yếu tố chính đóng góp vào kết quả doanh thu (như mở rộng thị trường, cải thiện sản phẩm)
-3. Triển vọng tăng trưởng doanh thu trong năm tới dựa trên dự phóng
-4. Đánh giá tính bền vững của chiến lược tăng trưởng doanh thu
-
-Chú ý: Hãy cụ thể, có tham chiếu đến các con số thực tế từ dữ liệu. Bình luận phải súc tích, chuyên nghiệp và có giá trị phân tích cao.
-
+Hãy viết một đoạn văn ngắn gọn (3-4 câu) đánh giá sâu về tình hình doanh thu của công ty, tập trung vào phân tích doanh thu của công ty thép NKG trong kỳ báo cáo này. Doanh thu có tăng trưởng so với cùng kỳ năm trước không? Nếu có, hãy xác định nguyên nhân (tăng giá bán, tăng sản lượng tiêu thụ hay yếu tố khác). Nếu giảm, hãy chỉ ra các nguyên nhân chính.
 Yêu cầu:
 - Không giới thiệu, chỉ trả lời trực tiếp
 - Không dùng từ "theo dữ liệu" hoặc "dựa trên thông tin được cung cấp"
 - Viết với giọng điệu tự tin, chuyên nghiệp của một chuyên gia phân tích tài chính
+
 """
 
 def create_gross_profit_commentary_prompt(gross_profit_data):
-    """Create a prompt for gross profit and expenses commentary"""
+    """Create a prompt for gross profit commentary, focusing only on gross profit margin"""
+    data = {
+      "doanh_thu_thuan": "20707.52",
+      "yoy_doanh_thu": "+11.2%",
+      "doanh_thu_thuan_2025F": "23928.46",
+      "yoy_doanh_thu_2025F": "+15.6%",
+      "loi_nhuan_gop": "1831.77",
+      "yoy_loi_nhuan_gop": "+64.7%",
+      "loi_nhuan_gop_2025F": "2207.03",
+      "yoy_loi_nhuan_gop_2025F": "+20.5%",
+      "loi_nhuan_hdkd": "557.45",
+      "yoy_loi_nhuan_hdkd": "+214.8%",
+      "loi_nhuan_hdkd_2025F": "641.85",
+      "yoy_loi_nhuan_hdkd_2025F": "+15.1%",
+      "loi_nhuan_truoc_thue": "558.17",
+      "yoy_loi_nhuan_truoc_thue": "+214.8%",
+      "loi_nhuan_truoc_thue_2025F": "641.06",
+      "yoy_loi_nhuan_truoc_thue_2025F": "+14.8%",
+      "loi_nhuan_sau_thue": "453.01",
+      "yoy_loi_nhuan_sau_thue": "+285.8%",
+      "loi_nhuan_sau_thue_2025F": "504.17",
+      "yoy_loi_nhuan_sau_thue_2025F": "+11.3%",
+    }
+    
+    # Tính biên lợi nhuận gộp nếu có dữ liệu doanh thu và lợi nhuận gộp
+    gross_margin = ""
+    try:
+        doanh_thu = float(data.get("doanh_thu_thuan", "0").replace(",", ""))
+        loi_nhuan_gop = float(data.get("loi_nhuan_gop", "0").replace(",", ""))
+        if doanh_thu > 0:
+            gross_margin = f"Biên lợi nhuận gộp năm 2024: {(loi_nhuan_gop/doanh_thu)*100:.2f}%"
+    except:
+        gross_margin = ""
+    
     return f"""
-Bạn là một chuyên gia phân tích tài chính. Hãy viết bình luận chi tiết về LỢI NHUẬN GỘP và CƠ CẤU CHI PHÍ của công ty dựa trên dữ liệu sau:
+Bạn là một chuyên gia phân tích tài chính. 
+Cho dữ liệu tài chính đã tính toán sẵn:
+- Lợi nhuận gộp: {data.get("loi_nhuan_gop", 'N/A')} tỷ VND
+- Tăng trưởng lợi nhuận gộp so với năm trước: {data.get("yoy_loi_nhuan_gop", 'N/A')}
+- Lợi nhuận gộp dự kiến năm tới: {data.get("loi_nhuan_gop_2025F", 'N/A')} tỷ VND
+- Tăng trưởng lợi nhuận gộp dự kiến năm tới: {data.get("yoy_loi_nhuan_gop_2025F", 'N/A')}
+- Doanh thu thuần: {data.get("doanh_thu_thuan", 'N/A')} tỷ VND
+- Tăng trưởng doanh thu so với năm trước: {data.get("yoy_doanh_thu", 'N/A')}
+{gross_margin}
 
-- Lợi nhuận gộp: {gross_profit_data.get('gross_profit', 'N/A')} tỷ VND
-- Tăng trưởng lợi nhuận gộp so với năm trước: {gross_profit_data.get('yoy_growth', 'N/A')}
-- Biên lợi nhuận gộp hiện tại: {gross_profit_data.get('gross_margin', 'N/A')}
-- Biên lợi nhuận gộp năm trước: {gross_profit_data.get('prev_gross_margin', 'N/A')}
-- Chi phí tài chính: {gross_profit_data.get('financial_expense', 'N/A')} tỷ VND (YoY: {gross_profit_data.get('financial_expense_yoy', 'N/A')})
-- Chi phí bán hàng: {gross_profit_data.get('selling_expense', 'N/A')} tỷ VND (YoY: {gross_profit_data.get('selling_expense_yoy', 'N/A')})
-- Chi phí quản lý: {gross_profit_data.get('admin_expense', 'N/A')} tỷ VND (YoY: {gross_profit_data.get('admin_expense_yoy', 'N/A')})
-- Tỷ lệ chi phí trên doanh thu: {gross_profit_data.get('expense_ratio', 'N/A')}
+Hãy viết một đoạn văn ngắn gọn (3-4 câu) đánh giá sâu về tình hình lợi nhuận gộp của công ty thép NKG trong năm 2024. Phân tích:
+1. Lợi nhuận gộp có xu hướng tăng hay giảm so với năm trước
+2. Biên lợi nhuận gộp (tỷ lệ lợi nhuận gộp/doanh thu) là bao nhiêu và thay đổi ra sao
+3. Các yếu tố ảnh hưởng đến sự thay đổi lợi nhuận gộp (giá nguyên vật liệu, giá bán, cơ cấu sản phẩm, hiệu quả sản xuất)
+4. Đưa ra nhận định về triển vọng lợi nhuận gộp năm 2025
 
-Hãy viết một đoạn văn chi tiết (4-5 câu) phân tích biên lợi nhuận gộp và cơ cấu chi phí của công ty, tập trung vào:
-1. Biên lợi nhuận gộp cải thiện/suy giảm và các yếu tố ảnh hưởng chính
-2. Đánh giá hiệu quả kiểm soát chi phí tài chính và chiến lược quản lý nợ
-3. Phân tích xu hướng chi phí bán hàng và hiệu quả của hoạt động marketing
-4. Nhận xét về chi phí quản lý doanh nghiệp và nỗ lực tối ưu hóa bộ máy quản lý
-5. Đánh giá tổng thể về khả năng quản lý chi phí của doanh nghiệp
-
-Chú ý: Hãy cụ thể, có tham chiếu đến các con số thực tế từ dữ liệu. Bình luận phải súc tích, chuyên nghiệp và có giá trị phân tích cao.
-
-Yêu cầu:
+Yêu cầu quan trọng:
+- TUYỆT ĐỐI KHÔNG NHẮC ĐẾN CHI PHÍ TÀI CHÍNH, CHI PHÍ BÁN HÀNG HOẶC CHI PHÍ QUẢN LÝ
+- CHỈ TẬP TRUNG VÀO LỢI NHUẬN GỘP, BIÊN LỢI NHUẬN GỘP VÀ NGUYÊN NHÂN BIẾN ĐỘNG
 - Không giới thiệu, chỉ trả lời trực tiếp
 - Không dùng từ "theo dữ liệu" hoặc "dựa trên thông tin được cung cấp"
-- Tập trung phân tích cả lợi nhuận gộp VÀ các loại chi phí chính
 - Viết với giọng điệu tự tin, chuyên nghiệp của một chuyên gia phân tích tài chính
+- Không quá 100 từ
 """
 
 def create_operating_profit_commentary_prompt(operating_profit_data):
     """Create a prompt for operating profit and net profit commentary"""
+    data = {
+      "doanh_thu_thuan": "20707.52",
+      "yoy_doanh_thu": "+11.2%",
+      "doanh_thu_thuan_2025F": "23928.46",
+      "yoy_doanh_thu_2025F": "+15.6%",
+      "loi_nhuan_gop": "1831.77",
+      "yoy_loi_nhuan_gop": "+64.7%",
+      "loi_nhuan_gop_2025F": "2207.03",
+      "yoy_loi_nhuan_gop_2025F": "+20.5%",
+      "chi_phi_tai_chinh": "-477.10",
+      "yoy_chi_phi_tai_chinh": "+12.0%",
+      "chi_phi_tai_chinh_2025F": "-544.48",
+      "yoy_chi_phi_tai_chinh_2025F": "+14.1%",
+      "chi_phi_ban_hang": "-1017.60",
+      "yoy_chi_phi_ban_hang": "+67.1%",
+      "chi_phi_ban_hang_2025F": "-1420.55",
+      "yoy_chi_phi_ban_hang_2025F": "+39.6%",
+      "chi_phi_quan_ly": "-120.24",
+      "yoy_chi_phi_quan_ly": "-7.7%",
+      "chi_phi_quan_ly_2025F": "-128.60",
+      "yoy_chi_phi_quan_ly_2025F": "+6.9%",
+      "loi_nhuan_hdkd": "557.45",
+      "yoy_loi_nhuan_hdkd": "+214.8%",
+      "loi_nhuan_hdkd_2025F": "641.85",
+      "yoy_loi_nhuan_hdkd_2025F": "+15.1%",
+      "loi_nhuan_truoc_thue": "558.17",
+      "yoy_loi_nhuan_truoc_thue": "+214.8%",
+      "loi_nhuan_truoc_thue_2025F": "641.06",
+      "yoy_loi_nhuan_truoc_thue_2025F": "+14.8%",
+      "loi_nhuan_sau_thue": "453.01",
+      "yoy_loi_nhuan_sau_thue": "+285.8%",
+      "loi_nhuan_sau_thue_2025F": "504.17",
+      "yoy_loi_nhuan_sau_thue_2025F": "+11.3%",
+    }
+    
+    # Tính biên lợi nhuận hoạt động kinh doanh nếu có dữ liệu
+    operating_margin = ""
+    try:
+        doanh_thu = float(data.get("doanh_thu_thuan", "0").replace(",", ""))
+        loi_nhuan_hdkd = float(data.get("loi_nhuan_hdkd", "0").replace(",", ""))
+        if doanh_thu > 0:
+            operating_margin = f"Biên lợi nhuận hoạt động kinh doanh năm 2024: {(loi_nhuan_hdkd/doanh_thu)*100:.2f}%"
+    except:
+        operating_margin = ""
+    
     return f"""
-Bạn là một chuyên gia phân tích tài chính. Hãy viết bình luận chi tiết về CÁC CHỈ SỐ LỢI NHUẬN CHÍNH của công ty dựa trên dữ liệu sau:
+Bạn là một chuyên gia phân tích tài chính. 
+Cho dữ liệu tài chính đã tính toán sẵn:
+- Lợi nhuận hoạt động kinh doanh: {data.get("loi_nhuan_hdkd", 'N/A')} tỷ VND
+- Tăng trưởng lợi nhuận HĐKD so với năm trước: {data.get("yoy_loi_nhuan_hdkd", 'N/A')}
+- Lợi nhuận HĐKD dự kiến năm tới: {data.get("loi_nhuan_hdkd_2025F", 'N/A')} tỷ VND
+- Tăng trưởng lợi nhuận HĐKD dự kiến năm tới: {data.get("yoy_loi_nhuan_hdkd_2025F", 'N/A')}
+- Lợi nhuận trước thuế: {data.get("loi_nhuan_truoc_thue", 'N/A')} tỷ VND
+- Tăng trưởng lợi nhuận trước thuế so với năm trước: {data.get("yoy_loi_nhuan_truoc_thue", 'N/A')}
+- Lợi nhuận sau thuế: {data.get("loi_nhuan_sau_thue", 'N/A')} tỷ VND
+- Tăng trưởng lợi nhuận sau thuế so với năm trước: {data.get("yoy_loi_nhuan_sau_thue", 'N/A')}
+{operating_margin}
 
-- Lợi nhuận từ hoạt động kinh doanh: {operating_profit_data.get('operating_profit', 'N/A')} tỷ VND
-- Tăng trưởng LNHĐKD so với năm trước: {operating_profit_data.get('yoy_growth', 'N/A')}
-- Lợi nhuận trước thuế: {operating_profit_data.get('profit_before_tax', 'N/A')} tỷ VND
-- Tăng trưởng LNTT so với năm trước: {operating_profit_data.get('pbt_yoy_growth', 'N/A')}
-- Lợi nhuận sau thuế: {operating_profit_data.get('profit_after_tax', 'N/A')} tỷ VND
-- Tăng trưởng LNST so với năm trước: {operating_profit_data.get('pat_yoy_growth', 'N/A')}
-- Biên lợi nhuận hoạt động: {operating_profit_data.get('operating_margin', 'N/A')}
-- Thuế suất thực tế: {operating_profit_data.get('effective_tax_rate', 'N/A')}
+Hãy viết một đoạn văn ngắn gọn (3-4 câu) đánh giá sâu về tình hình lợi nhuận hoạt động kinh doanh của công ty thép NKG trong năm 2024. Phân tích:
+1. Lợi nhuận HĐKD có xu hướng tăng hay giảm so với năm trước, mức tăng/giảm đáng kể không
+2. Biên lợi nhuận HĐKD (tỷ lệ lợi nhuận HĐKD/doanh thu) thay đổi ra sao
+3. Mối quan hệ giữa lợi nhuận HĐKD, lợi nhuận trước thuế và lợi nhuận sau thuế
+4. Đưa ra nhận định về triển vọng lợi nhuận hoạt động kinh doanh năm 2025
 
-Hãy viết một đoạn văn chi tiết (4-5 câu) phân tích sâu về hiệu quả hoạt động kinh doanh của công ty, tập trung vào:
-1. Phân tích mức tăng trưởng của lợi nhuận từ hoạt động kinh doanh và nguyên nhân chính
-2. So sánh tỷ lệ lợi nhuận trước thuế và lợi nhuận từ hoạt động kinh doanh để đánh giá tác động của các hoạt động tài chính/khác
-3. Phân tích hiệu quả quản lý thuế thông qua chênh lệch giữa lợi nhuận trước thuế và sau thuế
-4. Đánh giá tổng thể về khả năng sinh lời của doanh nghiệp 
-5. Nhận xét về khả năng tạo ra giá trị dài hạn cho cổ đông
-
-Chú ý: Hãy cụ thể, có tham chiếu đến các con số thực tế từ dữ liệu. Bình luận phải súc tích, chuyên nghiệp và có giá trị phân tích cao.
-
-Yêu cầu:
+Yêu cầu quan trọng:
+- CHỈ TẬP TRUNG VÀO LỢI NHUẬN HOẠT ĐỘNG KINH DOANH VÀ BIÊN LỢI NHUẬN HOẠT ĐỘNG
 - Không giới thiệu, chỉ trả lời trực tiếp
 - Không dùng từ "theo dữ liệu" hoặc "dựa trên thông tin được cung cấp"
-- Tập trung phân tích sâu về hiệu quả chung của hoạt động kinh doanh
 - Viết với giọng điệu tự tin, chuyên nghiệp của một chuyên gia phân tích tài chính
 """
 
 def create_cost_of_goods_sold_commentary_prompt(data):
+    datta = {
+  "doanh_thu_thuan": "20707.52",
+  "yoy_doanh_thu": "+11.2%",
+  "doanh_thu_thuan_2025F": "23928.46",
+  "yoy_doanh_thu_2025F": "+15.6%",
+  "loi_nhuan_gop": "1831.77",
+  "yoy_loi_nhuan_gop": "+64.7%",
+  "loi_nhuan_gop_2025F": "2207.03",
+  "yoy_loi_nhuan_gop_2025F": "+20.5%",
+  "chi_phi_tai_chinh": "-477.10",
+  "yoy_chi_phi_tai_chinh": "+12.0%",
+  "chi_phi_tai_chinh_2025F": "-544.48",
+  "yoy_chi_phi_tai_chinh_2025F": "+14.1%",
+  "chi_phi_ban_hang": "-1017.60",
+  "yoy_chi_phi_ban_hang": "+67.1%",
+  "chi_phi_ban_hang_2025F": "-1420.55",
+  "yoy_chi_phi_ban_hang_2025F": "+39.6%",
+  "chi_phi_quan_ly": "-120.24",
+  "yoy_chi_phi_quan_ly": "-7.7%",
+  "chi_phi_quan_ly_2025F": "-128.60",
+  "yoy_chi_phi_quan_ly_2025F": "+6.9%",
+  "loi_nhuan_hdkd": "557.45",
+  "yoy_loi_nhuan_hdkd": "+214.8%",
+  "loi_nhuan_hdkd_2025F": "641.85",
+  "yoy_loi_nhuan_hdkd_2025F": "+15.1%",
+  "loi_nhuan_truoc_thue": "558.17",
+  "yoy_loi_nhuan_truoc_thue": "+214.8%",
+  "loi_nhuan_truoc_thue_2025F": "641.06",
+  "yoy_loi_nhuan_truoc_thue_2025F": "+14.8%",
+  "loi_nhuan_sau_thue": "453.01",
+  "yoy_loi_nhuan_sau_thue": "+285.8%",
+  "loi_nhuan_sau_thue_2025F": "504.17",
+  "yoy_loi_nhuan_sau_thue_2025F": "+11.3%",
+}
     """Create a prompt for cost of goods sold commentary"""
     return f"""
 Bạn là một chuyên gia phân tích tài chính. Hãy viết bình luận ngắn gọn về giá vốn hàng bán của công ty dựa trên dữ liệu sau:
 
-- Doanh thu thuần: {data.get('doanh_thu_thuan', 'N/A')} tỷ VND
-- Lợi nhuận gộp: {data.get('loi_nhuan_gop', 'N/A')} tỷ VND
-- Tăng trưởng doanh thu so với năm trước: {data.get('yoy_doanh_thu', 'N/A')}
-- Tăng trưởng lợi nhuận gộp so với năm trước: {data.get('yoy_loi_nhuan_gop', 'N/A')}
+- Doanh thu thuần: {datta.get('doanh_thu_thuan', 'N/A')} tỷ VND
+- Lợi nhuận gộp: {datta.get('loi_nhuan_gop', 'N/A')} tỷ VND
+- Tăng trưởng doanh thu so với năm trước: {datta.get('yoy_doanh_thu', 'N/A')}
+- Tăng trưởng lợi nhuận gộp so với năm trước: {datta.get('yoy_loi_nhuan_gop', 'N/A')}
 
 Hãy viết một đoạn văn ngắn (không quá 2 câu) để diễn giải về tình hình giá vốn hàng bán của công ty. Tập trung vào việc tối ưu hóa quy trình sản xuất, kiểm soát chi phí nguyên vật liệu, và cải thiện hiệu quả hoạt động.
 
@@ -347,7 +516,7 @@ def generate_financial_commentary(company_code, page2_data):
             # Tạo mô tả phân tích phù hợp với từng mục
             descriptions = {
                 "Doanh thu thuần": "tăng trưởng doanh thu, so sánh với mức tăng trưởng năm trước và dự báo năm tới",
-                "Lợi nhuận gộp": "biên lợi nhuận gộp, nguyên nhân thay đổi, và triển vọng. CHỈ NÓI VỀ LỢI NHUẬN GỘP, KHÔNG NHẮC ĐẾN CHI PHÍ",
+                "Lợi nhuận gộp": "biên lợi nhuận gộp, nguyên nhân thay đổi, và triển vọng. CHỈ NÓI VỀ LỢI NHUẬN GỘP, không nói đến chi phí bán hàng, chi phí quản lý, chi phí tài chính",
                 "Chi phí": "biến động của chi phí tài chính (lãi vay và tỷ giá), chi phí bán hàng (marketing), và chi phí quản lý (bộ máy quản trị)",
                 "Lợi nhuận từ HĐKD": "hiệu quả hoạt động kinh doanh, kiểm soát chi phí và triển vọng"
             }
@@ -459,6 +628,7 @@ def generate_financial_analysis(balance_sheet=None, income_statement=None, profi
     except Exception as e:
         print(f"API error: {str(e)}")
         return f"Error generating analysis: {str(e)}"
+
 
 def generate_revenue_commentary(revenue_data):
     """Generate commentary for revenue section based on provided data"""
