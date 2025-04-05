@@ -9,6 +9,8 @@ from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
 from reportlab.pdfgen.canvas import Canvas
 import datetime
 import os
+import matplotlib.pyplot as plt
+from vnstock import Vnstock
 
 class Page1:
     def __init__(self, font_added=False):
@@ -204,6 +206,47 @@ class Page1:
         # Nếu không phải tiêu đề, hoặc định dạng không đúng
         return ("normal", text)
 
+    def create_shareholders_chart(self, market_data):
+        """Tạo biểu đồ tròn cổ đông lớn sử dụng vnstock"""
+        try:
+            # Lấy dữ liệu cổ đông từ vnstock
+            company = Vnstock().stock(symbol='NKG', source='TCBS').company
+            shareholders_df = company.shareholders()
+            
+            # Tạo thư mục tạm thời nếu chưa tồn tại
+            temp_dir = os.path.join("backend", "app", "api", "v2", "report", "temp")
+            os.makedirs(temp_dir, exist_ok=True)
+            
+            # Tạo tên file tạm thời cho biểu đồ
+            temp_chart_path = os.path.join(temp_dir, f"shareholders_chart_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.png")
+            
+            # Tạo biểu đồ sử dụng phương thức viz.pie() của vnstock - giảm kích thước cho phù hợp cột trái
+            shareholders_df.viz.pie(
+                title='Cổ đông lớn NKG',
+                labels='share_holder',
+                values='share_own_percent',
+                figsize=(5, 4),  # Kích thước nhỏ hơn cho cột trái
+                ylabel='',
+                color_palette='stock'
+            )
+            
+            # Lưu biểu đồ vào file
+            plt.savefig(temp_chart_path, format='png', dpi=100, bbox_inches='tight')
+            plt.close()
+            
+            # Tạo đối tượng Image từ file ảnh đã lưu
+            img = Image(temp_chart_path)
+            
+            # Điều chỉnh kích thước ảnh cho phù hợp cột trái
+            img.drawHeight = 5*cm
+            img.drawWidth = 6*cm
+            
+            return img
+            
+        except Exception as e:
+            print(f"Lỗi khi tạo biểu đồ cổ đông: {str(e)}")
+            return None
+
     def create_market_data_table(self, market_data):
         """Tạo bảng dữ liệu thị trường cho phần sidebar"""
         if not market_data:
@@ -271,86 +314,19 @@ class Page1:
         # Tăng khoảng cách giữa các bảng
         middle_spacer = Spacer(1, 0.3*cm)
         
-        # Xử lý phần cổ đông lớn
-        shareholders = []
-        if "co_dong_lon" in market_data and market_data["co_dong_lon"] is not None:
-            shareholders_df = market_data["co_dong_lon"]
-            
-            shareholder_title = Paragraph("Cổ đông lớn (%)", self.styles['MarketDataTitle'])
-            shareholders.append(shareholder_title)
-            shareholders.append(Spacer(1, 0.1*cm))
-            
-            if not shareholders_df.empty:
-                try:
-                    share_holder_col = None
-                    share_percent_col = None
-                    
-                    for col in shareholders_df.columns:
-                        if 'hold' in str(col).lower() or 'name' in str(col).lower():
-                            share_holder_col = col
-                            break
-                    
-                    for col in shareholders_df.columns:
-                        if 'percent' in str(col).lower() or 'own' in str(col).lower() or 'ratio' in str(col).lower():
-                            share_percent_col = col
-                            break
-                    
-                    if share_holder_col and share_percent_col:
-                        formatted_shareholders = []
-                        for i in range(min(3, len(shareholders_df))):
-                            try:
-                                holder_name = str(shareholders_df.iloc[i][share_holder_col])
-                                if len(holder_name) > 20:
-                                    holder_name = holder_name[:18] + "..."
-                                
-                                ownership_ratio = float(shareholders_df.iloc[i][share_percent_col]) * 100
-                                formatted_shareholders.append([holder_name, f"{ownership_ratio:.2f}%"])
-                            except (ValueError, TypeError) as e:
-                                print(f"Lỗi khi xử lý cổ đông {i}: {str(e)}")
-                                continue
-                        
-                        if formatted_shareholders:
-                            shareholder_table = Table(
-                                formatted_shareholders, 
-                                colWidths=[4.0*cm, 1.8*cm],
-                                spaceBefore=3,
-                                spaceAfter=3
-                            )
-                            
-                            shareholder_style = TableStyle([
-                                ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-                                ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-                                ('FONTNAME', (0, 0), (0, -1), 'DejaVuSans' if self.font_added else 'Helvetica'),
-                                ('FONTNAME', (1, 0), (1, -1), 'DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold'),
-                                ('FONTSIZE', (0, 0), (-1, -1), 8),
-                                ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-                                ('TOPPADDING', (0, 0), (-1, -1), 5),
-                                ('LEFTPADDING', (0, 0), (0, -1), 0),
-                                ('RIGHTPADDING', (1, 0), (1, -1), 0),
-                                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                                ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#F5F5F5')),
-                            ])
-                            
-                            shareholder_table.setStyle(shareholder_style)
-                            shareholders.append(shareholder_table)
-                        else:
-                            no_data = Paragraph("Không có dữ liệu", self.styles['NormalVN'])
-                            shareholders.append(no_data)
-                    else:
-                        no_column = Paragraph("Không tìm thấy cột dữ liệu", self.styles['NormalVN'])
-                        shareholders.append(no_column)
-                except Exception as e:
-                    error_msg = Paragraph(f"Lỗi: {str(e)[:30]}...", self.styles['NormalVN'])
-                    shareholders.append(error_msg)
-            else:
-                empty_df = Paragraph("Không có dữ liệu cổ đông", self.styles['NormalVN'])
-                shareholders.append(empty_df)
+        elements = [spacer, table, middle_spacer]
         
-        elements = [spacer, table]
+        # Thêm biểu đồ cổ đông lớn vào cột trái
+        shareholder_title = Paragraph("Cơ cấu cổ đông", self.styles['MarketDataTitle'])
+        elements.append(shareholder_title)
+        elements.append(Spacer(1, 0.1*cm))
         
-        if shareholders:
-            elements.append(middle_spacer)
-            elements.extend(shareholders)
+        # Tạo biểu đồ cổ đông
+        shareholders_chart = self.create_shareholders_chart(market_data)
+        if shareholders_chart:
+            elements.append(shareholders_chart)
+        else:
+            elements.append(Paragraph("Không có dữ liệu về cổ đông", self.styles['NormalVN']))
         
         return elements
 
