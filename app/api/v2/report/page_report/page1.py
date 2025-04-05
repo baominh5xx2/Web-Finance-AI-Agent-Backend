@@ -499,14 +499,14 @@ class Page1:
         # Thêm spacing để tránh chồng lấp với khung màu xanh
         story.append(Spacer(1,2.5*cm))
         
-        # Date hiện tại
-        date_today = datetime.date.today().strftime('%d/%m/%Y')
+        # Date hiện tại - HARDCODE ngày báo cáo
+        date_today = "31/12/2024"  # HARDCODE ngày báo cáo cố định
         date_label = Paragraph("Báo cáo cập nhật", self.styles['DateLabel'])
         date_value = Paragraph(date_today, self.styles['DateValue'])
         
-        # Hiển thị giá hiện tại
+        # Hiển thị giá hiện tại - HARDCODE giá hiện tại
         price_label = Paragraph("Giá hiện tại", self.styles['PriceLabel'])
-        price_value = Paragraph("<b>{0} VND</b>".format(recommendation_data.get('current_price', 'N/A')), self.styles['PriceValue'])
+        price_value = Paragraph("<b>19,240 VND</b>", self.styles['PriceValue'])  # HARDCODE giá cố định
         
         # Thêm hiển thị giá mục tiêu và suất sinh lời
         target_price_label = Paragraph("Giá mục tiêu dài hạn", self.styles['TargetPriceLabel'])
