@@ -149,7 +149,7 @@ class Page3:
         # Thêm các dòng vào bảng - đã xóa các dòng P/E trung bình, trung vị và trung bình 10 năm
         data.append([Paragraph('P/E ngành:', self.styles['SummaryRow']), 
                      Paragraph(f"{pe_target}", self.styles['TableCell'])])
-        data.append([Paragraph('EPS mục tiêu (VND):', self.styles['SummaryRow']), 
+        data.append([Paragraph('EPS trung bình ngành (VND):', self.styles['SummaryRow']), 
                      Paragraph(f"{eps_target}", self.styles['TableCell'])])
         data.append([Paragraph('Giá mục tiêu (VND):', self.styles['SummaryRow']), 
                      Paragraph(f"{price_target}", self.styles['TableCell'])])

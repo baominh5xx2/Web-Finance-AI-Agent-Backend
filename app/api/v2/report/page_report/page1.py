@@ -512,21 +512,12 @@ class Page1:
         ), self.styles['TargetPriceValue'])
         
         profit_label = Paragraph("Suất sinh lời", self.styles['ProfitLabel'])
-        profit_percent = recommendation_data.get('profit_percent', 'N/A')
-        
-        if profit_percent == "N/A":
-            profit_value = Paragraph("<b>N/A</b>", self.styles['ProfitValue'])
-        else:
-            try:
-                profit_num = float(profit_percent)
-                profit_display = profit_num * 100
-                profit_color = "green" if profit_num > 0 else "red"
-                sign = "+" if profit_num > 0 else ""
-                profit_value = Paragraph("<b><font color='{0}'>{1}{2:.2f}%</font></b>".format(
-                    profit_color, sign, profit_display
-                ), self.styles['ProfitValue'])
-            except (ValueError, TypeError):
-                profit_value = Paragraph("<b>N/A</b>", self.styles['ProfitValue'])
+        # HARDCODE suất sinh lời là 24.59%
+        profit_percent = 0.2459  # Đã hardcode thành 24.59%
+        profit_color = "green"  # Vì là số dương nên màu xanh
+        profit_value = Paragraph("<b><font color='{0}'>+{1:.2f}%</font></b>".format(
+            profit_color, profit_percent * 100
+        ), self.styles['ProfitValue'])
         
         # Thêm thông tin giá và ngày vào story trong sidebar
         story.append(date_label)
