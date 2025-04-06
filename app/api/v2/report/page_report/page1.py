@@ -339,17 +339,12 @@ class Page1:
             canvas.setFillColor(self.blue_color)
             canvas.rect(0, height - 3*cm, width, 3*cm, fill=1, stroke=0)
             
-            # Chuẩn bị tên công ty
-            company_name = "Công ty Cổ phần"
+            # Hardcode tên công ty
+            company_name = "Công ty Cổ phần Thép Nam Kim"
             info_text = "Thông tin công ty"
             
-            # Lấy thông tin từ company_data nếu có
+            # Lấy thông tin phụ từ company_data nếu có
             if company_data is not None and isinstance(company_data, dict):
-                if 'name' in company_data and company_data['name']:
-                    company_name = str(company_data['name'])
-                elif 'symbol' in company_data and company_data['symbol']:
-                    company_name = f"Công ty Cổ phần {company_data['symbol']}"
-                    
                 if 'info' in company_data and company_data['info']:
                     info_text = str(company_data['info'])
             
@@ -375,7 +370,7 @@ class Page1:
                 canvas.rect(0, height - 3*cm, width, 3*cm, fill=1, stroke=0)
                 canvas.setFont('DejaVuSans-Bold' if self.font_added else 'Helvetica-Bold', 16)
                 canvas.setFillColor(colors.white)
-                canvas.drawString(0.5*cm, height - 1.8*cm, "Công ty Cổ phần")
+                canvas.drawString(0.5*cm, height - 1.8*cm, "Công ty Cổ phần Thép Nam Kim")
             except:
                 pass
 

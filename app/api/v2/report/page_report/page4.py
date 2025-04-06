@@ -93,7 +93,7 @@ class Page4:
         elements.append(chart_table)
         
         # Add source note
-        source_text = "Nguồn: Báo cáo công ty, Chứng khoán Shinhan Việt Nam"
+        source_text = ""
         elements.append(Paragraph(source_text, self.source_style))
         
         # If buffer is provided, build a standalone PDF
@@ -436,9 +436,6 @@ class Page4:
         canvas.setFillColor(colors.white)
         canvas.setFont('DejaVuSans' if self.font_added else 'Helvetica', 9)
         canvas.drawRightString(width - 1*cm, 3.5*mm, f"Trang 4")
-        
-        # Thông tin công ty
-        canvas.drawString(1*cm, 3.5*mm, "FinBot - Trí tuệ tài chính cho mọi người")
 
 # For testing purposes
 if __name__ == "__main__":

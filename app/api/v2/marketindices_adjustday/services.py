@@ -14,7 +14,7 @@ class MarketIndicesAdjustDayService:
         try:
             end_date = datetime.now().strftime('%Y-%m-%d')
             if time == "1D":
-                start_date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+                start_date = (datetime.now() - timedelta(days=2)).strftime('%Y-%m-%d')
                 interval = '1m'
             elif time == "3M":
                 start_date = (datetime.now() - timedelta(days=90)).strftime('%Y-%m-%d')
