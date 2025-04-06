@@ -8,7 +8,7 @@ from .module_report.finance_calc import (calculate_total_current_assets, calcula
                                         calculate_net_income_before_taxes, calculate_net_income_before_extraordinary_items,
                                         get_market_data, current_price, predict_price, analyze_stock_data_2025_2026_p1,
                                         analyze_stock_financials_p2)
-from .module_report.generate_pdf import PDFReport, generate_page4_pdf, generate_page5_pdf
+from .module_report.generate_pdf import PDFReport, generate_page4_pdf, generate_page5_pdf, generate_page6_pdf
 from .module_report.api_gemini import generate_financial_analysis
 from vnstock import Vnstock
 from .cache_manager import save_page1_data, save_page2_data, save_result_dataset, save_stock_data
@@ -721,6 +721,30 @@ def generate_financial_ratios_pdf(output_path=None):
     
     return result_path
 
+def generate_financial_charts_pdf(output_path=None):
+    """
+    Generate a PDF file with financial charts.
+    
+    Args:
+        output_path (str, optional): Path where the PDF file will be saved.
+            If None, a default path will be used.
+            
+    Returns:
+        str: Path to the generated PDF file
+    """
+    if output_path is None:
+        # Create a directory for reports if it doesn't exist
+        reports_dir = os.path.join(os.getcwd(), "reports")
+        os.makedirs(reports_dir, exist_ok=True)
+        
+        # Generate a filename based on current date and time
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_path = os.path.join(reports_dir, f"financial_charts_{timestamp}.pdf")
+    
+    # Call the function to generate the PDF
+    result_path = generate_page6_pdf(output_path)
+    
+    return result_path
 
 def get_page3_industry_peers_data(symbol=None):
     """

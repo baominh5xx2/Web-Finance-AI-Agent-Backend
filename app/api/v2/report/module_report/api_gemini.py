@@ -265,7 +265,7 @@ Yêu cầu quan trọng:
 - Không giới thiệu, chỉ trả lời trực tiếp
 - Không dùng từ "theo dữ liệu" hoặc "dựa trên thông tin được cung cấp"
 - Viết với giọng điệu tự tin, chuyên nghiệp của một chuyên gia phân tích tài chính
-- Không quá 100 từ
+- Tuyệt đối không viết quá 100 từ
 """
 
 def create_operating_profit_commentary_prompt(operating_profit_data):
