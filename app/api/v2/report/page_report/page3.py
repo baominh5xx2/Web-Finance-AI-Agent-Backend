@@ -147,7 +147,7 @@ class Page3:
         current_price = valuation_data.get('current_price', 'N/A')
         
         # Thêm các dòng vào bảng - đã xóa các dòng P/E trung bình, trung vị và trung bình 10 năm
-        data.append([Paragraph('P/E ngành:', self.styles['SummaryRow']), 
+        data.append([Paragraph('P/E mục tiêu:', self.styles['SummaryRow']), 
                      Paragraph(f"{pe_target}", self.styles['TableCell'])])
         data.append([Paragraph('EPS trung bình ngành (VND):', self.styles['SummaryRow']), 
                      Paragraph(f"{eps_target}", self.styles['TableCell'])])
